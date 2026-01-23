@@ -1,0 +1,20 @@
+# IDE-specific files (WebStorm/JetBrains)
+.idea/
+desktop.ini
+# If you want to share some run configurations, you can use something like:
+# !.idea/runConfigurations/
+
+# Node.js dependencies
+node_modules/
+/npm-debug.log*
+yarn-error.log*
+
+# Build artifacts and temporary files
+dist/
+build/
+coverage/
+*.tgz
+
+# OS-specific files
+.DS_Store
+Thumbs.db
