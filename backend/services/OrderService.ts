@@ -6,7 +6,7 @@ export class OrderService {
     private orderRepository: IOrderRepository
   ) {}
 
-  async execute(dto: CreateOrderDTO): Promise<Order> {
+  async execute(dto: OrderDTO): Promise<Order> {
     const product = this.productManager.createByCategory(
       dto.category,
       ...dto.productArgs

@@ -1,45 +1,38 @@
-import { BaseProduct } from '../BaseProduct';
+import { BaseProduct, type BaseProductProps } from "../BaseProduct";
+
+export interface FilmProps extends BaseProductProps {}
 
 export class Film extends BaseProduct {
-  constructor(
-    id: number,
-    basePrice: number,
-    public readonly width: number,   // см
-    public readonly length: number   // м
-  ) {
-    super(id, basePrice);
+  private width: number;
+  private thickness: number;
+
+  constructor(props: FilmProps) {
+    super(props);
+    this.category = props.category;
+    this.width = 0;
+    this.thickness = 0;
   }
 
-  get area(): number {
-    return (this.width / 100) * this.length;
+  set setWidth(v: number) {
+    this.width = v;
   }
 
-  getTotalPrice(): number {
-    return this.area * this.basePrice;
+  set setThickness(v: number) {
+    this.thickness = v;
+  }
+
+  fillData(data: {
+    name: string;
+    width: number;
+    weight: number;
+    thickness: number;
+  }) {
+    this.name = data.name;
+    this.width = data.width;
+    this.weight = data.weight;
+    this.thickness = data.thickness;
+    console.log("fillData", data);
+
+    return this;
   }
 }
-
-// import Product, { TProduct } from "./product";
-// import CategoryManager from "./attributes/category";
-
-// export type TFilm = TProduct & {
-//   width: string;
-// };
-
-// const filmType = new CategoryManager("filmType", "Тип плівки");
-// filmType.add({ id: "0", name: "pocket", title: "Карман" });
-// filmType.add({ id: "1", name: "sleeve", title: "Рукав" });
-// filmType.add({ id: "2", name: "halfSleeve", title: "Напіврукав" });
-// filmType.add({ id: "3", name: "Canvas", title: "Полотно" });
-
-// export default class Film extends Product {
-//   types;
-//   width;
-
-//   constructor(params: TFilm) {
-//     super(params);
-
-//     this.types = filmType.getAll();
-//     this.width = params.width;
-//   }
-// }

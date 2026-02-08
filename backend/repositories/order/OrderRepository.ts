@@ -1,50 +1,20 @@
+import { db } from "../../../config/db";
+import { OrderDTO } from "../../../dto/OrderDTO";
 import { Order } from "./../../domain/order/Order";
-import { IOrderRepository } from "./IOrderRepository";
+import type { IOrderRepository } from "./IOrderRepository";
+
 
 export class OrderRepository implements IOrderRepository {
-  constructor(private dbPromise: Promise<IDBDatabase>) {}
-
-  async save(order: Order): Promise<void> {
-    const db = await this.dbPromise;
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('orders', 'readwrite');
-      const store = tx.objectStore('orders');
-
-      store.put({
-        ...order,
-        createdAt: order.createdAt.toISOString(),
-      });
-
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+  
+  async save(order: Order): Promise<number> {
+    if(order.hasOwnProperty('id')) delete order.id;
+    
+    return await db.orders.put({
+      ...order,
+      createdAt: new Date().toISOString(),
     });
   }
-
-  async findAll(): Promise<Order[]> {
-    const db = await this.dbPromise;
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('orders', 'readonly');
-      const store = tx.objectStore('orders');
-      const request = store.getAll();
-
-      request.onsuccess = () => {
-        resolve(
-          request.result.map(
-            (o) =>
-              new Order(
-                o.id,
-                o.clientId,
-                o.product,
-                o.price,
-                new Date(o.createdAt)
-              )
-          )
-        );
-      };
-
-      request.onerror = () => reject(request.error);
-    });
+  findAll(): Promise<Order[]> {
+    return db.orders.toArray();
   }
 }

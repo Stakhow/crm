@@ -1,27 +1,34 @@
-import { ProductRepository } from '@/domain/product/ProductRepository';
+import type { IProductRepository } from "./IProductRepository";
+import { db } from "../../../config/db";
+import {
+  BaseProduct,
+  type BaseProductProps,
+} from "../../domain/product/BaseProduct";
+import { AppError } from "../../utils/error";
 
-import { IndexedDB } from '../db/IndexedDB';
+export class ProductRepository implements IProductRepository {
+  async save(product: BaseProductProps): Promise<number> {
+    if (product.hasOwnProperty("id")) delete product.id;
 
-const STORE = 'products';
-
-export class IndexedDBProductRepository implements ProductRepository {
-  constructor(private readonly db: IndexedDB) {}
-
-  save(product: ProductSnapshot): Promise<void> {
-    return this.db.transaction<void>(STORE, 'readwrite', store =>
-      store.put(product)
-    );
+    return await db.products.put({
+      ...product,
+      createdAt: new Date().toISOString(),
+    });
   }
 
-  getById(id: string): Promise<ProductSnapshot | null> {
-    return this.db.transaction<ProductSnapshot | null>(STORE, 'readonly', store =>
-      store.get(id)
-    );
+  async getById(id: number): Promise<BaseProduct> {
+    return await db.products.get(id);
   }
 
-  getAll(): Promise<ProductSnapshot[]> {
-    return this.db.transaction<ProductSnapshot[]>(STORE, 'readonly', store =>
-      store.getAll()
-    );
+  async getAll(): Promise<BaseProduct[]> {
+    return await db.products.toArray();
+  }
+
+  async delete(id: number): Promise<void> {
+    return await db.products.delete(id);
+  }
+
+  async getByCategory(category: string): Promise<BaseProduct[] | null> {
+    return await db.products.get({ category });
   }
 }

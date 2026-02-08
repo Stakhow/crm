@@ -1,6 +1,6 @@
 export enum ProductCategory {
-  Film = 'film',
-  Bag = 'bag',
-  Stretch = 'stretch',
-  Granule = 'granule',
+  Film = "film",
+  Bag = "bag",
+  Stretch = "stretch",
+  Granule = "granule",
 }

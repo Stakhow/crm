@@ -1,7 +1,9 @@
-import { BaseProduct } from "../../domain/product/BaseProduct";
+import { BaseProduct, type BaseProductProps } from "../../domain/product/BaseProduct";
 
 export interface IProductRepository {
-  save(order: BaseProduct): Promise<void>;
-  // getById(id: string): Promise<Order | null>;
-  findAll(): Promise<BaseProduct[]>;
+  save(product: BaseProductProps): Promise<number>;
+  getById(id: number): Promise<BaseProduct>;
+  getAll(): Promise<BaseProduct[]>;
+  delete(id: number): Promise<void>;
+  getByCategory(category: string): Promise<BaseProduct[] | null>;
 }

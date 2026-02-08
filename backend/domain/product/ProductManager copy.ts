@@ -4,7 +4,7 @@ import { type IFactory } from "./../../shared/factory/IFactory";
 
 type ProductCtor<C extends ProductCategory> = (typeof ProductByCategory)[C];
 
-export type ProductCtorArgs<C extends ProductCategory> = ConstructorParameters<
+type ProductCtorArgs<C extends ProductCategory> = ConstructorParameters<
   ProductCtor<C>
 >;
 
@@ -17,7 +17,7 @@ export class ProductManager {
 
   createByCategory<C extends ProductCategory>(
     category: C,
-    args: ProductCtorArgs<C>,
+    ...args: ProductCtorArgs<C>
   ): ProductInstance<C> {
     const Ctor = ProductByCategory[category];
 

@@ -1,27 +1,14 @@
-import { BaseProduct } from '../BaseProduct';
+import { BaseProduct, type BaseProductProps } from "../BaseProduct";
 
 export class Stretch extends BaseProduct {
-  constructor(
-    id: number,
-    basePrice: number,
-    public readonly thickness: number, // мкм
-    public readonly weight: number      // кг
-  ) {
-    super(id, basePrice);
+  constructor(props: BaseProductProps) {
+    super(props);
   }
 
-  getTotalPrice(): number {
-    const thicknessCoef = this.thickness / 10;
-    return this.weight * thicknessCoef * this.basePrice;
+  fillData(data: {}): ThisType<Stretch> {
+    this.name = data.name;
+    this.weight = data.weight;
+
+    return this;
   }
 }
-
-
-// import Film from "./film";
-
-// export default class Stretch extends Film {
-  
-//   constructor(params) {
-//     super(params);
-//   }
-// }
