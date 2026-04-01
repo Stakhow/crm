@@ -1,16 +1,22 @@
 // import { IProductRepository } from "../../domain/product/IProductRepository";
 // import { Product, OptionGroup } from "../../domain/product/Product.entity";
 import { db } from "./../../../config/db";
-import { AppError } from "../../utils/error";
-import type { ClientDTO } from "../../../dto/ClientDTO";
+import { AppError } from "./../../../utils/error";
+import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import { Client } from "./../../domain/client/Client";
 import type { IClientRepository } from "./IClientRepository";
 
 export class ClientRepository implements IClientRepository {
-  async getById(id: number): Promise<Client> {
+  async getById(id: number): Promise<ClientViewDTO> {
     const client = await db.clients.get(id);
 
     if (!client) throw new AppError("DATABASE", "Немає такого клієнта");
+
+    return client;
+  }
+
+  async getByPhone(phone: string): Promise<ClientViewDTO | undefined> {
+    const client = await db.clients.where({ phone }).first();
 
     return client;
   }
@@ -19,70 +25,32 @@ export class ClientRepository implements IClientRepository {
     return await db.clients.delete(id);
   }
 
-  async getAll(): Promise<Client[]> {
+  async getAll(): Promise<ClientViewDTO[]> {
     return await db.clients.toArray();
   }
 
-  // async loadOptionGroups(productId: number): Promise<OptionGroup[]> {
-  //   const rels = await db.product_option_relations
-  //     .where("productId")
-  //     .equals(productId)
-  //     .toArray();
-  //   const gIds = rels.map((r) => r.groupId);
-  //   const groups = await db.option_groups.where("id").anyOf(gIds).toArray();
-  //   for (const g of groups) {
-  //     g.values = await db.option_values.where("groupId").equals(g.id).toArray();
-  //   }
-  //   return groups;
-  // }
-
   async save(client: Client): Promise<number> {
-    if(client.hasOwnProperty('id')) delete client.id;
-    
-    const clientId = await db.clients.put({
-      name: client.name,
-      phone: client.phone,
-      createdAt: new Date().toISOString(),
-    });
+    const { id, name, phone } = client.toPersistent();
 
-    if (!clientId)
-      throw new AppError("DATABASE", "Помилка при створенні клієнта");
+    const isNewClient = !id || id == 0;
 
-    return clientId;
+    const existingClient = await this.getByPhone(phone);
+
+    if (!!existingClient && existingClient.id !== id) {
+      throw new AppError("DATABASE", "Клієнт з таким номером вже існує");
+    }
+
+    if (isNewClient)
+      return await db.clients.put({
+        name,
+        phone,
+        createdAt: new Date().toISOString(),
+      });
+    else
+      return await db.clients.update(id, {
+        name,
+        phone,
+        updatedAt: new Date().toISOString(),
+      });
   }
 }
-
-// import { IClientRepository } from './IClientRepository';
-// import { Client } from './../../domain/client/Client';
-// import { IndexedDB } from './../../../config/db';
-// import type { ClientDTO } from '../../../dto/ClientDTO';
-
-// const STORE = 'clients';
-
-// export class ClientRepository implements IClientRepository {
-//   constructor(private readonly db: IndexedDB) {}
-
-//   save(client: ClientDTO): Promise<void> {
-//     return this.db.transaction<void>(STORE, 'readwrite', store =>
-//       store.put({...client, createdAt: new Date().toISOString()})
-//     );
-//   }
-
-//   getById(id: number): Promise<Client | null> {
-//     return this.db.transaction<Client | null>(STORE, 'readonly', store =>
-//       store.get(id)
-//     );
-//   }
-
-//   getAll(): Promise<Client[]> {
-//     return this.db.transaction<Client[]>(STORE, 'readonly', store =>
-//       store.getAll()
-//     );
-//   }
-
-//   delete(id: number): Promise<void> {
-//     return this.db.transaction<void>(STORE, 'readwrite', store =>
-//       store.delete(id)
-//     );
-//   }
-// }

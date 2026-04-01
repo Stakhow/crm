@@ -1,35 +1,32 @@
 import { type IClientRepository } from "../repositories/client/IClientRepository";
 import { Client } from "../domain/client/Client";
-import { ClientDTO } from "../../dto/ClientDTO";    
+import type { ClientDTO } from "../../dto/ClientDTO";
+import type { ClientViewDTO } from "../../dto/ClientViewDTO";
 
 export class ClientService {
-    constructor(private clientRepository: IClientRepository) {
-      this.clientRepository = clientRepository;
-    }
+  constructor(private clientRepository: IClientRepository) {
+    this.clientRepository = clientRepository;
+  }
 
-    save(clientData: ClientDTO): Promise<void> {
-        const client = {
-            name: clientData.name,
-            phone: clientData.phone,
-        };
-        return this.clientRepository.save(client);
-    }
+  async save(data: ClientDTO): Promise<number> {
+    const client = new Client(data);
 
-    getById(id: number): Promise<Client | null> {
-        return this.clientRepository.getById(id);
-    }
+    return new Promise((resove, reject) => {
+      if (client.isValid()) resove(this.clientRepository.save(client));
+      else reject("Помилка збереження клієнта");
+    });
+  }
 
-    getAll(): Promise<Client[]> {
-        return this.clientRepository.getAll();
-    }
+  async getById(id: number): Promise<ClientViewDTO> {
+    return this.clientRepository.getById(id);
+  }
 
-    delete(id: number): Promise<void> {
-        return this.clientRepository.delete(id);
-    }
+  async getAll(): Promise<ClientViewDTO[]> {
+    return await this.clientRepository.getAll();
+  }
 
-    // delete(id: string): Promise<void> {
-    //     // Assuming the repository has a delete method
-    //     return this.clientRepository.delete(id);
-    // }   
+  async delete(id: number): Promise<void> {
+    return await this.clientRepository.delete(id);
+  }
+
 }
-

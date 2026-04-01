@@ -1,6 +1,6 @@
-import { ProductCategory } from "./ProductCategory";
+import { type ProductCategory } from "./ProductCategory";
 import { ProductByCategory } from "./ProductByCategory";
-import { type IFactory } from "./../../shared/factory/IFactory";
+import { type IProductFactory } from "../../shared/factory/IProductFactory";
 
 type ProductCtor<C extends ProductCategory> = (typeof ProductByCategory)[C];
 
@@ -8,27 +8,27 @@ export type ProductCtorArgs<C extends ProductCategory> = ConstructorParameters<
   ProductCtor<C>
 >;
 
+export type ProductCreateProps<C extends ProductCategory> =
+  ConstructorParameters<(typeof ProductByCategory)[C]>;
+
 export type ProductInstance<C extends ProductCategory> = InstanceType<
-  ProductCtor<C>
+  (typeof ProductByCategory)[C]
 >;
 
 export class ProductManager {
-  constructor(private factory: IFactory) {}
+  constructor(private factory: IProductFactory) {}
 
   createByCategory<C extends ProductCategory>(
-    category: C,
-    args: ProductCtorArgs<C>,
+    categoryName: C,
+    props: ProductCreateProps<C>[0],
   ): ProductInstance<C> {
-    const Ctor = ProductByCategory[category];
-
-    if (!Ctor) {
-      throw new Error(`Unsupported product category: ${category}`);
-    }
-
-    return this.factory.create(Ctor, ...args);
+    const Ctor = ProductByCategory[categoryName];
+    return this.factory.create(Ctor, props);
   }
 
-  getClassByCategory<C extends ProductCategory>(category: C): ProductCtor<C> {
-    return ProductByCategory[category];
+  getClassByCategory<C extends ProductCategory>(
+    categoryName: C,
+  ): ProductCtor<C> {
+    return ProductByCategory[categoryName];
   }
 }

@@ -1,22 +1,26 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>CRM</title>
-</head>
-<body>
-<form id="clientForm">
-    <input type="text" placeholder="name" name="name" value="">
-    <input type="tel" placeholder="phone" name="phone" value="">
+    <head>
+        <meta charset="UTF-8" />
 
-    <input type="submit">
-</form>
-
-<ul id="list"></ul>
-
-<script type="module" src="index.js"></script>
-</body>
+        <!-- Link the manifest -->
+        <link rel="manifest" href="manifest.json" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CRM</title>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker
+                        .register('/sw.js')
+                        .then((reg) => console.log('Service Worker Registered!', reg))
+                        .catch((err) => console.log('Registration Failed', err));
+                });
+            }
+        </script>
+    </body>
 </html>

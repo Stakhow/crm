@@ -1,6 +1,3 @@
-export enum ProductCategory {
-  Film = "film",
-  Bag = "bag",
-  Stretch = "stretch",
-  Granule = "granule",
-}
+import type { ProductByCategory } from "./ProductByCategory";
+
+export type ProductCategory = keyof typeof ProductByCategory;

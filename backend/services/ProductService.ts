@@ -1,95 +1,14 @@
-import {
-  ProductCtorArgs,
-  ProductManager,
-} from "../domain/product/ProductManager";
-import type { ProductDTO } from "./../../dto/ProductDTO";
+import { ProductManager } from "../domain/product/ProductManager";
 import { ProductModifier } from "../domain/product/modifiers/ProductModifier";
-import { ProductCategory } from "./../domain/product/ProductCategory";
-import type { ProductByCategory } from "../domain/product/ProductByCategory";
-import { AppError } from "../utils/error";
-import type { ProductRepository } from "../../dto/ProductRepository";
-
-const modifiers = () =>
-  [
-    new ProductModifier(
-      "1",
-      "material",
-      "Матеріал",
-      [ProductCategory.Film, ProductCategory.Bag],
-      [
-        { id: "1", name: "secondary", price: 72, title: "Вторинна гранула" },
-        { id: "2", name: "primary", price: 110, title: "Первинна гранула" },
-      ],
-    ),
-    new ProductModifier(
-      "2",
-      "color",
-      "Колір",
-      [ProductCategory.Film, ProductCategory.Bag],
-      [
-        { id: "1", name: "transparent", price: 0, title: "Прозорий" },
-        { id: "2", name: "colored", price: 2, title: "Кольоровий" },
-      ],
-    ),
-    new ProductModifier(
-      "3",
-      "filmType",
-      "Тип Плівки",
-      [ProductCategory.Film],
-      [
-        { id: "1", name: "pocket", price: 0, title: "Карман" },
-        { id: "2", name: "sleeve", price: 0, title: "Рукав" },
-        { id: "3", name: "halfSleeve", price: 0, title: "Напіврукав" },
-        { id: "4", name: "canvas", price: 0, title: "Полотно" },
-      ],
-    ),
-    new ProductModifier(
-      "4",
-      "bagFilmType",
-      "Тип Плівки",
-      [ProductCategory.Bag],
-      [
-        { id: "1", name: "pocket", price: 0, title: "Карман" },
-        { id: "2", name: "sleeve", price: 0, title: "Рукав" },
-      ],
-    ),
-    new ProductModifier(
-      "5",
-      "materialStretch",
-      "Матеріал Стрейчу",
-      [ProductCategory.Stretch],
-      [
-        { id: "1", name: "secondary", price: 100, title: "Чорний" },
-        { id: "2", name: "primary", price: 200, title: "Сірий" },
-        { id: "3", name: "primary", price: 200, title: "Прозорий" },
-      ],
-    ),
-    new ProductModifier(
-      "6",
-      "bagType",
-      "Тип Пакета",
-      [ProductCategory.Bag],
-      [
-        { id: "1", name: "bag", price: 0, title: "Мішок" },
-        { id: "2", name: "handle", price: 0, title: "Ручка" },
-        { id: "3", name: "t-shirt", price: 0, title: "Майка" },
-      ],
-    ),
-    new ProductModifier(
-      "7",
-      "materialGranule",
-      "Матеріал Гранули",
-      [ProductCategory.Granule],
-      [
-        { id: "1", name: "secondary", price: 72, title: "Вторинна гранула" },
-        { id: "2", name: "primary", price: 110, title: "Первинна гранула" },
-      ],
-    ),
-  ] as const;
+import { type ProductCategory } from "./../domain/product/ProductCategory";
+import { ProductByCategory } from "../domain/product/ProductByCategory";
+import { AppError } from "../../utils/error";
+import type { ProductRepository } from "../repositories/product/ProductRepository";
+import type { ProductViewDTO } from "../../dto/ProductViewDTO";
+import type { ProductModifierItemDTO } from "../../dto/ProductModifierItemDTO";
+import type { ProductFormValuesDTO } from "../../dto/ProductFormValuesDTO";
 
 export class ProductService {
-  private product: InstanceType<(typeof ProductByCategory)[ProductCategory]>;
-
   constructor(
     private productManager: ProductManager,
     private productRepository: ProductRepository,
@@ -98,206 +17,246 @@ export class ProductService {
     this.productRepository = productRepository;
   }
 
-  get modifiers() {
-    return modifiers();
-  }
+  private async _create(
+    categoryName: ProductCategory,
+  ): Promise<InstanceType<(typeof ProductByCategory)[ProductCategory]>> {
+    const category = this._getCategory(categoryName);
 
-  create(props: ProductDTO) {
-    const category = props.category;
+    if (!category) throw new AppError("SERVICE", "Категорію не знайдено");
 
-    return new Promise((resolve, reject) => {
-      this.product = this.productManager.createByCategory(category, [props]);
+    // TODO: filter mods
+    const modifiers = await this.productRepository.getAllModifiers();
 
-      console.log("create", this.product);
-
-      if (this.product) {
-        const initialValues: {
-          [key: string]: string | number;
-        } = {};
-
-        const fields = this.getFieldsForCreate(category);
-        fields.map((i) => (initialValues[i.name] = ""));
-
-        const modifiers: ProductModifier[] = this.modifiers.filter((i) =>
-          i.category.includes(category),
-        );
-        modifiers.map((m) => (initialValues[m.name] = m.list[0].id));
-
-        resolve(
-          JSON.parse(
-            JSON.stringify({
-              ...this.product,
-              modifiers,
-              fields,
-              initialValues,
-            }),
-          ),
-        );
-      } else reject(new AppError("SERVICE", "Помилка при створенні об'єкта"));
-    });
-  }
-
-  save(values): Promise<void> {
-    const p = this.product;
-
-    this.product.fillData(values);
-
-    return this.productRepository.save(p);
-  }
-
-  getAll() {
-    return this.productRepository.getAll();
-  }
-
-  delete(id: string) {
-    return this.productRepository.delete(id);
-  }
-
-  getClassByCategory(c) {
-    return this.productManager.getClassByCategory(c);
-  }
-
-  fillDataService(values) {
-    return this.product.fillData(values);
-  }
-
-  calulate(values) {
-    console.log("calculate:", this.product);
-    const mods = this.modifiers
-      .filter((m) => values.hasOwnProperty(m.name))
-      .map((fm) => {
-        fm.list = fm.list.filter((l) => l.id === values[fm.name]);
-
-        return fm;
-      });
-    console.log("mods", mods);
-    this.product.setModifiers = mods;
-
-    this.product.fillData(values);
-
-    const res = this.product.getTotalPrice();
-
-    return res;
-  }
-
-  getWeight() {
-    return this.product.getWeight();
-  }
-
-  getByIndex(a: string, b: string) {
-    return this.productRepository.getByIndex(a, b);
-  }
-  getByCategory(category: string) {
-    return this.productRepository.getByCategory(category);
-  }
-
-  getFieldsForCreate(category: string): Array<{
-    name: string;
-    title: string;
-    fieldType: string;
-    required?: boolean;
-  }> {
-    const key: string = category;
-
-    const addionalFields = {
-      film: [
-        {
-          name: "width",
-          title: "Ширина (см)",
-          fieldType: "number",
-          required: true,
-        },
-        {
-          name: "thickness",
-          title: "Товщина (мкм)",
-          fieldType: "number",
-          required: true,
-        },
-      ],
-      bag: [
-        {
-          name: "width",
-          title: "Ширина (см)",
-          fieldType: "number",
-          required: true,
-        },
-        {
-          name: "length",
-          title: "Довжина (см)",
-          fieldType: "number",
-          required: true,
-        },
-        {
-          name: "thickness",
-          title: "Товщина (мкм)",
-          fieldType: "number",
-          required: true,
-        },
-        {
-          name: "quantity",
-          title: "Кількість (шт.)",
-          fieldType: "number",
-          required: true,
-        },
-      ],
-      stretch: [],
-      granule: [],
+    const props = {
+      id: 0,
+      category,
+      modifiers: modifiers.filter((i) => i.category.includes(categoryName)),
+      price: 0,
+      totalAmount: 0,
     };
 
-    return [
-      ...(category && addionalFields[category]),
-      { name: "weight", title: "Вага (кг)", fieldType: "number" },
-      { name: "name", title: "Назва продукту", fieldType: "text" },
-    ];
+    return this.productManager.createByCategory(categoryName, props);
   }
 
-  getCategories(): Promise<{ name: string; title: string }[]> {
-    return new Promise((resolve, reject) => {
-      resolve(
-        Object.values(ProductCategory).map((category) => {
-          let title = "";
-          switch (category) {
-            case ProductCategory.Film:
-              title = "Плівка";
-              break;
-            case ProductCategory.Bag:
-              title = "Пакет";
-              break;
-            case ProductCategory.Stretch:
-              title = "Стрейч";
-              break;
-            case ProductCategory.Granule:
-              title = "Гранула";
-              break;
-          }
-          return { name: category, title };
-        }),
+  // TODO: remove this method in future
+  public async getAllModifiers() {
+    const mods = await this.productRepository.getAllModifiers();
+
+    return mods.map((i) => i.showFullData());
+  }
+
+  public async getModifier(id: number) {
+    return this.productRepository.getModifier(Number(id));
+  }
+
+  public async saveModifier(data: {
+    name: string;
+    categories: ProductCategory[];
+    list: ProductModifierItemDTO[];
+  }) {
+    const mod = new ProductModifier(0, data.name, data.categories, data.list);
+
+    return await this.productRepository.saveModifier(mod);
+  }
+
+  public async deleteModifier(id: number) {
+    const productsId = await this.productRepository.getProductsByModifier(
+      Number(id),
+    );
+    if (productsId.length)
+      throw new AppError(
+        "DOMAIN",
+        "Помилка видалення: модифікатор використовується в продуктах",
+        {
+          data: JSON.stringify(productsId),
+        },
       );
+
+    return await this.productRepository.deleteModifier(id);
+  }
+
+  public async updateModifier(data: {
+    id: number;
+    name: string;
+    categories: ProductCategory[];
+    list: ProductModifierItemDTO[];
+  }) {
+    const mod = new ProductModifier(
+      data.id,
+      data.name,
+      data.categories,
+      data.list,
+    );
+
+    return await this.productRepository.updateModifier(mod);
+  }
+
+  public async init(categoryName: ProductCategory) {
+    const product = await this._create(categoryName);
+
+    return product.toCreate();
+  }
+  public async initToEdit(productId: number) {
+    const _product = await this.productRepository.getById(productId);
+
+    const allowedField = ["weight", "name", "quantity"];
+
+    const product = _product.toCreate();
+
+    product.extendedFields = product.extendedFields.filter((i) =>
+      allowedField.includes(i.name),
+    );
+    product.modifiers = [];
+
+    return product;
+  }
+
+  public async save(
+    categoryName: ProductCategory,
+    values: any,
+  ): Promise<number> {
+    const product = await this._create(categoryName);
+
+    return new Promise((resolve, reject) => {
+      product.fillData(values);
+      console.log(product.toView());
+      if (product.toView().weight === 0)
+        throw new AppError("DOMAIN", "Неправильні дані продукту");
+
+      if (product.isValid()) resolve(this.productRepository.save(product));
+      else reject({ values, product: product });
     });
   }
 
-  getProductsJSON(category: string): Promise<object[]> {
-    return new Promise(async (resolve, reject) => {
+  public async getAll() {
+    const products = await this.productRepository.getAll();
+
+    return products.map((i) => i.toView());
+  }
+
+  public async delete(id: number) {
+    return await this.productRepository.delete(id);
+  }
+
+  public async calculateDraft(
+    categoryName: ProductCategory,
+    values: ProductFormValuesDTO,
+  ): Promise<{ sum: number; isValid: boolean; price: number }> {
+    const product = await this._create(categoryName);
+    return new Promise((resolve, reject) => {
       try {
-        const fields = await this.getFieldsForCreate(category);
-        const categories = await this.getCategories();
-        const products = await this.getByCategory(category);
+        if (!product)
+          throw new AppError("SERVICE", "Помилка при створенні продукту");
 
-        products.map((product) => {
-          product.fields = fields
-            .filter((i) => product.hasOwnProperty(i.name))
-            .filter((i) => i.name !== "name")
-            .map((i) => ({
-              name: i.name,
-              title: i.title,
-              value: product[i.name],
-            }));
-        });
-
-        resolve(products);
+        product.fillData(values);
+        setTimeout(() => {
+          resolve(product.calculate());
+        }, 0);
       } catch (error) {
         reject(error);
       }
     });
+  }
+
+  public async calculate(
+    id: number,
+    value: number,
+  ): Promise<{ sum: number; isValid: boolean }> {
+    const product = await this.productRepository.getById(id);
+
+    product.setMainParam(value);
+
+    return product.calculate();
+  }
+
+  public async getByCategory(categoryName: ProductCategory) {
+    return await this.productRepository.getByCategory(categoryName);
+  }
+
+  _getCategories(): { id: number; name: ProductCategory; title: string }[] {
+    const categories: ProductCategory[] = ["film", "bag", "stretch", "granule"];
+
+    return categories.map((category, id) => {
+      let title = "";
+      switch (category) {
+        case "film":
+          title = "Плівка";
+          break;
+        case "bag":
+          title = "Пакет";
+          break;
+        case "stretch":
+          title = "Стрейч";
+          break;
+        case "granule":
+          title = "Гранула";
+          break;
+      }
+      return { id, name: category, title };
+    });
+  }
+
+  private _getCategory(categoryName: ProductCategory) {
+    return this._getCategories().find((i) => i.name === categoryName);
+  }
+
+  public async getCategories(): Promise<
+    { id: number; name: ProductCategory; title: string }[]
+  > {
+    return this._getCategories();
+  }
+
+  public async getProducts(
+    category?: ProductCategory | "",
+  ): Promise<ProductViewDTO[]> {
+    const products = !!category
+      ? await this.productRepository.getByCategory(category)
+      : await this.productRepository.getAll();
+    
+    return products.map((i) => i.toView());
+  }
+
+  public async getProduct(productId: number) {
+    return await this.productRepository.getById(productId);
+  }
+
+  public async getProductByIds(productIds: number[]) {
+    return await this.productRepository.getByIds(productIds);
+  }
+
+  public async getProductToView(productId: number) {
+    const product = await this.productRepository.getById(productId);
+
+    return product.toView();
+  }
+
+  public async updateProduct(productId: number, values: ProductFormValuesDTO) {
+    const product = await this.productRepository.getById(productId);
+
+    return new Promise<any>((resolve, reject) => {
+      product.fillData(values);
+
+      this.productRepository.update(productId, product);
+
+      const updatedProduct = this.getProductToView(productId);
+
+      if (product.isValid()) resolve(updatedProduct);
+      else reject({ values, product: product });
+    });
+  }
+
+  public async updateProductMainParam(
+    productId: number,
+    {
+      unitOperation,
+      param,
+    }: { unitOperation: "add" | "subtract"; param: number },
+  ) {
+    const product = await this.productRepository.getById(productId);
+    product.updateMainParam(Number(param), unitOperation);
+
+    await this.productRepository.update(productId, product);
+
+    return product.toView();
   }
 }

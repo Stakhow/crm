@@ -1,9 +1,13 @@
-import { BaseProduct, type BaseProductProps } from "../../domain/product/BaseProduct";
+import { BaseProduct } from "../../domain/product/BaseProduct";
+import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
+import type { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
 
 export interface IProductRepository {
-  save(product: BaseProductProps): Promise<number>;
+  save(product: BaseProduct): Promise<number>;
   getById(id: number): Promise<BaseProduct>;
+  getByIds(id: number[]): Promise<BaseProduct[]>;
   getAll(): Promise<BaseProduct[]>;
   delete(id: number): Promise<void>;
-  getByCategory(category: string): Promise<BaseProduct[] | null>;
+  getByCategory(category: string): Promise<BaseProduct[]>;
+  getAllModifiers(): Promise<ProductModifier[]>;
 }

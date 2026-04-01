@@ -1,0 +1,101 @@
+src/
+├── domain/
+│   └── product/
+│       ├── ProductCategory.ts
+│       ├── ProductManager.ts
+│       ├── ProductByCategory.ts
+│       └── products/
+│           ├── Film.ts
+│           ├── Bag.ts
+│           ├── Stretch.ts
+│           └── Granule.ts
+│
+├── shared/
+│   └── factory/
+│       ├── Factory.ts
+│       └── IFactory.ts
+│
+├── application/
+│   └── services/
+│       └── ProductService.ts
+│
+└── index.ts
+
+
+ШАрии і залежності
+
+HTTP / REST / GraphQL
+        ↓
+     Controller
+        ↓
+ Application Service
+        ↓
+ Domain (ProductManager)
+        ↓
+ Shared / Factory
+ 
+ ----------------------------
+ 
+ РОЛЬ APPLICATION SERVICE
+ 
+ application/ProductService.ts
+
+Це «оркестратор» між HTTP і доменом 
+
+ProductService
+
+
+трансформує DTO → domain args
+
+викликає ProductManager
+
+може відкривати транзакції
+
+працює з репозиторіями
+
+---------------------------
+domain/product/ProductManager.ts
+РОЛЬ ProductManager
+
+бізнес-рішення
+
+створення продукту
+
+інваріанти
+
+🧩 РОЛЬ Factory
+
+технічне створення обʼєкта
+ 
+ 
+ 
+ UI (CalculatorForm)
+   ↓
+OrderController
+   ↓
+OrderService
+   ↓
+ProductManager + OrderCalculator
+   ↓
+OrderRepository (IndexedDB)
+
+
+ПРИКЛАД СЦЕНАРІЮ (створення замовлення)
+
+UI → CalculatorForm
+
+CalculatorForm → OrderController
+
+OrderController → OrderService
+
+OrderService:
+
+бере Client з ClientRepository
+
+рахує OrderCalculator
+
+створює Order
+
+зберігає OrderRepository
+
+UI отримує результат
