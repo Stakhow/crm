@@ -34,7 +34,6 @@ import { grey } from '@mui/material/colors';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 import type { ProductModifierItemDTO } from '../../../dto/ProductModifierItemDTO';
 import { useNotification } from '../components/NotificationContext';
-import { msMS } from '@mui/material/locale';
 
 export interface SimpleDialogProps {
     open: boolean;
@@ -175,6 +174,7 @@ export default function Home() {
                                     </FormControl>
 
                                     <Categories
+                                        name={'categoryName'}
                                         categories={categories}
                                         value={values.category}
                                         onChange={(e: React.ChangeEvent<any>) => {

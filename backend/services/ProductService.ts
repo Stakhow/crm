@@ -166,7 +166,13 @@ export class ProductService {
 
     product.setMainParam(value);
 
-    return product.calculate();
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(product.calculate());
+      }, 0);
+    });
+
+    // return product.calculate();
   }
 
   public async getByCategory(categoryName: ProductCategory) {
@@ -212,7 +218,7 @@ export class ProductService {
     const products = !!category
       ? await this.productRepository.getByCategory(category)
       : await this.productRepository.getAll();
-    
+
     return products.map((i) => i.toView());
   }
 

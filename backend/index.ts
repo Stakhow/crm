@@ -29,10 +29,10 @@ export const productService = new ProductService(
   productRepository,
 );
 
-export const cartService = new CartService(cartRepository, productService);
+export const cartService = new CartService(cartRepository, productService, clientService);
 
 export const orderService = new OrderService(
   orderRepository,
   cartService,
-  clientService,
+  productService,
 );

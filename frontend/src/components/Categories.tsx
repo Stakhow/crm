@@ -4,12 +4,13 @@ import type { ProductCategory } from '../../../backend/domain/product/ProductCat
 type CategoriesProps = {
     categories: { name: ProductCategory; title: string }[];
     value: string | string[];
+    name: string;
     onChange: (e: any) => void;
     multiple?: boolean;
     error?: string | string[] | undefined;
 };
 
-export function Categories({ categories, value, onChange, multiple = false, error, ...rest }: CategoriesProps) {
+export function Categories({ categories, value, onChange, multiple = false, error, name, ...rest }: CategoriesProps) {
     const categoriesItems = categories.map((category, idx) => (
         <MenuItem key={++idx} value={category.name} sx={{ textTransform: 'capitalize' }}>
             {category.title}
@@ -24,15 +25,15 @@ export function Categories({ categories, value, onChange, multiple = false, erro
 
     return (
         <FormControl fullWidth margin="dense">
-            <InputLabel id="categorySelectLabel">Категорії</InputLabel>
+            <InputLabel id={`categorySelectLabel-${name}`}>Категорії</InputLabel>
             <Select
                 multiple={multiple}
-                aria-labelledby="categorySelectLabel"
+                aria-labelledby={`categorySelectLabel-${name}`}
                 onChange={(e) => {
                     onChange(e);
                 }}
-                id="category-select"
-                name="categoryName"
+                id={`category-select-${name}`}
+                name={name}
                 label="Категорії"
                 value={value}
                 error={!!error}

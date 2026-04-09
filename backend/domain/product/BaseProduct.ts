@@ -3,11 +3,14 @@ import { AppError } from "../../../utils/error";
 import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
 import type { ProductModifier } from "./modifiers/ProductModifier";
 import type { ProductViewDTO } from "./../../../dto/ProductViewDTO";
-import type { ProductToCreateDTO, ProductToCreateFieldDTO } from "../../../dto/ProductToCreateDTO";
+import type {
+  ProductToCreateDTO,
+  ProductToCreateFieldDTO,
+} from "../../../dto/ProductToCreateDTO";
 import type { ProductFormValuesDTO } from "../../../dto/ProductFormValuesDTO";
 
 export interface BaseProductProps {
-  id: number | undefined;
+  id: number;
   createdAt?: string;
   category: {
     id: number;
@@ -22,7 +25,7 @@ export interface BaseProductProps {
 }
 
 export abstract class BaseProduct {
-  protected id: number | undefined;
+  public readonly id: number;
   protected createdAt: string;
 
   protected category: {
@@ -34,18 +37,20 @@ export abstract class BaseProduct {
   private availableModifiers: ProductModifier[];
 
   public name: string;
+  protected param: number;
   protected modifiers: ProductModifier[] | [];
   protected weight: number;
   protected price: number;
   protected totalAmount: number;
 
   protected constructor(props: BaseProductProps) {
-    this.id = props.id ?? undefined;
+    this.id = props.id;
     this.createdAt = props.createdAt ?? ""; // 0 for new objects
 
     this.category = props.category;
     this.name = props.name ?? "";
     this.weight = props.weight ?? 0;
+    this.param = this.weight;
 
     this.modifiers = props.modifiers ?? [];
     this.availableModifiers = [];
@@ -81,6 +86,10 @@ export abstract class BaseProduct {
     this.setPrice();
   }
 
+  get getWeight() {
+    return this.weight;
+  }
+
   set setWeight(value: number) {
     if (!Number.isNaN(value)) {
       this.weight = value;
@@ -95,7 +104,7 @@ export abstract class BaseProduct {
     this.name = values.name ? String(values.name) : this.name;
     this.weight = +values.weight ? +values.weight : this.weight;
 
-    this.fillName();
+    this.autofillName();
     this.setTotalAmount();
 
     return this;
@@ -135,7 +144,7 @@ export abstract class BaseProduct {
     this.totalAmount = Number((this.weight * this.price).toFixed(2));
   }
 
-  protected fillName(): void {
+  protected autofillName(): void {
     if (!this.name) this.name = `${this.category.title}`;
   }
 
@@ -221,7 +230,7 @@ export abstract class BaseProduct {
   }
 
   protected get mainParam() {
-    return this.weight;
+    return this.param;
   }
 
   updateMainParam(value: number, unitOperation: "add" | "subtract") {
@@ -234,10 +243,17 @@ export abstract class BaseProduct {
   }
 
   setMainParam(value: number) {
-    if (value < 0) throw new AppError("DOMAIN", "weight cannot be negative");
+    if (value < 0)
+      throw new AppError("DOMAIN", `Вага не може бути нижче нуля: ${value}`);
 
     this.setWeight = value;
 
+    this.param = value;
+
     this.setTotalAmount();
+  }
+
+  isAvailable() {
+    return this.weight > 0;
   }
 }

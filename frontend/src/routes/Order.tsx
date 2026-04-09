@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
 import {
     Backdrop,
@@ -67,6 +67,7 @@ export default function Order() {
     const [order, setOrder] = useState<OrderViewDTO>();
     const [isLoading, setLoading] = useState<boolean>(false);
     const { notify } = useNotification();
+    const navigate = useNavigate();
 
     useEffect(() => {
         !!id &&
@@ -85,8 +86,29 @@ export default function Order() {
                                 Замовлення #: {order.id}
                             </Typography>
 
-                            <Stack>
-                                <Button href={`/orders/new/${id}`} fullWidth variant="contained">
+                            <Stack spacing={1}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    onClick={() => {
+                                        orderService
+                                            .repeatOrder(Number(id))
+                                            .then(() => {
+                                                notify({
+                                                    message: 'Сворено корзину із замовлення',
+                                                    severity: 'success',
+                                                });
+                                                // navigate(`/cart/new/${id}`); // old
+                                                navigate(`/cart/`);
+                                            })
+                                            .catch((error) => {
+                                                notify({
+                                                    message: `Помилка дублювання замовлення: ${error.message ?? error.message}`,
+                                                    severity: 'error',
+                                                });
+                                            });
+                                    }}
+                                >
                                     Повторити замовлення
                                 </Button>
                             </Stack>

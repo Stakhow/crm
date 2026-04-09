@@ -1,10 +1,10 @@
-import { type IClientRepository } from "../repositories/client/IClientRepository";
 import { Client } from "../domain/client/Client";
 import type { ClientDTO } from "../../dto/ClientDTO";
 import type { ClientViewDTO } from "../../dto/ClientViewDTO";
+import type { ClientRepository } from "../repositories/client/ClientRepository";
 
 export class ClientService {
-  constructor(private clientRepository: IClientRepository) {
+  constructor(private clientRepository: ClientRepository) {
     this.clientRepository = clientRepository;
   }
 

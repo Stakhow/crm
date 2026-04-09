@@ -36,14 +36,14 @@ export class Film extends BaseProduct {
     this.weight = +values.weight ? +values.weight : this.weight;
     this.thickness = +values.thickness ? +values.thickness : this.thickness;
 
-    this.fillName();
+    this.autofillName();
 
     this.setTotalAmount();
 
     return this;
   }
 
-  override fillName(): void {
+  override autofillName(): void {
     if (!this.name) {
       this.name = [this.category.title, this.width, this.thickness].join("/");
     }

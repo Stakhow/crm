@@ -23,6 +23,8 @@ export class Bag extends BaseProduct {
     this.length = props.length ?? 0;
     this.thickness = props.thickness ?? 0;
     this.quantity = props.quantity ?? 0;
+
+    this.param = this.quantity;
   }
 
   set setName(name: string) {
@@ -55,14 +57,14 @@ export class Bag extends BaseProduct {
     this.setQuantity = +values.quantity ? +values.quantity : this.quantity;
     this.setWeight = this._getWeight();
 
-    this.fillName();
+    this.autofillName();
 
     this.setTotalAmount();
 
     return this;
   }
 
-  override fillName(): void {
+  override autofillName(): void {
     if (!this.name) {
       this.name = [
         this.category.title,
@@ -155,6 +157,8 @@ export class Bag extends BaseProduct {
     if (value < 0) throw new AppError("DOMAIN", "quantity cannot be negative");
 
     this.setQuantity = value;
+
+    this.param = value;
 
     this.setWeight = this._getWeight();
 

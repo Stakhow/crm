@@ -1,28 +1,44 @@
 import { db } from "../../../config/db";
-
+import type { BaseProduct } from "../../domain/product/BaseProduct";
 import { Order } from "./../../domain/order/Order";
 import type { IOrderRepository } from "./IOrderRepository";
 
 export class OrderRepository implements IOrderRepository {
-  async save(order: Order): Promise<number> {
-    const orderId = await db.orders.add({
-      client: order.client,
-      clientId: order.client.id,
-      totalAmount: order.totalAmount,
-      quantity: order.quantity,
-      status: order.status,
-      createdAt: order.createdAt,
-    });
+  async save(order: Order, products: BaseProduct[]): Promise<number> {
+    return await db.transaction(
+      "rw",
+      db.products,
+      db.orders,
+      db.order_items,
+      async () => {
+        console.log(order);
+        console.log(products);
+        const productsToUpdate = products.map((i) => ({
+          key: i.id,
+          changes: i,
+        }));
+        await db.products.bulkUpdate(productsToUpdate);
 
-    await db.order_items.bulkAdd(
-      order.items.map((i) => ({
-        orderId,
-        productId: i.id,
-        data: i,
-      })),
+        const orderId = await db.orders.add({
+          client: order.client,
+          clientId: order.client.id,
+          totalAmount: order.totalAmount,
+          quantity: order.quantity,
+          status: order.status,
+          createdAt: order.createdAt,
+        });
+
+        await db.order_items.bulkAdd(
+          order.items.map((i) => ({
+            orderId,
+            productId: i.id,
+            data: i,
+          })),
+        );
+
+        return orderId;
+      },
     );
-
-    return orderId;
   }
 
   async update(order: Order): Promise<number> {

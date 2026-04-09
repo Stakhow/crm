@@ -1,78 +1,82 @@
-import { useLocation, useParams, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
-import { Box, Button, CardActions, Divider, Fab, Paper, Stack, Typography } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { cartService, clientService, orderService } from '../../../backend';
-import type { CartDTO } from '../../../dto/CartDTO';
-import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
+import { Box, Button, CardActions, Paper, Stack, Typography } from '@mui/material';
+import { cartService, orderService } from '../../../backend';
 import { priceFormat } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
-import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { useNotification } from '../components/NotificationContext';
+import type { CartViewDTO } from '../../../dto/CartViewDTO';
 
 export default function Cart() {
-    const [cart, setCart] = useState<
-        CartDTO & {
-            products: ProductViewDTO[];
-        }
-    >();
-    const [client, setClient] = useState<ClientViewDTO>();
+    const [cart, setCart] = useState<CartViewDTO>();
 
     const navigate = useNavigate();
     const { notify } = useNotification();
 
-    const getCartInfo = () => {
-        cartService.getCartToView().then((cart) => {
-            if (cart.clientId)
-                clientService.getById(cart.clientId).then((client) => {
-                    setClient(client);
-                    setCart(cart);
-                    console.log(cart);
-                });
-            else {
-                setCart(undefined);
-                setClient(undefined);
-            }
+    const deleteCartItem = (itemId: number) => {
+        cartService.deleteCartItem(itemId).then((cart) => {
+            setCart(cart);
+            notify({ message: 'Товар видалено з корзини', severity: 'success' });
         });
     };
 
+    const deleteCart = () => {
+        cartService.deleteCart().then(() => {
+            setCart(undefined);
+        });
+    };
+
+    const createOrder = () => {
+        orderService
+            .createOrder()
+            .then((orderId) => {
+                navigate(`/orders/${orderId}`);
+                notify({ message: 'Замовлення успішно створено', severity: 'success' });
+            })
+            .catch((error) => {
+                console.log(error);
+                notify({ message: `Помилка створення замовлення: ${error.message}`, severity: 'error' });
+            });
+    };
+
     useEffect(() => {
-        getCartInfo();
+        cartService.getCartToView().then((cart) => {
+            setCart(cart);
+        });
     }, []);
 
     return (
         <Box>
-            {!!cart && !!client ? (
+            {!!cart && cart.quantity > 0 ? (
                 <Box>
-                    <Paper sx={{ mt: 2, p: 2 }}>
-                        <Typography>{client.name}</Typography>
-                        <Typography>{client.phone}</Typography>
-                    </Paper>
+                    {!!cart.client && (
+                        <Paper sx={{ mt: 2, p: 2 }}>
+                            <Typography>{cart.client.name}</Typography>
+                            <Typography>{cart.client.phone}</Typography>
+                        </Paper>
+                    )}
 
-                    {!!cart.products.length &&
-                        cart.products.map((product, idx) => (
-                            <ProductCard
-                                key={idx}
-                                product={product}
-                                children={
-                                    <CardActions sx={{ p: 2 }}>
-                                        <Stack direction="row" justifyContent={'center'} flex={1}>
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                fullWidth
-                                                type={'submit'}
-                                                onClick={() => {
-                                                    cartService.deleteCartItem(product.id).then(() => getCartInfo());
-                                                }}
-                                            >
-                                                Видалити з корзини
-                                            </Button>
-                                        </Stack>
-                                    </CardActions>
-                                }
-                            />
-                        ))}
+                    {cart.products.map((product, idx) => (
+                        <ProductCard
+                            key={idx}
+                            product={product}
+                            children={
+                                <CardActions sx={{ p: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        fullWidth
+                                        type={'submit'}
+                                        onClick={() => {
+                                            deleteCartItem(product.id);
+                                        }}
+                                    >
+                                        Видалити з корзини
+                                    </Button>
+                                </CardActions>
+                            }
+                        />
+                    ))}
 
                     <Paper sx={{ mt: 2, p: 2 }}>
                         <Typography textAlign={'center'} gutterBottom>
@@ -81,23 +85,18 @@ export default function Cart() {
 
                         <Stack spacing={2}>
                             <Button
-                                variant="outlined"
+                                variant="contained"
                                 fullWidth
                                 type={'submit'}
                                 onClick={() => {
-                                    orderService
-                                        .createOrder()
-                                        .then((orderId) => {
-
-                                            navigate(`/orders/${orderId}`);
-                                            notify({ message: 'Замовлення успішно створено', severity: 'success' });
-                                        })
-                                        .catch(() => {
-                                            notify({ message: 'Помилка створення замовлення', severity: 'error' });
-                                        });
+                                    createOrder();
                                 }}
                             >
                                 Створити Замовлення
+                            </Button>
+
+                            <Button variant="outlined" color="info" fullWidth href="/orders/new">
+                                Додати товар
                             </Button>
 
                             <Button
@@ -106,10 +105,7 @@ export default function Cart() {
                                 fullWidth
                                 type={'submit'}
                                 onClick={() => {
-                                    cartService.deleteCart().then(() => {
-                                        setCart(undefined);
-                                        setClient(undefined);
-                                    });
+                                    deleteCart();
                                 }}
                             >
                                 Видалити Корзину
@@ -118,7 +114,15 @@ export default function Cart() {
                     </Paper>
                 </Box>
             ) : (
-                'Корзина Порожня'
+                <Stack spacing={2} justifyContent={'center'}>
+                    <Typography variant="h5" textAlign={'center'}>
+                        Корзина порожня
+                    </Typography>
+
+                    <Button href="/orders/new" variant="outlined">
+                        Нове Замовлення
+                    </Button>
+                </Stack>
             )}
         </Box>
     );

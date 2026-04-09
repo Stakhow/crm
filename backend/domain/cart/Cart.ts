@@ -1,4 +1,5 @@
 import type { CartDTO } from "../../../dto/CartDTO";
+import { AppError } from "../../../utils/error";
 
 export class CartItem {
   constructor(
@@ -32,8 +33,10 @@ export class CartItem {
   }
 }
 
+type ProductId = number;
+
 export class Cart {
-  private items = new Map<number, CartItem>();
+  private items = new Map<ProductId, CartItem>();
   private createdAt: number;
   public clientId: number;
   public id: number;
@@ -60,6 +63,9 @@ export class Cart {
   }) {
     const existing = this.items.get(data.productId);
 
+    if (data.quantity <= 0)
+      throw new AppError("DOMAIN", "Вага/Кількість повинна бути більше нуля");
+
     if (existing) {
       existing.increase(data.quantity);
       return;
@@ -82,6 +88,10 @@ export class Cart {
 
   getItems() {
     return [...this.items.values()];
+  }
+
+  getProductsId() {
+    return this.getItems().map(i => i.productId);
   }
 
   getItemsMap() {

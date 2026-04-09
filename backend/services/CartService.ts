@@ -2,18 +2,43 @@ import { AppError } from "../../utils/error";
 import { Cart, CartItem } from "../domain/cart/Cart";
 import { CartRepository } from "../repositories/cart/CartRepository";
 import type { ProductService } from "./ProductService";
+import type { CartViewDTO } from "../../dto/CartViewDTO";
+import type { ClientService } from "./ClientService";
 
 export class CartService {
   constructor(
     private cartReposirory: CartRepository,
     private productService: ProductService,
+    private clientService: ClientService,
   ) {}
 
   async getCart() {
     return await this.cartReposirory.load();
   }
 
-  async getCartToView() {
+  async createFromOrder(
+    cartItems: {
+      productId: number;
+      quantity: number;
+      clientId: number;
+    }[],
+  ) {
+    await this.resetCart();
+
+    const products = await this.productService.getProductByIds(
+      cartItems.map((i) => i.productId),
+    );
+
+    const notAvailableProducts = products.filter((i) => !i.isAvailable());
+
+    if (notAvailableProducts.length > 0) {
+      const producNames = notAvailableProducts.map((i) => i.name).join("|");
+
+      throw new AppError("DOMAIN", `не доступні ${producNames}`);
+    } else cartItems.map((i) => this.addCartItem(i));
+  }
+
+  async getCartToView(): Promise<CartViewDTO> {
     const cart = await this.getCart();
     const cartItemsMap = cart.getItemsMap();
 
@@ -21,12 +46,19 @@ export class CartService {
       Array.from(cartItemsMap.keys()),
     );
 
+    const client = cart.clientId
+      ? await this.clientService.getById(cart.clientId)
+      : undefined;
+
     return {
       ...cart.toPersistent(),
+      client,
       products: products.map((i) => {
-        i.setMainParam(cart.getItem(i.id).quantity);
+        const cartItem = cart.getItem(i.id);
+        const stock = i.getWeight;
+        if (cartItem) i.setMainParam(cartItem.quantity);
 
-        return i.toView();
+        return { ...i.toView(), stock };
       }),
     };
   }
@@ -35,56 +67,41 @@ export class CartService {
     productId: number;
     quantity: number;
     clientId: number;
-  }) {
+  }): Promise<CartViewDTO> {
     const cart = await this.getCart();
 
     const product = await this.productService.getProduct(data.productId);
     product.setMainParam(data.quantity);
+
+    const productData = product.toView();
+
     cart.addItem({
       productId: data.productId,
-      name: product.name,
-      price: product.getPrice,
+      name: productData.name,
+      price: productData.price,
       quantity: data.quantity,
-      total: product.getTotalAmount(),
+      total: productData.totalAmount,
     });
 
     cart.setClientId = data.clientId;
 
     await this.cartReposirory.save(cart);
 
-    await this.productService.updateProductMainParam(data.productId, {
-      unitOperation: "subtract",
-      param: data.quantity,
-    });
+    return this.getCartToView();
   }
 
-  async deleteCartItem(productId: number) {
+  async deleteCartItem(productId: number): Promise<CartViewDTO> {
     const cart = await this.getCart();
 
     const cartItem = cart.getItem(productId);
+    if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
 
-    if (!!cartItem) {
-      await this.productService.updateProductMainParam(productId, {
-        unitOperation: "add",
-        param: cartItem.quantity,
-      });
+    await this.cartReposirory.deleteCartItem(productId, cart.id);
 
-      await this.cartReposirory.deleteCartItem(productId, cart.id);
-    } else throw new AppError("SERVICE", "Позиція відсутня!");
+    return this.getCartToView();
   }
 
   async deleteCart() {
-    const cart = await this.getCart();
-
-    await Promise.all(
-      cart.getItems().map((i) =>
-        this.productService.updateProductMainParam(i.productId, {
-          unitOperation: "add",
-          param: i.quantity,
-        }),
-      ),
-    );
-
     return this.resetCart();
   }
 

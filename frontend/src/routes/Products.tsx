@@ -207,6 +207,7 @@ export default function Products() {
     return (
         <div>
             <Categories
+                name={'categoryName'}
                 categories={categories}
                 value={categoryName}
                 onChange={(e: React.ChangeEvent<any>) => {

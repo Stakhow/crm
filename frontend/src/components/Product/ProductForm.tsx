@@ -281,6 +281,7 @@ export function ProductForm({
         <Box>
             {!!categories && (
                 <Categories
+                name={'categoryName'}
                     categories={categories}
                     value={categoryName ?? ''}
                     onChange={(e) => {

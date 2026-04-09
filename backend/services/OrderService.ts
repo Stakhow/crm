@@ -2,11 +2,9 @@ import { AppError } from "../../utils/error";
 
 import type { OrderRepository } from "../repositories/order/OrderRepository";
 import type { CartService } from "./CartService";
-
-import type { ClientService } from "./ClientService";
-
 import { Order, type Status } from "../domain/order/Order";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
+import type { ProductService } from "./ProductService";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -14,16 +12,31 @@ export class OrderService {
   constructor(
     private orderRepository: OrderRepository,
     private cartService: CartService,
-    private clientService: ClientService,
+    private productService: ProductService,
   ) {}
 
   async createOrder() {
     const cart = await this.cartService.getCart();
 
-    if (!cart.isValid()) throw new AppError("SERVICE", "Помилка корзини");
+    if (!cart || !cart.isValid())
+      throw new AppError("SERVICE", "Помилка корзини");
 
     const cartToView = await this.cartService.getCartToView();
-    const client = await this.clientService.getById(cart.clientId);
+    const client = cartToView.client;
+
+    if (!client) throw new AppError("SERVICE", "В корзині відсутній клієнт");
+
+    const productsId = cart.getProductsId();
+    const stockProducts = await this.productService.getProductByIds(productsId);
+    stockProducts.map((product) => {
+      const cartItem = cart.getItem(product.id);
+
+      if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
+
+      product.updateMainParam(cartItem.quantity, "subtract");
+
+      return product;
+    });
 
     const orderId = await this.orderRepository.save(
       new Order(
@@ -38,7 +51,7 @@ export class OrderService {
         cartToView.quantity,
         this.status,
         new Date().toISOString(),
-      ),
+      ), stockProducts
     );
 
     await this.cartService.resetCart();
@@ -52,6 +65,18 @@ export class OrderService {
     if (status) order.updateStatus(status);
 
     return await this.orderRepository.update(order);
+  }
+
+  async repeatOrder(id: number) {
+    const order = await this.orderRepository.getById(id);
+
+    return this.cartService.createFromOrder(
+      order.items.map((i) => ({
+        productId: i.id,
+        quantity: i.weight, // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        clientId: order.client.id,
+      })),
+    );
   }
 
   async getById(id: number): Promise<OrderViewDTO> {
