@@ -32,8 +32,10 @@ export function ConfirmationDialog({
                         <DialogContentText>{message || ''}</DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleClose}>Відміна</Button>
-                        <Button color={'error'} onClick={handleConfirmClick}>
+                        <Button fullWidth variant="outlined" onClick={handleClose}>
+                            Відміна
+                        </Button>
+                        <Button fullWidth variant="outlined" color={'error'} onClick={handleConfirmClick}>
                             Підтвердити
                         </Button>
                     </DialogActions>

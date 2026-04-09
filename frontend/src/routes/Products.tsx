@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { productService } from '../../../backend';
 import { Categories } from '../components/Categories';
-import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
-import { Box, CardActions, CircularProgress, Divider, Fab, Stack, Typography } from '@mui/material';
+import { Backdrop, Box, Button, CardActions, CircularProgress, Divider, Paper, Stack, Typography } from '@mui/material';
 import { NotFoundImg } from '../components/NotFound';
 import { ProductCard } from '../components/Product/ProductCard';
 import { useNotification } from '../components/NotificationContext';
@@ -10,10 +9,7 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { ProductUpdateParam } from '../components/Product/ProductUpdateParam';
 import { NavLink } from 'react-router';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import DeleteIcon from '@mui/icons-material/Delete';
-import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 
 interface Dialog {
     title: string;
@@ -24,9 +20,9 @@ interface Dialog {
 
 export default function Products() {
     const [products, setProducts] = useState<ProductViewDTO[]>([]);
-    const [isLoading, setLoading] = useState<boolean>(false);
-    const [categoryName, setCategoryName] = useState<ProductCategory | ''>('');
-    const [categories, setCategories] = useState<{ name: ProductCategory; title: string }[]>([]);
+    const [isLoading, setLoading] = useState<boolean>(true);
+    const [categoryName, setCategoryName] = useState<ProductCategoryDTO['name']>();
+    const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [dialogConfig, setDialogConfig] = useState<Dialog | null>(null);
 
@@ -48,20 +44,18 @@ export default function Products() {
 
     useEffect(() => {
         setLoading(true);
-        setTimeout(() => {
-            productService
-                .getProducts(categoryName)
-                .then((products) => {
-                    setProducts(products);
-                    console.log('useEffect getProductsByCategory', products);
-                    setLoading(false);
-                })
-                .catch((e) => {
-                    setLoading(false);
-                    console.log(e);
-                    notify({ message: 'Помилка отримання продуктів', severity: 'error' });
-                });
-        }, 1000);
+        productService
+            .getProducts(categoryName)
+            .then((products) => {
+                setProducts(products);
+                console.log('useEffect getProductsByCategory', products);
+                setLoading(false);
+            })
+            .catch((e) => {
+                setLoading(false);
+                console.log(e);
+                notify({ message: 'Помилка отримання продуктів', severity: 'error' });
+            });
     }, [categoryName]);
 
     const updateMainParam = (
@@ -159,78 +153,92 @@ export default function Products() {
         });
     };
 
-    const productsList = products.map((product, idx) => (
-        <ProductCard
-            key={idx}
-            product={product}
-            children={
-                <CardActions sx={{ p: 2 }}>
-                    <Stack direction="row" spacing={2} divider={<Divider orientation="vertical" flexItem />}>
-                        <Fab
-                            component={NavLink}
-                            to={`${product.id}`}
-                            color="primary"
-                            size="small"
-                            children={<RemoveRedEyeIcon fontSize="medium" />}
-                        />
+    const productsList = products.map((product, idx) => {
+        const unitText = product.categoryName === 'bag' ? 'Кількість' : 'Вагу';
 
-                        <Fab
-                            color="error"
-                            size="small"
-                            children={<DeleteIcon fontSize="medium" />}
-                            onClick={() => {
-                                deleteProduct(product.id);
-                            }}
-                        />
-                        <Fab
-                            color="primary"
-                            size="small"
-                            children={<AddIcon fontSize="medium" />}
-                            onClick={() => {
-                                increaseProduct(product);
-                            }}
-                        />
-                        <Fab
-                            color="primary"
-                            size="small"
-                            children={<RemoveIcon fontSize="medium" />}
-                            onClick={() => {
-                                decreaseProduct(product);
-                            }}
-                        />
-                    </Stack>
-                </CardActions>
-            }
-        />
-    ));
+        return (
+            <ProductCard
+                key={idx}
+                product={product}
+                children={
+                    <CardActions sx={{ p: 2 }}>
+                        <Stack sx={{ width: '100%' }}>
+                            <Stack direction="row" spacing={1} divider={<Divider orientation="vertical" flexItem />}>
+                                <Button
+                                    color="warning"
+                                    size="small"
+                                    fullWidth
+                                    to={`${product.id}`}
+                                    component={NavLink}
+                                    variant="outlined"
+                                >
+                                    Редагувати
+                                </Button>
+                                <Button
+                                    size="small"
+                                    color="error"
+                                    fullWidth
+                                    onClick={() => {
+                                        deleteProduct(product.id);
+                                    }}
+                                    variant="outlined"
+                                >
+                                    Видалити
+                                </Button>
+                            </Stack>
+                            <Divider orientation="vertical" sx={{ my: 0.4, width: '100%' }} flexItem />
+                            <Stack direction="row" spacing={1} divider={<Divider orientation="vertical" flexItem />}>
+                                <Button
+                                    size="small"
+                                    fullWidth
+                                    onClick={() => {
+                                        increaseProduct(product);
+                                    }}
+                                    variant="outlined"
+                                >
+                                    Додати {unitText}
+                                </Button>
+                                <Button
+                                    size="small"
+                                    fullWidth
+                                    onClick={() => {
+                                        decreaseProduct(product);
+                                    }}
+                                    variant="outlined"
+                                >
+                                    Зменшити {unitText}
+                                </Button>
+                            </Stack>
+                        </Stack>
+                    </CardActions>
+                }
+            />
+        );
+    });
 
     return (
-        <div>
-            <Categories
-                name={'categoryName'}
-                categories={categories}
-                value={categoryName}
-                onChange={(e: React.ChangeEvent<any>) => {
-                    setCategoryName(e.target.value);
-                }}
-            />
+        <Box>
+            <Paper sx={{ p: 2, mb: 2 }}>
+                <Categories
+                    name={'categoryName'}
+                    categories={categories}
+                    value={categoryName}
+                    onChange={(e: React.ChangeEvent<any>) => {
+                        setCategoryName(e.target.value);
+                    }}
+                />
+            </Paper>
 
-            {isLoading ? (
-                <Box my={3} sx={{ textAlign: 'center' }}>
-                    <CircularProgress size="3rem" />
-                </Box>
-            ) : !!products.length ? (
-                productsList
-            ) : (
-                !!categoryName && (
-                    <Box>
-                        <Typography mt={3} textAlign={'center'} variant="h5">
-                            Продуктів не знайдено
-                        </Typography>
-                        <NotFoundImg />
-                    </Box>
-                )
-            )}
+            {!!products.length
+                ? productsList
+                : !!categoryName && (
+                      <Box>
+                          <Typography mt={3} textAlign={'center'} variant="h5">
+                              Продуктів не знайдено
+                          </Typography>
+                          <NotFoundImg />
+                      </Box>
+                  )}
 
             <ConfirmationDialog
                 isOpen={openDialog}
@@ -241,6 +249,9 @@ export default function Products() {
                     if (typeof dialogConfig?.handleConfirmClick !== 'undefined') dialogConfig?.handleConfirmClick();
                 }}
             />
-        </div>
+            <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </Box>
     );
 }

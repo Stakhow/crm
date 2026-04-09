@@ -15,7 +15,6 @@ import { useEffect, useState } from 'react';
 import { Badge, Button } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { cartService } from '../../backend';
-import { number } from 'yup';
 
 interface Props {
     /**
@@ -64,10 +63,22 @@ export default function App(props: Props) {
                 CRM
             </Typography>
             <Divider />
-            <List>
+            <List sx={{ ml: 1 }}>
                 {navItems.map((item, idx) => (
                     <ListItem key={idx} disablePadding>
-                        <Button href={item.to}>
+                        <Button
+                            to={item.to}
+                            component={NavLink}
+                            sx={{
+                                textAlign: 'center',
+
+                                '&.active': {
+                                    border: '1px solid',
+                                    fontWeight: 700,
+                                    // textDecoration: 'underline',
+                                },
+                            }}
+                        >
                             <ListItemButton sx={{ textAlign: 'center' }}>{item.title}</ListItemButton>
                         </Button>
                     </ListItem>
