@@ -36,6 +36,7 @@ const navItems = [
     { title: 'Замовлення', to: '/orders' },
     { title: 'Нове Замовлення', to: '/orders/new' },
     { title: 'Корзина', to: '/cart' },
+    { title: 'Модифікатори', to: '/modifiers' },
 ];
 
 export default function App(props: Props) {

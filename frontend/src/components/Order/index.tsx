@@ -194,7 +194,7 @@ export const ProductSelect = ({
         <>
             <FormControl fullWidth margin="dense">
                 <InputLabel>{label}</InputLabel>
-                <Select id={field.name} value={selectedProductId} {...props}>
+                <Select id={field.name} {...field}>
                     {options}
                 </Select>
             </FormControl>

@@ -1,14 +1,23 @@
-import { FormControl, FormHelperText, InputLabel, MenuItem, OutlinedInput, Select } from '@mui/material';
+import {
+    FormControl,
+    FormHelperText,
+    InputLabel,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    type SelectProps,
+    type SelectChangeEvent,
+} from '@mui/material';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 
 type CategoriesProps = {
     categories: { name: ProductCategory; title: string }[];
-    value: string | string[];
+    // Use a looser type that only requires target name and value
+    onChange: (event: any) => void;
+    value: any;
     name: string;
-    onChange: (e: any) => void;
-    multiple?: boolean;
-    error?: string | string[] | undefined;
-};
+    error?: any;
+} & Omit<SelectProps, 'onChange' | 'value' | 'error' | 'color' | 'size'>;
 
 export function Categories({ categories, value, onChange, multiple = false, error, name, ...rest }: CategoriesProps) {
     const categoriesItems = categories.map((category, idx) => (
@@ -29,9 +38,7 @@ export function Categories({ categories, value, onChange, multiple = false, erro
             <Select
                 multiple={multiple}
                 aria-labelledby={`categorySelectLabel-${name}`}
-                onChange={(e) => {
-                    onChange(e);
-                }}
+                onChange={onChange}
                 id={`category-select-${name}`}
                 name={name}
                 label="Категорії"

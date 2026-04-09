@@ -17,6 +17,7 @@ import ProductNew from './routes/ProductNew.tsx';
 import OrderNew from './routes/OrderNew.tsx';
 import Orders from './routes/Orders.tsx';
 import Cart from './routes/Cart.tsx';
+import Modifiers from './routes/Modifiers.tsx';
 
 const customTheme = createTheme({
     typography: {
@@ -68,6 +69,8 @@ createRoot(document.getElementById('root')!).render(
                             </Route>
 
                             <Route path="cart" element={<Cart />} />
+
+                            <Route path="modifiers" element={<Modifiers />} />
 
                             <Route path="*" element={<Page404 />} />
                         </Routes>

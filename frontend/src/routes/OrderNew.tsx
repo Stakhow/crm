@@ -40,6 +40,7 @@ import * as Yup from 'yup';
 import { useParams, useSearchParams } from 'react-router';
 import type { CartViewDTO } from '../../../dto/CartViewDTO';
 import { ProductSelect } from '../components/Order';
+import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 
 export interface OrderFormValues {
     client: number;
@@ -50,7 +51,7 @@ export interface OrderFormValues {
 export default function OrderNew() {
     const [clients, setClients] = useState<ClientViewDTO[]>([]);
     const [client, setClient] = useState<ClientViewDTO['id']>();
-    const [categories, setCategories] = useState<{ name: ProductCategory; title: string }[]>([]);
+    const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);
     const [isLoading, setLoading] = useState<boolean>(false);
     const [cart, setCart] = useState<CartViewDTO>();
     const [state, setState] = useState<Map<ProductCategory, ProductViewDTO[]>>(new Map());
@@ -297,7 +298,6 @@ export default function OrderNew() {
                     handleChange(e);
                     onChange(e);
                 }}
-                {...props}
                 name={field.name}
             />
         );
@@ -339,7 +339,7 @@ export default function OrderNew() {
                                 const categoryHasProducts = !!_products?.length;
                                 const productInCart = isProductInCart(item.id);
 
-                                return (    
+                                return (
                                     <Paper key={index} sx={{ p: 2, my: 2 }} elevation={3}>
                                         <CategoriesComponent
                                             name={`list.${index}.categoryName`}

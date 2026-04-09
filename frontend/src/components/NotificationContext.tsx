@@ -21,13 +21,13 @@ export const useNotification = (): NotificationContextType => {
 
 type NotificationState = {
     open: boolean;
-    message: string;
+    message: ReactNode;
     severity: 'success' | 'error' | 'warning' | 'info';
     duration: number;
 };
 
 type NotifyArgs = {
-    message: string;
+    message: ReactNode;
     severity?: 'success' | 'error' | 'warning' | 'info';
     duration?: number;
 };

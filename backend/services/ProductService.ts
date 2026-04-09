@@ -68,7 +68,7 @@ export class ProductService {
         "DOMAIN",
         "Помилка видалення: модифікатор використовується в продуктах",
         {
-          data: JSON.stringify(productsId),
+          data: productsId,
         },
       );
 

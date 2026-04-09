@@ -25,6 +25,7 @@ import type { ProductCategory } from '../../../../backend/domain/product/Product
 import type { ProductFormValuesDTO } from '../../../../dto/ProductFormValuesDTO';
 import { productService } from '../../../../backend';
 import { useNotification } from '../NotificationContext';
+import type {ProductCategoryDTO} from '../../../../dto/ProductCategoryDTO';
 
 export function ProductForm({
     onFormSubmit,
@@ -33,7 +34,7 @@ export function ProductForm({
 }) {
     const [price, setPrice] = useState<number>(0);
     const [categoryName, setCategoryName] = useState<ProductCategory>();
-    const [categories, setCategories] = useState<{ name: ProductCategory; title: string }[]>();
+    const [categories, setCategories] = useState<ProductCategoryDTO[]>();
     const [product, setProduct] = useState<ProductToCreateDTO>();
     const [isLoading, setLoading] = useState<boolean>(false);
 
