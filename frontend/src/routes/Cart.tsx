@@ -20,11 +20,10 @@ import type { CartViewDTO } from '../../../dto/CartViewDTO';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import type { PickerValue } from '@mui/x-date-pickers/internals';
 
 export default function Cart() {
     const [cart, setCart] = useState<CartViewDTO>();
-    const [deadline, setDeadline] = useState<string>('');
+    const [deadline, setDeadline] = useState<number>(0);
 
     const navigate = useNavigate();
     const { notify } = useNotification();
@@ -129,7 +128,7 @@ export default function Cart() {
                                             shrink: true, // Required to keep the label from overlapping the placeholder
                                         },
                                         input: {
-                                            min: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+                                            min: Date.now().split('T')[0], // Format: YYYY-MM-DD
                                         } as any,
                                     }}
                                 /> */}
@@ -140,8 +139,8 @@ export default function Cart() {
                                             disablePast
                                             format="DD/MM/YYYY"
                                             onChange={(val) => {
-                                                setDeadline(val ? val.toISOString() : '');
-                                                console.log(deadline);
+                                                setDeadline(val ? val.valueOf() : 0);
+
                                                 return val;
                                             }}
                                         />

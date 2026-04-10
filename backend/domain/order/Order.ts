@@ -11,8 +11,8 @@ export class Order {
   public totalAmount: number;
   public quantity: number;
   public status: OrderStatus;
-  public deadline: string;
-  public createdAt: string;
+  public deadline: number;
+  public createdAt: number;
 
   private localedStatuses: Map<OrderStatus, string>;
 
@@ -23,8 +23,8 @@ export class Order {
     totalAmount: number,
     quantity: number,
     status: OrderStatus,
-    deadline: string,
-    createdAt: string,
+    deadline: number,
+    createdAt: number,
   ) {
     this.id = id;
     this.client = client;

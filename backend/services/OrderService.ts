@@ -15,7 +15,7 @@ export class OrderService {
     private productService: ProductService,
   ) {}
 
-  async createOrder(deadline: string) {
+  async createOrder(deadline: number) {
     const cart = await this.cartService.getCart();
 
     if (!cart || !cart.isValid())
@@ -51,7 +51,7 @@ export class OrderService {
         cartToView.quantity,
         this.status,
         deadline,
-        new Date().toISOString(),
+        Date.now(),
       ),
       stockProducts,
     );
@@ -98,7 +98,7 @@ export class OrderService {
     return orders.map((i) => i.toView());
   }
 
-  async getAllByTargetDate(deadline: string): Promise<OrderViewDTO[]> {
+  async getAllByTargetDate(deadline: number): Promise<OrderViewDTO[]> {
     if (!deadline) throw new AppError("SERVICE", "Дата не вказана");
 
     const orders = await this.orderRepository.getAllByTargetDate(deadline);

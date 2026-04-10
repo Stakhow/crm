@@ -44,13 +44,13 @@ export class ClientRepository implements IClientRepository {
       return await db.clients.put({
         name,
         phone,
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       });
     else
       return await db.clients.update(id, {
         name,
         phone,
-        updatedAt: new Date().toISOString(),
+        updatedAt: Date.now(),
       });
   }
 }

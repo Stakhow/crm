@@ -92,7 +92,7 @@ export default function Home() {
 
     React.useEffect(() => {
         if (date)
-            orderService.getAllByTargetDate(date.toISOString()).then((data) => {
+            orderService.getAllByTargetDate(date.valueOf()).then((data) => {
                 console.log('orders', data);
             });
     }, [date]);

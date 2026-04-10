@@ -26,7 +26,7 @@ export class ProductRepository implements IProductRepository {
   async save(product: BaseProduct): Promise<number> {
     const data = {
       ...product.toPersistence(),
-      createdAt: new Date().toISOString(),
+      createdAt: Date.now(),
     };
 
     const productId = await db.products.put(data);
@@ -45,7 +45,7 @@ export class ProductRepository implements IProductRepository {
   async update(id: number, product: BaseProduct): Promise<number> {
     const data = {
       ...product.toPersistence(),
-      updatedAt: new Date().toISOString(),
+      updatedAt: Date.now(),
     };
 
     return await db.products.update(id, data);
@@ -142,7 +142,7 @@ export class ProductRepository implements IProductRepository {
         const modId: number = await db.modifiers_groups.add({
           name: mod.name,
           category: mod.category,
-          createdAt: new Date().toISOString(),
+          createdAt: Date.now(),
         });
 
         const modsListBulk = mod.list.map((i) => ({
@@ -167,7 +167,7 @@ export class ProductRepository implements IProductRepository {
         await db.modifiers_groups.update(mod.id, {
           name: mod.name,
           category: mod.category,
-          updatedAt: new Date().toISOString(),
+          updatedAt: Date.now(),
         });
 
         const modsListBulk = mod.list.map((i) => ({

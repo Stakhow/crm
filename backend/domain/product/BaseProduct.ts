@@ -11,7 +11,7 @@ import type { ProductFormValuesDTO } from "../../../dto/ProductFormValuesDTO";
 
 export interface BaseProductProps {
   id: number;
-  createdAt?: string;
+  createdAt?: number;
   category: {
     id: number;
     name: ProductCategory;
@@ -26,7 +26,7 @@ export interface BaseProductProps {
 
 export abstract class BaseProduct {
   public readonly id: number;
-  protected createdAt: string;
+  protected createdAt: number;
 
   protected category: {
     id: number;

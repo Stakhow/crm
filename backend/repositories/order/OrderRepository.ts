@@ -108,7 +108,7 @@ export class OrderRepository implements IOrderRepository {
 
   // db.events.where('timestamp').between(startISO, endISO).
 
-  async getAllByTargetDate(deadline: string): Promise<Order[]> {
+  async getAllByTargetDate(deadline: number): Promise<Order[]> {
     const ordersDTO = await db.orders.where({ deadline }).toArray();
 
     return ordersDTO.map(

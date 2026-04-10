@@ -9,6 +9,6 @@ export interface OrderViewDTO {
   quantity: number;
   status: OrderStatus;
   statuses: { title: string; value: OrderStatus }[];
-  deadline: string;
-  createdAt: string;
+  deadline: number;
+  createdAt: number;
 }

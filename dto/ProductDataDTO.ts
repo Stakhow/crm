@@ -1,10 +1,9 @@
-
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
 
 export type ProductDataDTO = {
   id: number;
   name: string;
-  createdAt: string;
+  createdAt: number;
   category: {
     id: number;
     name: ProductCategory;

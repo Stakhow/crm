@@ -4,21 +4,21 @@ interface IClient {
   id?: number;
   name: string;
   phone: string;
-  createdAt?: string;
+  createdAt?: number;
 }
 
 export class Client {
   id: number;
   protected name: string;
   protected phone: string;
-  protected createdAt?: string;
-  protected updatedAt?: string;
+  protected createdAt?: number;
+  protected updatedAt?: number;
 
   constructor(props: IClient) {
     this.id = props.id ?? 0;
     this.name = props.name;
     this.phone = props.phone;
-    this.createdAt = props.createdAt ?? ""; // 0 for new objects
+    this.createdAt = props.createdAt;
   }
 
   isValid(): boolean {

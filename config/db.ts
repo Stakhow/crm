@@ -14,8 +14,8 @@ export class DexieDb extends Dexie {
         id: number;
         category: ProductCategory[];
         name: string;
-        createdAt: string;
-        updatedAt?: string;
+        createdAt: number;
+        updatedAt?: number;
       },
       "id"
     >,
@@ -46,8 +46,8 @@ export class DexieDb extends Dexie {
         totalAmount: number;
         quantity: number;
         status: OrderStatus;
-        deadline: string;
-        createdAt: string;
+        deadline: number;
+        createdAt: number;
       },
       "id"
     >,
@@ -68,8 +68,8 @@ export class DexieDb extends Dexie {
         id: number;
         name: string;
         phone: string;
-        createdAt: string;
-        updatedAt?: string;
+        createdAt: number;
+        updatedAt?: number;
       },
       "id"
     >,
@@ -102,6 +102,21 @@ db.on("ready", async () => {
   // Add initial users
   // modifiers_groups
   // modifiers_values
+
+  await db.products.toCollection().modify((row) => {
+    const isoDate = row.createdAt;
+    const isoDate2 = row.updatedAt;
+
+    row.createdAt = new Date(isoDate).getTime();
+    row.updatedAt = new Date(isoDate2).getTime();
+  });
+  await db.clients.toCollection().modify((row) => {
+    const isoDate = row.createdAt;
+    const isoDate2 = row.updatedAt;
+
+    row.createdAt = new Date(isoDate).getTime();
+    row.updatedAt = new Date(isoDate2).getTime();
+  });
 
   if ((await db.modifiers_groups.count()) === 0) {
     const modIds: number[] = await db.modifiers_groups.bulkPut(
@@ -172,43 +187,43 @@ db.on("ready", async () => {
         id: 0,
         name: "Олександр Шевченко",
         phone: "+380501234567",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Олена Петренко",
         phone: "+380679876543",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Дмитро Бойко",
         phone: "+380935551234",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Тетяна Коваленко",
         phone: "+380664448899",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Андрій Бондаренко",
         phone: "+380682223344",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Марина Мельник",
         phone: "+380737770011",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
       {
         id: 0,
         name: "Сергій Мороз",
         phone: "+380443210987",
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
       },
     ];
 
