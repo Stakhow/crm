@@ -2,7 +2,7 @@ import { AppError } from "../../utils/error";
 
 import type { OrderRepository } from "../repositories/order/OrderRepository";
 import type { CartService } from "./CartService";
-import { Order, type Status } from "../domain/order/Order";
+import { Order, type OrderStatus } from "../domain/order/Order";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
 import type { ProductService } from "./ProductService";
 
@@ -15,7 +15,7 @@ export class OrderService {
     private productService: ProductService,
   ) {}
 
-  async createOrder() {
+  async createOrder(deadline: string) {
     const cart = await this.cartService.getCart();
 
     if (!cart || !cart.isValid())
@@ -50,8 +50,10 @@ export class OrderService {
         cartToView.totalAmount,
         cartToView.quantity,
         this.status,
+        deadline,
         new Date().toISOString(),
-      ), stockProducts
+      ),
+      stockProducts,
     );
 
     await this.cartService.resetCart();
@@ -59,7 +61,7 @@ export class OrderService {
     return orderId;
   }
 
-  async updateStatus(id: number, status: Status): Promise<number> {
+  async updateStatus(id: number, status: OrderStatus): Promise<number> {
     const order = await this.orderRepository.getById(id);
 
     if (status) order.updateStatus(status);
@@ -93,6 +95,13 @@ export class OrderService {
   async getByClient(clientId: number): Promise<OrderViewDTO[]> {
     const orders = await this.orderRepository.getByClient(clientId);
 
+    return orders.map((i) => i.toView());
+  }
+
+  async getAllByTargetDate(deadline: string): Promise<OrderViewDTO[]> {
+    if (!deadline) throw new AppError("SERVICE", "Дата не вказана");
+
+    const orders = await this.orderRepository.getAllByTargetDate(deadline);
     return orders.map((i) => i.toView());
   }
 }

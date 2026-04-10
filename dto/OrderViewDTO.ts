@@ -1,4 +1,4 @@
-import type { Status } from "../backend/domain/order/Order";
+import type { OrderStatus } from "../backend/domain/order/Order";
 import type { ProductViewDTO } from "./ProductViewDTO";
 
 export interface OrderViewDTO {
@@ -7,7 +7,8 @@ export interface OrderViewDTO {
   items: ProductViewDTO[];
   totalAmount: number;
   quantity: number;
-  status: Status;
-  statuses: { title: string; value: Status }[];
+  status: OrderStatus;
+  statuses: { title: string; value: OrderStatus }[];
+  deadline: string;
   createdAt: string;
 }

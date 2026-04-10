@@ -2,6 +2,9 @@ import Dexie, { type Table } from "dexie";
 import type { Optional } from "dexie";
 
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
+import type { ClientDTO } from "../dto/ClientDTO";
+import type { OrderStatus } from "../backend/domain/order/Order";
+import type { ProductViewDTO } from "../dto/ProductViewDTO";
 
 export class DexieDb extends Dexie {
   products!: Table<any, number>;
@@ -34,8 +37,30 @@ export class DexieDb extends Dexie {
     { productId: number; itemId: number; groupId: number },
     number
   >;
-  orders!: Table<any, number>;
-  order_items!: Table<any, number>;
+  orders!: Table<
+    Optional<
+      {
+        id: number;
+        client: ClientDTO;
+        clientId: number;
+        totalAmount: number;
+        quantity: number;
+        status: OrderStatus;
+        deadline: string;
+        createdAt: string;
+      },
+      "id"
+    >,
+    number
+  >;
+  order_items!: Table<
+    {
+      orderId: number;
+      productId: number;
+      data: ProductViewDTO;
+    },
+    number
+  >;
   logs!: Table<any, number>;
   clients!: Table<
     Optional<
@@ -61,7 +86,7 @@ export class DexieDb extends Dexie {
       modifiers_groups: "++id",
       modifiers_values: "++id, groupId",
       product_modifiers_relations: "++id, productId, groupId",
-      orders: "++id, clientId, createdAt",
+      orders: "++id, clientId, createdAt, deadline",
       order_items: "++id, orderId, productId",
       logs: "++id, type, timestamp",
       clients: "++id, name, phone",

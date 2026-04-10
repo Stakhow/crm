@@ -25,6 +25,7 @@ export class OrderRepository implements IOrderRepository {
           totalAmount: order.totalAmount,
           quantity: order.quantity,
           status: order.status,
+          deadline: order.deadline,
           createdAt: order.createdAt,
         });
 
@@ -61,6 +62,7 @@ export class OrderRepository implements IOrderRepository {
       orderDTO.totalAmount,
       orderDTO.quantity,
       orderDTO.status,
+      orderDTO.deadline,
       orderDTO.createdAt,
     );
   }
@@ -77,6 +79,7 @@ export class OrderRepository implements IOrderRepository {
           i.totalAmount,
           i.quantity,
           i.status,
+          i.deadline,
           i.createdAt,
         ),
     );
@@ -97,6 +100,27 @@ export class OrderRepository implements IOrderRepository {
           i.totalAmount,
           i.quantity,
           i.status,
+          i.deadline,
+          i.createdAt,
+        ),
+    );
+  }
+
+  // db.events.where('timestamp').between(startISO, endISO).
+
+  async getAllByTargetDate(deadline: string): Promise<Order[]> {
+    const ordersDTO = await db.orders.where({ deadline }).toArray();
+
+    return ordersDTO.map(
+      (i) =>
+        new Order(
+          i.id,
+          i.client,
+          i.items,
+          i.totalAmount,
+          i.quantity,
+          i.status,
+          i.deadline,
           i.createdAt,
         ),
     );

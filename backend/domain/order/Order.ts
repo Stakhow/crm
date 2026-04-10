@@ -1,7 +1,8 @@
+import type { ClientDTO } from "../../../dto/ClientDTO";
 import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import type { ProductViewDTO } from "../../../dto/ProductViewDTO";
 
-export type Status = "InProgress" | "Done" | "Cancelled";
+export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
 export class Order {
   public id: number | null;
@@ -9,17 +10,20 @@ export class Order {
   public items: ProductViewDTO[];
   public totalAmount: number;
   public quantity: number;
-  public status: Status;
+  public status: OrderStatus;
+  public deadline: string;
   public createdAt: string;
-  private localedStatuses: Map<Status, string>;
+
+  private localedStatuses: Map<OrderStatus, string>;
 
   constructor(
     id: number | null,
-    client: { id: number; name: string; phone: string },
+    client: ClientDTO,
     items: ProductViewDTO[],
     totalAmount: number,
     quantity: number,
-    status: "InProgress" | "Done" | "Cancelled",
+    status: OrderStatus,
+    deadline: string,
     createdAt: string,
   ) {
     this.id = id;
@@ -28,6 +32,7 @@ export class Order {
     this.totalAmount = totalAmount;
     this.quantity = quantity;
     this.status = status;
+    this.deadline = deadline;
     this.createdAt = createdAt;
 
     this.localedStatuses = new Map();
@@ -36,16 +41,7 @@ export class Order {
     this.localedStatuses.set("Cancelled", "Відмінений");
   }
 
-  // localeStatus(): string {
-  //   const status = this.localedStatuses.get(this.status);
-  //   return status ?? "В роботі";
-  // }
-
-  // getStatuses() {
-  //   return Object.entries(this.localedStatuses);
-  // }
-
-  updateStatus(status: Status) {
+  updateStatus(status: OrderStatus) {
     this.status = status;
   }
 
@@ -65,6 +61,7 @@ export class Order {
         value: key,
         title: value,
       })),
+      deadline: this.deadline,
       createdAt: this.createdAt,
     };
   }

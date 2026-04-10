@@ -67,6 +67,7 @@ export default function App(props: Props) {
                 {navItems.map((item, idx) => (
                     <ListItem key={idx} disablePadding>
                         <Button
+                            end
                             to={item.to}
                             component={NavLink}
                             sx={{
@@ -75,7 +76,6 @@ export default function App(props: Props) {
                                 '&.active': {
                                     border: '1px solid',
                                     fontWeight: 700,
-                                    // textDecoration: 'underline',
                                 },
                             }}
                         >

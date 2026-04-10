@@ -1,14 +1,30 @@
 import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
-import { Box, Button, CardActions, Paper, Stack, Typography } from '@mui/material';
+import {
+    AppBar,
+    Box,
+    Button,
+    CardActions,
+    FormControl,
+    Paper,
+    Stack,
+    TextField,
+    Toolbar,
+    Typography,
+} from '@mui/material';
 import { cartService, orderService } from '../../../backend';
 import { priceFormat } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
 import { useNotification } from '../components/NotificationContext';
 import type { CartViewDTO } from '../../../dto/CartViewDTO';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import type { PickerValue } from '@mui/x-date-pickers/internals';
 
 export default function Cart() {
     const [cart, setCart] = useState<CartViewDTO>();
+    const [deadline, setDeadline] = useState<string>('');
 
     const navigate = useNavigate();
     const { notify } = useNotification();
@@ -27,16 +43,18 @@ export default function Cart() {
     };
 
     const createOrder = () => {
-        orderService
-            .createOrder()
-            .then((orderId) => {
-                navigate(`/orders/${orderId}`);
-                notify({ message: 'Замовлення успішно створено', severity: 'success' });
-            })
-            .catch((error) => {
-                console.log(error);
-                notify({ message: `Помилка створення замовлення: ${error.message}`, severity: 'error' });
-            });
+        if (!!deadline)
+            orderService
+                .createOrder(deadline)
+                .then((orderId) => {
+                    navigate(`/orders/${orderId}`);
+                    notify({ message: 'Замовлення успішно створено', severity: 'success' });
+                })
+                .catch((error) => {
+                    console.log(error);
+                    notify({ message: `Помилка створення замовлення: ${error.message}`, severity: 'error' });
+                });
+        else notify({ message: 'Помилка створення замовлення: Дата виконання не встановлена', severity: 'success' });
     };
 
     useEffect(() => {
@@ -79,22 +97,7 @@ export default function Cart() {
                     ))}
 
                     <Paper sx={{ mt: 2, p: 2 }}>
-                        <Typography textAlign={'center'} gutterBottom>
-                            Загальна вартість : <b>{priceFormat(cart.totalAmount)}</b>
-                        </Typography>
-
                         <Stack spacing={2}>
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                type={'submit'}
-                                onClick={() => {
-                                    createOrder();
-                                }}
-                            >
-                                Створити Замовлення
-                            </Button>
-
                             <Button variant="outlined" color="info" fullWidth href="/orders/new">
                                 Додати товар
                             </Button>
@@ -110,8 +113,64 @@ export default function Cart() {
                             >
                                 Видалити Корзину
                             </Button>
+
+                            <FormControl fullWidth margin="dense">
+                                {/* <TextField
+                                    label="Виконати на"
+                                    value={deadline}
+                                    error={!deadline}
+                                    helperText={!deadline && "Поле обов'язкове"}
+                                    type="date"
+                                    onChange={(e) => {
+                                        setDeadline(e.target.value);
+                                    }}
+                                    slotProps={{
+                                        inputLabel: {
+                                            shrink: true, // Required to keep the label from overlapping the placeholder
+                                        },
+                                        input: {
+                                            min: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+                                        } as any,
+                                    }}
+                                /> */}
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DemoContainer components={['DatePicker']}>
+                                        <DatePicker
+                                            label="Виконати на"
+                                            disablePast
+                                            format="DD/MM/YYYY"
+                                            onChange={(val) => {
+                                                setDeadline(val ? val.toISOString() : '');
+                                                console.log(deadline);
+                                                return val;
+                                            }}
+                                        />
+                                    </DemoContainer>
+                                </LocalizationProvider>
+                            </FormControl>
                         </Stack>
                     </Paper>
+
+                    <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0, py: 1 }}>
+                        <Toolbar>
+                            <Stack spacing={1} direction={'column'} sx={{ width: '100%' }}>
+                                <Typography textAlign={'center'} gutterBottom variant="h6">
+                                    Загальна вартість : <b>{priceFormat(cart.totalAmount)}</b>
+                                </Typography>
+
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    disabled={!deadline}
+                                    onClick={() => {
+                                        createOrder();
+                                    }}
+                                >
+                                    Створити Замовлення
+                                </Button>
+                            </Stack>
+                        </Toolbar>
+                    </AppBar>
                 </Box>
             ) : (
                 <Stack spacing={2} justifyContent={'center'}>

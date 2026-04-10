@@ -16,11 +16,12 @@ import {
     Stack,
     Typography,
 } from '@mui/material';
-import { cartService, orderService } from '../../../backend';
+import { orderService } from '../../../backend';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { dateToLocalString, priceFormat } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
 import { useNotification } from '../components/NotificationContext';
+import type { OrderStatus } from '../../../backend/domain/order/Order';
 
 const SelectComponent = ({
     title,
@@ -76,6 +77,24 @@ export default function Order() {
             });
     }, []);
 
+    const updateOrderStatus = (status: OrderStatus) => {
+        setLoading(true);
+        orderService
+            .updateStatus(Number(id), status)
+            .then(() => {
+                notify({ message: 'Статус оновлено', severity: 'success' });
+            })
+            .catch((error) => {
+                notify({
+                    message: `Помилка оновлення статусу: ${error.message ?? error.message}`,
+                    severity: 'error',
+                });
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
     return (
         <Box>
             {!!order ? (
@@ -117,6 +136,9 @@ export default function Order() {
                                 Від: <b> {dateToLocalString(order.createdAt)}</b>
                             </Typography>
                             <Typography>
+                                Виконати на: <b> {dateToLocalString(order.deadline)}</b>
+                            </Typography>
+                            <Typography>
                                 Клієнт: <b> {order.client.name}</b>
                             </Typography>
                             <SelectComponent
@@ -125,21 +147,7 @@ export default function Order() {
                                 value={order.status}
                                 options={order.statuses}
                                 onChange={(value) => {
-                                    setLoading(true);
-                                    orderService
-                                        .updateStatus(Number(id), value)
-                                        .then(() => {
-                                            notify({ message: 'Статус оновлено', severity: 'success' });
-                                        })
-                                        .catch((error) => {
-                                            notify({
-                                                message: `Помилка оновлення статусу: ${error.message ?? error.message}`,
-                                                severity: 'error',
-                                            });
-                                        })
-                                        .finally(() => {
-                                            setLoading(false);
-                                        });
+                                    updateOrderStatus(value);
                                 }}
                             />
                             <Typography>
