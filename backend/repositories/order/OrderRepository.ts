@@ -1,33 +1,70 @@
 import { db } from "../../../config/db";
 import type { BaseProduct } from "../../domain/product/BaseProduct";
-import { Order } from "./../../domain/order/Order";
+import { Order } from "../../domain/order/Order";
 import type { IOrderRepository } from "./IOrderRepository";
 
+import type { OrderDB, OrderItemDB } from "../../../config/db.types";
+
+// ---------- helpers ----------
+function groupByOrderId(items: OrderItemDB[]) {
+  const map = new Map<number, OrderItemDB[]>();
+
+  for (const item of items) {
+    if (!map.has(item.orderId)) {
+      map.set(item.orderId, []);
+    }
+    map.get(item.orderId)!.push(item);
+  }
+
+  return map;
+}
+
+function getDayRange(timestamp: number) {
+  const date = new Date(timestamp);
+
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  return { start: start.getTime(), end: end.getTime() };
+}
+
+function getMonthRange(timestamp: number) {
+  const date = new Date(timestamp);
+
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
+
+  return { start: start.getTime(), end: end.getTime() };
+}
+
+// ---------- repository ----------
 export class OrderRepository implements IOrderRepository {
   async save(order: Order, products: BaseProduct[]): Promise<number> {
-    return await db.transaction(
+    return db.transaction(
       "rw",
       db.products,
       db.orders,
       db.order_items,
       async () => {
-        console.log(order);
-        console.log(products);
-        const productsToUpdate = products.map((i) => ({
-          key: i.id,
-          changes: i,
-        }));
-        await db.products.bulkUpdate(productsToUpdate);
+        await db.products.bulkUpdate(
+          products.map((p) => ({
+            key: p.id,
+            changes: p.toPersistence(),
+          })),
+        );
 
-        const orderId = await db.orders.add({
-          client: order.client,
-          clientId: order.client.id,
-          totalAmount: order.totalAmount,
-          quantity: order.quantity,
-          status: order.status,
-          deadline: order.deadline,
-          createdAt: order.createdAt,
-        });
+        const orderId = await db.orders.add(this.toOrderDB(order));
 
         await db.order_items.bulkAdd(
           order.items.map((i) => ({
@@ -43,86 +80,96 @@ export class OrderRepository implements IOrderRepository {
   }
 
   async update(order: Order): Promise<number> {
-    return await db.orders.update(order.id, {
+    return db.orders.update(order.id, {
       status: order.status,
     });
   }
 
   async getById(id: number): Promise<Order> {
     const orderDTO = await db.orders.get(id);
-    const orderItemsDTO = await db.order_items
-      .where("orderId")
-      .equals(id)
-      .toArray();
+    if (!orderDTO) throw new Error("Order not found");
 
-    return new Order(
-      orderDTO.id,
-      orderDTO.client,
-      orderItemsDTO.map((i) => i.data),
-      orderDTO.totalAmount,
-      orderDTO.quantity,
-      orderDTO.status,
-      orderDTO.deadline,
-      orderDTO.createdAt,
-    );
+    const items = await db.order_items.where("orderId").equals(id).toArray();
+
+    return this.toDomain(orderDTO, items);
   }
 
   async getAll(): Promise<Order[]> {
-    const ordersDTO = await db.orders.toArray();
-
-    return ordersDTO.map(
-      (i) =>
-        new Order(
-          i.id,
-          i.client,
-          i.items,
-          i.totalAmount,
-          i.quantity,
-          i.status,
-          i.deadline,
-          i.createdAt,
-        ),
-    );
+    const orders = await db.orders.reverse().toArray();
+    return this.buildOrders(orders);
   }
 
   async getByClient(clientId: number): Promise<Order[]> {
-    const ordersDTO = await db.orders
+    const orders = await db.orders
       .where("clientId")
       .equals(clientId)
+      .reverse()
       .toArray();
 
-    return ordersDTO.map(
-      (i) =>
-        new Order(
-          i.id,
-          i.client,
-          i.items,
-          i.totalAmount,
-          i.quantity,
-          i.status,
-          i.deadline,
-          i.createdAt,
-        ),
+    return this.buildOrders(orders);
+  }
+
+  async getAllByTargetDate(timestamp: number): Promise<Order[]> {
+    const { start, end } = getDayRange(timestamp);
+
+    const orders = await db.orders
+      .where("deadline")
+      .between(start, end)
+      .toArray();
+
+    return this.buildOrders(orders);
+  }
+
+  async getAllByMonth(timestamp: number): Promise<Order[]> {
+    const { start, end } = getMonthRange(timestamp);
+
+    const orders = await db.orders
+      .where("deadline")
+      .between(start, end)
+      .toArray();
+
+    return this.buildOrders(orders);
+  }
+
+  // ---------- private ----------
+  private async buildOrders(orders: OrderDB[]): Promise<Order[]> {
+    if (!orders.length) return [];
+
+    const items = await db.order_items
+      .where("orderId")
+      .anyOf(orders.map((i) => i.id!))
+      .toArray();
+
+    const grouped = groupByOrderId(items);
+
+    return orders.map((order) =>
+      this.toDomain(order, grouped.get(order.id!) || []),
     );
   }
 
-  // db.events.where('timestamp').between(startISO, endISO).
-
-  async getAllByTargetDate(deadline: number): Promise<Order[]> {
-    const ordersDTO = await db.orders.where({ deadline }).toArray();
-
-    return ordersDTO.map(
-      (i) =>
-        new Order(
-          i.id,
-          i.client,
-          i.items,
-          i.totalAmount,
-          i.quantity,
-          i.status,
-          i.deadline,
-          i.createdAt,
-        ),
+  private toDomain(order: OrderDB, items: OrderItemDB[]): Order {
+    return new Order(
+      order.id!,
+      order.client,
+      items.map((i) => i.data),
+      order.totalAmount,
+      order.quantity,
+      order.status,
+      order.deadline,
+      order.createdAt,
     );
+  }
+
+  private toOrderDB(order: Order): OrderDB {
+    return {
+      id: order.id,
+      client: order.client,
+      clientId: order.client.id,
+      totalAmount: order.totalAmount,
+      quantity: order.quantity,
+      status: order.status,
+      deadline: order.deadline,
+      createdAt: order.createdAt,
+    };
   }
 }

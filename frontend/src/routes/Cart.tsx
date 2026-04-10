@@ -114,24 +114,6 @@ export default function Cart() {
                             </Button>
 
                             <FormControl fullWidth margin="dense">
-                                {/* <TextField
-                                    label="Виконати на"
-                                    value={deadline}
-                                    error={!deadline}
-                                    helperText={!deadline && "Поле обов'язкове"}
-                                    type="date"
-                                    onChange={(e) => {
-                                        setDeadline(e.target.value);
-                                    }}
-                                    slotProps={{
-                                        inputLabel: {
-                                            shrink: true, // Required to keep the label from overlapping the placeholder
-                                        },
-                                        input: {
-                                            min: Date.now().split('T')[0], // Format: YYYY-MM-DD
-                                        } as any,
-                                    }}
-                                /> */}
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DemoContainer components={['DatePicker']}>
                                         <DatePicker

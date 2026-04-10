@@ -57,6 +57,7 @@ export class Order {
       totalAmount: this.totalAmount,
       quantity: this.quantity,
       status: this.status,
+      statusTitle: this.localedStatuses.get(this.status) ?? "",
       statuses: Array.from(this.localedStatuses, ([key, value]) => ({
         value: key,
         title: value,

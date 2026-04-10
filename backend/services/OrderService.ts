@@ -98,10 +98,32 @@ export class OrderService {
     return orders.map((i) => i.toView());
   }
 
-  async getAllByTargetDate(deadline: number): Promise<OrderViewDTO[]> {
-    if (!deadline) throw new AppError("SERVICE", "Дата не вказана");
+  async getAllByTargetDate(timestamp: number): Promise<OrderViewDTO[]> {
+    if (!timestamp) throw new AppError("SERVICE", "Дата не вказана");
 
-    const orders = await this.orderRepository.getAllByTargetDate(deadline);
+    const orders = await this.orderRepository.getAllByTargetDate(timestamp);
     return orders.map((i) => i.toView());
+  }
+  async getOrdersByMonth(
+    timestamp: number,
+  ): Promise<Map<number, OrderViewDTO[]>> {
+    if (!timestamp) throw new AppError("SERVICE", "Дата не вказана");
+
+    const orders = await this.orderRepository.getAllByMonth(timestamp);
+
+    const ordersMap = new Map<number, OrderViewDTO[]>();
+
+    orders.map((o) => {
+      const date = new Date(o.deadline);
+      const dayOfMonth = date.getDate();
+
+      const orderDTO = o.toView();
+      const row = ordersMap.get(dayOfMonth);
+
+      if (!!row) row.push(orderDTO);
+      else ordersMap.set(dayOfMonth, [orderDTO]);
+    });
+
+    return ordersMap;
   }
 }

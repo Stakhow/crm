@@ -7,12 +7,6 @@ import type { ProductCategory } from "../../domain/product/ProductCategory";
 import type { ProductManager } from "../../domain/product/ProductManager";
 import { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
 
-type ModDTO = {
-  id: number;
-  name: string;
-  category: ProductCategory[];
-};
-
 type ModListDTO = {
   id: number;
   name: string;
@@ -54,6 +48,8 @@ export class ProductRepository implements IProductRepository {
   async getById(id: number): Promise<BaseProduct> {
     const productDTO = await db.products.get(id);
 
+    if (!productDTO) throw new AppError("DOMAIN", "Продукту не існує");
+
     const modifiers = await this._getProductModifiers([productDTO.id]);
 
     const product = this.productManager.createByCategory(
@@ -69,7 +65,7 @@ export class ProductRepository implements IProductRepository {
   async getByIds(ids: number[]): Promise<BaseProduct[]> {
     const productsDTO = await db.products.bulkGet(ids);
 
-    return this._getProducts(productsDTO);
+    return this._getProducts(productsDTO.filter((i) => !!i));
   }
 
   private async _getProducts(

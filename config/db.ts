@@ -1,85 +1,33 @@
 import Dexie, { type Table } from "dexie";
-import type { Optional } from "dexie";
 
-import type { ProductCategory } from "../backend/domain/product/ProductCategory";
-import type { ClientDTO } from "../dto/ClientDTO";
-import type { OrderStatus } from "../backend/domain/order/Order";
-import type { ProductViewDTO } from "../dto/ProductViewDTO";
+import type {
+  ProductDB,
+  ModifierGroupDB,
+  ModifierValueDB,
+  ProductModifierRelationDB,
+  OrderDB,
+  OrderItemDB,
+  ClientDB,
+  LogDB,
+  CartDB,
+  CartItemDB,
+} from "./db.types";
 
 export class DexieDb extends Dexie {
-  products!: Table<any, number>;
-  modifiers_groups!: Table<
-    Optional<
-      {
-        id: number;
-        category: ProductCategory[];
-        name: string;
-        createdAt: number;
-        updatedAt?: number;
-      },
-      "id"
-    >,
-    number
-  >;
-  modifiers_values!: Table<
-    Optional<
-      {
-        id: number;
-        groupId: number;
-        name: string;
-        price: number;
-      },
-      "id"
-    >,
-    number
-  >;
-  product_modifiers_relations!: Table<
-    { productId: number; itemId: number; groupId: number },
-    number
-  >;
-  orders!: Table<
-    Optional<
-      {
-        id: number;
-        client: ClientDTO;
-        clientId: number;
-        totalAmount: number;
-        quantity: number;
-        status: OrderStatus;
-        deadline: number;
-        createdAt: number;
-      },
-      "id"
-    >,
-    number
-  >;
-  order_items!: Table<
-    {
-      orderId: number;
-      productId: number;
-      data: ProductViewDTO;
-    },
-    number
-  >;
-  logs!: Table<any, number>;
-  clients!: Table<
-    Optional<
-      {
-        id: number;
-        name: string;
-        phone: string;
-        createdAt: number;
-        updatedAt?: number;
-      },
-      "id"
-    >,
-    number
-  >;
-  cart!: Table<any, number>;
-  cart_items!: Table<any, number>;
+  products!: Table<ProductDB, number>;
+  modifiers_groups!: Table<ModifierGroupDB, number>;
+  modifiers_values!: Table<ModifierValueDB, number>;
+  product_modifiers_relations!: Table<ProductModifierRelationDB, number>;
+  orders!: Table<OrderDB, number>;
+  order_items!: Table<OrderItemDB, number>;
+  logs!: Table<LogDB, number>;
+  clients!: Table<ClientDB, number>;
+  cart!: Table<CartDB, number>;
+  cart_items!: Table<CartItemDB, number>;
 
   constructor() {
     super("crm");
+
     this.version(4).stores({
       products:
         "++id, category, categoryId, categoryName, name, weight, length, thickness",
@@ -102,21 +50,6 @@ db.on("ready", async () => {
   // Add initial users
   // modifiers_groups
   // modifiers_values
-
-  await db.products.toCollection().modify((row) => {
-    const isoDate = row.createdAt;
-    const isoDate2 = row.updatedAt;
-
-    row.createdAt = new Date(isoDate).getTime();
-    row.updatedAt = new Date(isoDate2).getTime();
-  });
-  await db.clients.toCollection().modify((row) => {
-    const isoDate = row.createdAt;
-    const isoDate2 = row.updatedAt;
-
-    row.createdAt = new Date(isoDate).getTime();
-    row.updatedAt = new Date(isoDate2).getTime();
-  });
 
   if ((await db.modifiers_groups.count()) === 0) {
     const modIds: number[] = await db.modifiers_groups.bulkPut(
