@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+
+        <!-- Link the manifest -->
+        <link rel="manifest" href="/assets/manifest-DBo6HP07.json" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CRM</title>
+      <script type="module" crossorigin src="/assets/index-ZsGAmlTs.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-YmNppWWM.css">
+    </head>
+    <body>
+        <div id="root"></div>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker
+                        .register('/sw.js')
+                        .then((reg) => console.log('Service Worker Registered!', reg))
+                        .catch((err) => console.log('Registration Failed', err));
+                });
+            }
+        </script>
+    </body>
+</html>
