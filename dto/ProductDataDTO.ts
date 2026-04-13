@@ -4,6 +4,7 @@ export type ProductDataDTO = {
   id: number;
   name: string;
   createdAt: number;
+  updatedAt: number;
   category: {
     id: number;
     name: ProductCategory;
@@ -13,8 +14,8 @@ export type ProductDataDTO = {
   price: number;
   totalAmount: number;
   weight: number;
-  width?: number;
-  thickness?: number;
-  length?: number;
-  quantity?: number;
+  width: number;
+  thickness: number;
+  length: number;
+  quantity: number;
 };

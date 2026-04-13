@@ -33,14 +33,14 @@ export class OrderService {
 
       if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
 
-      product.updateMainParam(cartItem.quantity, "subtract");
+      product.updateQuantity(cartItem.quantity, "subtract");
 
       return product;
     });
 
     const orderId = await this.orderRepository.save(
       new Order(
-        null,
+        0,
         {
           id: client.id,
           name: client.name,
@@ -75,7 +75,7 @@ export class OrderService {
     return this.cartService.createFromOrder(
       order.items.map((i) => ({
         productId: i.id,
-        quantity: i.weight, // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        quantity: i.quantity,
         clientId: order.client.id,
       })),
     );

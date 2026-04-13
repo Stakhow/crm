@@ -5,7 +5,7 @@ import type { ProductViewDTO } from "../../../dto/ProductViewDTO";
 export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
 export class Order {
-  public id: number | null;
+  public id: number;
   public client: { id: number; name: string; phone: string };
   public items: ProductViewDTO[];
   public totalAmount: number;
@@ -17,7 +17,7 @@ export class Order {
   private localedStatuses: Map<OrderStatus, string>;
 
   constructor(
-    id: number | null,
+    id: number,
     client: ClientDTO,
     items: ProductViewDTO[],
     totalAmount: number,
@@ -26,7 +26,7 @@ export class Order {
     deadline: number,
     createdAt: number,
   ) {
-    this.id = id;
+    this.id = id ?? undefined;
     this.client = client;
     this.items = items;
     this.totalAmount = totalAmount;

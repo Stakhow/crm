@@ -14,22 +14,3 @@ export function priceFormat(sum: string | number) {
     currency: "UAH",
   });
 }
-
-export function getWeightOfBag(
-  length: number,
-  width: number,
-  thickness: number,
-  quantity: number,
-): number {
-  if (length > 0 && width > 0 && thickness > 0 && quantity > 0)
-    return Number(
-      (
-        length *
-        0.01 *
-        width *
-        0.01 *
-        (thickness * 0.001 * 2 * quantity)
-      ).toFixed(3),
-    );
-  else return 0;
-}

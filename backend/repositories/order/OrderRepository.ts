@@ -4,8 +4,8 @@ import { Order } from "../../domain/order/Order";
 import type { IOrderRepository } from "./IOrderRepository";
 
 import type { OrderDB, OrderItemDB } from "../../../config/db.types";
+import { AppError } from "../../../utils/error";
 
-// ---------- helpers ----------
 function groupByOrderId(items: OrderItemDB[]) {
   const map = new Map<number, OrderItemDB[]>();
 
@@ -48,7 +48,6 @@ function getMonthRange(timestamp: number) {
   return { start: start.getTime(), end: end.getTime() };
 }
 
-// ---------- repository ----------
 export class OrderRepository implements IOrderRepository {
   async save(order: Order, products: BaseProduct[]): Promise<number> {
     return db.transaction(
@@ -87,7 +86,7 @@ export class OrderRepository implements IOrderRepository {
 
   async getById(id: number): Promise<Order> {
     const orderDTO = await db.orders.get(id);
-    if (!orderDTO) throw new Error("Order not found");
+    if (!orderDTO) throw new AppError("SERVICE", "Замовлення не знайдено");
 
     const items = await db.order_items.where("orderId").equals(id).toArray();
 
@@ -131,7 +130,6 @@ export class OrderRepository implements IOrderRepository {
     return this.buildOrders(orders);
   }
 
-  // ---------- private ----------
   private async buildOrders(orders: OrderDB[]): Promise<Order[]> {
     if (!orders.length) return [];
 
@@ -162,7 +160,6 @@ export class OrderRepository implements IOrderRepository {
 
   private toOrderDB(order: Order): OrderDB {
     return {
-      id: order.id,
       client: order.client,
       clientId: order.client.id,
       totalAmount: order.totalAmount,

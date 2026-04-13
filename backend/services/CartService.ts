@@ -55,8 +55,8 @@ export class CartService {
       client,
       products: products.map((i) => {
         const cartItem = cart.getItem(i.id);
-        const stock = i.getWeight;
-        if (cartItem) i.setMainParam(cartItem.quantity);
+        const stock = i.getWeight();
+        if (cartItem) i.setQuantity(cartItem.quantity);
 
         return { ...i.toView(), stock };
       }),
@@ -71,7 +71,7 @@ export class CartService {
     const cart = await this.getCart();
 
     const product = await this.productService.getProduct(data.productId);
-    product.setMainParam(data.quantity);
+    product.setQuantity(data.quantity);
 
     const productData = product.toView();
 

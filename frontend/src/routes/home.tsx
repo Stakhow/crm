@@ -13,6 +13,7 @@ import { orderService } from '../../../backend';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 import type { ButtonProps } from '@mui/material';
+import { grey, red, green } from '@mui/material/colors';
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale('en', {
@@ -25,7 +26,7 @@ function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewD
     const orders = props.monthOrders ? props.monthOrders.get(day.date()) : undefined;
     const isPast = day.isBefore(dayjs(), 'day');
 
-    let color: ButtonProps['color'] = 'success';
+    let color: ButtonProps['color'] = 'info';
 
     if (orders) {
         if (orders.some((i) => i.status === 'InProgress')) color = 'error';
@@ -36,8 +37,13 @@ function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewD
         <Badge
             key={props.day.toString()}
             overlap="circular"
-            color={isPast ? 'primary' : color}
+            color={isPast ? 'info' : color}
             badgeContent={orders ? orders.length : undefined}
+            sx={{
+                '& .MuiBadge-colorInfo': {
+                    backgroundColor: grey[500],
+                },
+            }}
         >
             <PickerDay {...other} outsideCurrentMonth={outsideCurrentMonth} day={day} />
         </Badge>

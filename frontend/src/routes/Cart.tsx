@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 import {
     AppBar,
@@ -76,6 +76,7 @@ export default function Cart() {
                     {cart.products.map((product, idx) => (
                         <ProductCard
                             key={idx}
+                            isInCart={true}
                             product={product}
                             children={
                                 <CardActions sx={{ p: 2 }}>
@@ -97,7 +98,7 @@ export default function Cart() {
 
                     <Paper sx={{ mt: 2, p: 2 }}>
                         <Stack spacing={2}>
-                            <Button variant="outlined" color="info" fullWidth href="/orders/new">
+                            <Button variant="outlined" color="info" fullWidth to={'/orders/new'} component={NavLink}>
                                 Додати товар
                             </Button>
 
@@ -159,7 +160,7 @@ export default function Cart() {
                         Корзина порожня
                     </Typography>
 
-                    <Button href="/orders/new" variant="outlined">
+                    <Button end to={'/orders/new'} component={NavLink} variant="outlined">
                         Нове Замовлення
                     </Button>
                 </Stack>

@@ -7,12 +7,12 @@ import { ProductCard } from '../components/Product/ProductCard';
 import { useNotification } from '../components/NotificationContext';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
-import { ProductUpdateParam } from '../components/Product/ProductUpdateParam';
+import { ProductUpdateQuantity } from '../components/Product/ProductUpdateQuantity';
 import { NavLink } from 'react-router';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 
 interface Dialog {
-    title: string;
+    title?: string;
     message?: string;
     children?: ReactNode;
     handleConfirmClick?: () => void;
@@ -58,29 +58,6 @@ export default function Products() {
             });
     }, [categoryName]);
 
-    const updateMainParam = (
-        id: number,
-        data: {
-            unitOperation: 'add' | 'subtract';
-            param: number;
-        },
-    ) => {
-        productService
-            .updateProductMainParam(id, data)
-            .then((product) => {
-                setProducts((products) => products.map((i) => (i = i.id === id ? product : i)));
-                notify({ message: 'Параметр успішно оновлено', severity: 'success' });
-            })
-            .catch((e) => {
-                console.log(e);
-                notify({ message: 'Помилка при оновленні параметру', severity: 'error' });
-            })
-            .finally(() => {
-                setOpenDialog(false);
-                setDialogConfig(null);
-            });
-    };
-
     const deleteProduct = (id: number) => {
         setOpenDialog(true);
 
@@ -101,52 +78,33 @@ export default function Products() {
         });
     };
 
-    const increaseProduct = (product: ProductViewDTO) => {
+    const updateQuantityModal = (product: ProductViewDTO, unitOperation: 'add' | 'subtract') => {
         setOpenDialog(true);
 
         setDialogConfig({
-            title: 'Збільшити вагу',
             children: (
-                <ProductUpdateParam
-                    unitOperation="add"
+                <ProductUpdateQuantity
+                    unitOperation={unitOperation}
                     onSubmit={(data) => {
-                        updateMainParam(product.id, data);
+                        productService
+                            .updateProductQuantity(product.id, data)
+                            .then((product) => {
+                                setProducts((products) => products.map((i) => (i = i.id === product.id ? product : i)));
+                                notify({ message: 'Параметр успішно оновлено', severity: 'success' });
+                            })
+                            .catch((e) => {
+                                console.log(e);
+                                notify({ message: 'Помилка при оновленні параметру', severity: 'error' });
+                            })
+                            .finally(() => {
+                                setOpenDialog(false);
+                                setDialogConfig(null);
+                            });
                     }}
                     handleClose={() => {
                         setOpenDialog(false);
                     }}
-                    categoryName={product.categoryName}
-                />
-            ),
-        });
-    };
-
-    const decreaseProduct = (product: ProductViewDTO) => {
-        setOpenDialog(true);
-
-        const getLimit = (): number => {
-            let value = 0;
-
-            if (product.categoryName === 'bag') {
-                const quantity = product.fields.find((i) => i.name === 'quantity');
-                if (!!quantity) value = +quantity.value;
-            } else value = product.weight;
-
-            return value;
-        };
-
-        setDialogConfig({
-            title: 'Зменшити вагу',
-            children: (
-                <ProductUpdateParam
-                    unitOperation="subtract"
-                    onSubmit={(data) => {
-                        updateMainParam(product.id, data);
-                    }}
-                    handleClose={() => {
-                        setOpenDialog(false);
-                    }}
-                    limit={getLimit()}
+                    limit={unitOperation === 'subtract' ? product.quantity : undefined}
                     categoryName={product.categoryName}
                 />
             ),
@@ -154,8 +112,6 @@ export default function Products() {
     };
 
     const productsList = products.map((product, idx) => {
-        const unitText = product.categoryName === 'bag' ? 'Кількість' : 'Вагу';
-
         return (
             <ProductCard
                 key={idx}
@@ -192,21 +148,22 @@ export default function Products() {
                                     size="small"
                                     fullWidth
                                     onClick={() => {
-                                        increaseProduct(product);
+                                        updateQuantityModal(product, 'add');
                                     }}
                                     variant="outlined"
                                 >
-                                    Додати {unitText}
+                                    Додати Кількість
                                 </Button>
                                 <Button
                                     size="small"
                                     fullWidth
+                                    disabled={!product.quantity}
                                     onClick={() => {
-                                        decreaseProduct(product);
+                                        updateQuantityModal(product, 'subtract');
                                     }}
                                     variant="outlined"
                                 >
-                                    Зменшити {unitText}
+                                    Зменшити Кількість
                                 </Button>
                             </Stack>
                         </Stack>

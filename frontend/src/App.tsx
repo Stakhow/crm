@@ -112,14 +112,25 @@ export default function App(props: Props) {
 
                     <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                         {navItems.map((item, idx) => (
-                            <Button href={item.to} key={idx} sx={{ my: 2, color: 'white', display: 'block' }}>
+                            <Button
+                                component={NavLink}
+                                to={item.to}
+                                key={idx}
+                                sx={{ my: 2, color: 'white', display: 'block' }}
+                            >
                                 <ListItemButton sx={{ textAlign: 'center' }}>{item.title}</ListItemButton>
                             </Button>
                         ))}
                     </Box>
 
                     {!!cart && cart.quantity > 0 && (
-                        <IconButton href="/cart" size="large" aria-label="show 4 new mails" color="inherit">
+                        <IconButton
+                            component={NavLink}
+                            to="/cart"
+                            size="large"
+                            aria-label="show 4 new mails"
+                            color="inherit"
+                        >
                             <Badge badgeContent={cart.quantity} color="error">
                                 <ShoppingCartIcon />
                             </Badge>

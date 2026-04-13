@@ -157,7 +157,7 @@ export default function Order() {
                     </Card>
 
                     {order.items.map((product, idx) => (
-                        <ProductCard key={idx} product={product} />
+                        <ProductCard key={idx} product={product} isInCart={true} />
                     ))}
                 </Box>
             ) : (

@@ -29,6 +29,20 @@ const customTheme = createTheme({
             paper: '#fafafa', // Color for Paper components
         },
     },
+    components: {
+        MuiTextField: {
+            styleOverrides: {
+                root: {
+                    '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                        display: 'none',
+                    },
+                    '& input[type=number]': {
+                        MozAppearance: 'textfield',
+                    },
+                },
+            },
+        },
+    },
 });
 
 createRoot(document.getElementById('root')!).render(

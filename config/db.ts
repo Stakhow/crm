@@ -28,10 +28,10 @@ export class DexieDb extends Dexie {
   constructor() {
     super("crm");
 
-    this.version(4).stores({
+    this.version(1).stores({
       products:
         "++id, category, categoryId, categoryName, name, weight, length, thickness",
-      modifiers_groups: "++id",
+      modifiers_groups: "++id, *category",
       modifiers_values: "++id, groupId",
       product_modifiers_relations: "++id, productId, groupId",
       orders: "++id, clientId, createdAt, deadline",
@@ -50,7 +50,6 @@ db.on("ready", async () => {
   // Add initial users
   // modifiers_groups
   // modifiers_values
-
   if ((await db.modifiers_groups.count()) === 0) {
     const modIds: number[] = await db.modifiers_groups.bulkPut(
       [
@@ -117,43 +116,43 @@ db.on("ready", async () => {
   if ((await db.clients.count()) === 0) {
     const clients = [
       {
-        id: 0,
+        // id: 0,
         name: "Олександр Шевченко",
         phone: "+380501234567",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Олена Петренко",
         phone: "+380679876543",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Дмитро Бойко",
         phone: "+380935551234",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Тетяна Коваленко",
         phone: "+380664448899",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Андрій Бондаренко",
         phone: "+380682223344",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Марина Мельник",
         phone: "+380737770011",
         createdAt: Date.now(),
       },
       {
-        id: 0,
+        // id: 0,
         name: "Сергій Мороз",
         phone: "+380443210987",
         createdAt: Date.now(),

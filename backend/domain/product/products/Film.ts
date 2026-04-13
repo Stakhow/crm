@@ -1,4 +1,4 @@
-import type { ProductFormValuesDTO } from "../../../../dto/ProductFormValuesDTO";
+import type { ProductToCreateDTO } from "../../../../dto/ProductToCreateDTO";
 import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO";
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
 
@@ -26,23 +26,6 @@ export class Film extends BaseProduct {
     this.thickness = v;
   }
 
-  override fillData(data: ProductFormValuesDTO) {
-    this.selectModifiers(data);
-
-    const values = data.fields;
-
-    this.name = values.name ? String(values.name) : this.name;
-    this.width = +values.width ? +values.width : this.width;
-    this.weight = +values.weight ? +values.weight : this.weight;
-    this.thickness = +values.thickness ? +values.thickness : this.thickness;
-
-    this.autofillName();
-
-    this.setTotalAmount();
-
-    return this;
-  }
-
   override autofillName(): void {
     if (!this.name) {
       this.name = [this.category.title, this.width, this.thickness].join("/");
@@ -57,7 +40,7 @@ export class Film extends BaseProduct {
 
   override isValid(): boolean {
     return (
-      this.weight >= 0 &&
+      this.quantity >= 0 &&
       this.width >= this.WIDTH_MIN &&
       this.width <= this.WIDTH_MAX &&
       this.thickness >= this.THICKNESS_MIN &&
@@ -66,8 +49,22 @@ export class Film extends BaseProduct {
     );
   }
 
-  override getSpecialFields(): ProductToCreateFieldDTO[] {
+  override getFields(): ProductToCreateFieldDTO[] {
     return [
+      {
+        name: "quantity",
+        title: "Вага (кг)",
+        fieldType: "number",
+        value: this.quantity,
+        placeholder: "",
+      },
+      {
+        name: "name",
+        title: "Назва продукту",
+        fieldType: "text",
+        value: this.name,
+        placeholder: "",
+      },
       {
         name: "width",
         title: "Ширина (см)",

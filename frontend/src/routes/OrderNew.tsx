@@ -37,7 +37,7 @@ import type { ProductCategory } from '../../../backend/domain/product/ProductCat
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { priceFormat } from '../../../utils/utils';
 import * as Yup from 'yup';
-import { useParams, useSearchParams } from 'react-router';
+import { NavLink, useParams, useSearchParams } from 'react-router';
 import type { CartViewDTO } from '../../../dto/CartViewDTO';
 import { ProductSelect } from '../components/Order';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
@@ -45,7 +45,7 @@ import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 export interface OrderFormValues {
     client: number;
     totalAmount: number;
-    list: { categoryName: ProductCategory; id: number; weight: number; stock: number }[];
+    list: { categoryName: ProductCategory; id: number; quantity: number; stock: number }[];
 }
 
 export default function OrderNew() {
@@ -110,7 +110,7 @@ export default function OrderNew() {
                     products.map((i) => ({
                         categoryName: i.categoryName,
                         id: i.id,
-                        weight: i.weight,
+                        quantity: i.quantity,
                         stock: i.stock,
                     })),
                 );
@@ -162,7 +162,7 @@ export default function OrderNew() {
     }, [state]);
 
     const calc = (prodictId: number, value: number) => {
-        return productService.calculate(prodictId, value);
+        return productService.getTotalAmount(prodictId, value);
     };
 
     const initialValues: OrderFormValues = {
@@ -176,18 +176,33 @@ export default function OrderNew() {
             categoryName: Yup.string().required("Поле обов'язкове"),
             id: Yup.number().required("Поле обов'язкове"),
             stock: Yup.number().required("Поле обов'язкове"),
-            weight: Yup.number()
-                .transform((value, originalValue) => {
-                    return originalValue === '' ? undefined : Number(originalValue);
-                })
-                .positive('Позитивне значення')
-                .max(Yup.ref('stock'), 'Завелике значення')
-                .required("Поле обов'язкове"),
+
+            quantity: Yup.number().when('categoryName', {
+                is: 'bag',
+                then: (schema) =>
+                    schema
+                        .positive('Тільки позитивне число')
+                        .integer('Тільки ціле число')
+                        .max(Yup.ref('stock'), 'Завелике значення')
+                        .required("Поле обов'язкове"),
+                otherwise: (schema) =>
+                    schema
+                        .positive('Тільки позитивне число')
+                        .max(Yup.ref('stock'), 'Завелике значення')
+                        .required("Поле обов'язкове"),
+            }),
+            // quantity: Yup.number()
+            //     .transform((value, originalValue) => {
+            //         return originalValue === '' ? undefined : Number(originalValue);
+            //     })
+            //     .positive('Позитивне значення')
+            //     .max(Yup.ref('stock'), 'Завелике значення')
+            //     .required("Поле обов'язкове"),
         });
 
         return Yup.object().shape({
             client: Yup.string().required("Поле обов'язкове"),
-            totalAmount: Yup.number().positive('Позитивне значення').required("Поле обов'язкове"),
+            totalAmount: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
             list: Yup.array().of(listItem).min(1, 'Позитивне значення').required("Поле обов'язкове"),
         });
     }, [list]);
@@ -199,12 +214,11 @@ export default function OrderNew() {
         cartService
             .addCartItem(data)
             .then((data) => {
-                console.log('ADD CART ITEM', data);
+                return window.location.reload();
 
                 setProductsInCart(data.products.map((i) => i.id));
 
                 setCart(data);
-                // setClient(data.clientId);
 
                 const products = data.products;
 
@@ -214,7 +228,7 @@ export default function OrderNew() {
                         products.map((i) => ({
                             categoryName: i.categoryName,
                             id: i.id,
-                            weight: i.weight,
+                            quantity: i.quantity,
                             stock: i.stock,
                         })),
                     );
@@ -241,6 +255,8 @@ export default function OrderNew() {
         cartService
             .deleteCartItem(id)
             .then((data) => {
+                return window.location.reload();
+
                 setProductsInCart(data.products.map((i) => i.id));
 
                 setCart(data);
@@ -254,7 +270,7 @@ export default function OrderNew() {
                         products.map((i) => ({
                             categoryName: i.categoryName,
                             id: i.id,
-                            weight: i.weight,
+                            quantity: i.quantity,
                             stock: i.stock,
                         })),
                     );
@@ -306,7 +322,6 @@ export default function OrderNew() {
     const SelectedProductList = () => {
         const { values, isValid, handleChange, errors, setFieldValue } = useFormikContext<OrderFormValues>();
         const { list, client } = values;
-        console.log(errors);
 
         const ItemNotFound = () => (
             <Typography
@@ -322,7 +337,7 @@ export default function OrderNew() {
         const emptyItem = {
             categoryName: '',
             id: '',
-            weight: 0,
+            quantity: 0,
             stock: 0,
         };
 
@@ -407,18 +422,7 @@ export default function OrderNew() {
                 validationSchema={validationSchema}
                 enableReinitialize={true}
             >
-                {({
-                    errors,
-                    touched,
-                    isValidating,
-                    values,
-                    setFieldValue,
-                    isSubmitting,
-                    setSubmitting,
-                    handleChange,
-                    isValid,
-                }) => {
-                    console.log('INIT', values);
+                {({ errors, values, isSubmitting, handleChange }) => {
                     return (
                         <Form>
                             <FormControl fullWidth margin="dense">
@@ -448,10 +452,13 @@ export default function OrderNew() {
                             <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
                                 <Toolbar>
                                     <Button
+                                        end
+                                        to={'/cart'}
+                                        component={NavLink}
                                         variant="outlined"
                                         sx={{ color: 'white', borderColor: 'white' }}
                                         fullWidth
-                                        href={'/cart'}
+                                        
                                         disabled={values.totalAmount === 0}
                                     >
                                         Перейти в Корзину | Сума:&nbsp;

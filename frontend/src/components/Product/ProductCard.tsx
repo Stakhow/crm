@@ -6,7 +6,15 @@ import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
 
 import type { ReactNode } from 'react';
 
-export function ProductCard({ product, children }: { product: ProductViewDTO; children?: ReactNode }) {
+export function ProductCard({
+    product,
+    children,
+    isInCart,
+}: {
+    product: ProductViewDTO;
+    children?: ReactNode;
+    isInCart?: boolean;
+}) {
     const Details = ({ data }: { data: { title: string; value: string | number; price?: number }[] }) =>
         !!data &&
         data.map(({ title, value, price }, idx) => (
@@ -26,14 +34,16 @@ export function ProductCard({ product, children }: { product: ProductViewDTO; ch
 
                 <Details data={product.modifiers} />
 
-                <Details data={product.fields.filter((i) => !['name', 'weight'].includes(i.name))} />
+                <Details data={product.fields} />
 
                 {!!product.createdAt && <Typography>Створено: {dateToLocalString(product.createdAt)}</Typography>}
 
                 <hr />
 
                 <Typography>
-                    Вага (кг): <b>{product.weight || 0}</b>
+                    {isInCart ? 'Вага' : 'Доступно на складі'}
+                    {product.categoryName === 'bag' ? ' (шт.): ' : ' (кг): '}
+                    <b>{product.quantity ?? 0}</b>
                 </Typography>
 
                 <Typography>

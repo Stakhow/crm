@@ -3,6 +3,7 @@ import type { ProductCategory } from "./../backend/domain/product/ProductCategor
 export type ProductViewDTO = {
   id: number;
   createdAt: number;
+  updatedAt: number;
   name: string;
   category: {
     id: number;
@@ -10,7 +11,7 @@ export type ProductViewDTO = {
     title: string;
   };
   categoryName: ProductCategory;
-  weight: number;
+  quantity: number;
   modifiers: { title: string; value: string | number; price: number }[];
   price: number;
   totalAmount: number;

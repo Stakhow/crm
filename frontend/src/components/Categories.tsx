@@ -42,7 +42,7 @@ export function Categories({ categories, value, onChange, multiple = false, erro
                 id={`category-select-${name}`}
                 name={name}
                 label="Категорії"
-                value={value}
+                value={value ?? ''}
                 error={!!error}
                 {...multipleSelect}
                 {...rest}

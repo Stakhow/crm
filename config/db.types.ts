@@ -3,26 +3,10 @@ import type { ProductCategory } from "../backend/domain/product/ProductCategory"
 import type { ClientDTO } from "../dto/ClientDTO";
 import type { OrderStatus } from "../backend/domain/order/Order";
 import type { ProductViewDTO } from "../dto/ProductViewDTO";
+import { ProductDataDTO } from "../dto/ProductDataDTO";
 
 // ---------- PRODUCTS ----------
-export type ProductDB = {
-  id: number;
-  name: string;
-  createdAt: number;
-  category: {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  };
-  categoryName: ProductCategory;
-  price: number;
-  totalAmount: number;
-  weight: number;
-  width?: number | undefined;
-  thickness?: number | undefined;
-  length?: number | undefined;
-  quantity?: number | undefined;
-};
+export type ProductDB = ProductDataDTO;
 
 // ---------- MODIFIERS ----------
 export type ModifierGroupDB = Optional<
@@ -41,7 +25,7 @@ export type ModifierValueDB = Optional<
     id: number;
     groupId: number;
     name: string;
-    price: number;
+    price: number;  
   },
   "id"
 >;

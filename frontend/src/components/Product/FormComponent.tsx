@@ -12,196 +12,221 @@ import {
     Button,
     Backdrop,
     CircularProgress,
+    Stack,
 } from '@mui/material';
-import { useFormikContext, Formik, Form, type FormikHelpers } from 'formik';
-import { useMemo, useEffect } from 'react';
-import { productService } from '../../../../backend';
-import type { ProductFormValuesDTO } from '../../../../dto/ProductFormValuesDTO';
+import { useFormikContext, Formik, Form, type FormikHelpers, FieldArray, getIn, Field } from 'formik';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
-import { getWeightOfBag, priceFormat } from '../../../../utils/utils';
+import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
+import { productService } from '../../../../backend';
+import { useParams } from 'react-router';
+import { useNotification } from '../NotificationContext';
 
-export const FormComponent = ({
-    product,
-    onFormSubmit,
-    values,
-}: {
-    product: ProductToCreateDTO;
-    onFormSubmit: (values: ProductFormValuesDTO, FormikHelpers: FormikHelpers<ProductFormValuesDTO>) => void;
-    values?: ProductFormValuesDTO;
-}) => {
-    const categoryName = product.category.name;
+let counter = 0;
 
-    const initialValues: ProductFormValuesDTO = {
-        price: 0,
-        totalAmount: 0,
-        categoryName: categoryName,
-        fields: {},
-        modifiers: {},
-    };
+export const FormComponent = ({ id, values }: { id: number; values: ProductToCreateDTO }) => {
+    const [weight, setWeight] = useState(values.weight);
+    const [price, setPrice] = useState(values.price);
+    const [totalAmount, setTotalAmount] = useState(values.totalAmount);
 
-    product.initialValues.modifiers.map((i) => {
-        initialValues.modifiers[i.id] = i.itemId;
-    });
+    const isFirstRender = useRef(true);
 
-    product.initialValues.fields.map((i) => {
-        initialValues.fields[i.name] = i.value;
-    });
-
+    const { notify } = useNotification();
     const validationSchema = () => {
-        const fields = {};
-
         const allFields = {
-            name: Yup.string(),
-            weight: Yup.number().when('categoryName', {
-                is: 'bag',
-                then: (schema) => schema.notRequired(),
-                otherwise: (schema) => schema.min(0, 'Не менше ніж нуль').required("Поле обов'язкове"),
-            }),
             width: Yup.number().min(30, 'Замалий розмір').max(100, 'Завеликий розмір').required("Поле обов'язкове"),
             length: Yup.number().min(25, 'Замалий розмір').max(200, 'Завеликий розмір').required("Поле обов'язкове"),
             thickness: Yup.number().min(25, 'Замалий розмір').max(100, 'Завеликий розмір').required("Поле обов'язкове"),
-            quantity: Yup.number()
-                .positive('Тільки позитивне число')
-                .integer('Тільки ціле число')
-                .required("Поле обов'язкове"),
+            quantity: Yup.number().positive('Тільки позитивне число').required("Поле обов'язкове"),
         };
 
-        if (!!product) {
-            product.initialValues.fields.forEach((i) => {
-                const key = i.name as keyof typeof allFields;
+        return Yup.object({
+            categoryName: Yup.string().required(),
+            // totalAmount: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
+            // price: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
 
-                Object.assign(fields, { [key]: allFields[key] });
-            });
-        }
+            fields: Yup.array().of(
+                Yup.object({
+                    name: Yup.string().required(),
 
-        return Yup.object().shape({
-            categoryName: Yup.string().required("Поле обов'язкове"),
-            fields: Yup.object().shape(fields),
+                    value: Yup.lazy((value, { parent, options }) => {
+                        const name = parent.name;
+                        const categoryName = options?.context?.categoryName;
+
+                        let schema = allFields[name];
+
+                        if (!schema) {
+                            return Yup.mixed();
+                        }
+
+                        schema = schema.transform((val, originalVal) =>
+                            originalVal === '' ? undefined : Number(originalVal),
+                        );
+
+                        if (name === 'quantity' && categoryName === 'bag') {
+                            schema = schema.integer('Тільки ціле число');
+                        }
+
+                        return schema;
+                    }),
+                }),
+            ),
         });
     };
 
-    const schema = useMemo(() => validationSchema(), [product]);
+    const schema = useMemo(() => validationSchema(), [values]);
 
     const AutoCalc = () => {
-        const { setFieldValue, values, isValid, setSubmitting, errors } = useFormikContext<ProductFormValuesDTO>();
+        const { values, isValid, setSubmitting } = useFormikContext<ProductToCreateDTO>();
 
         useEffect(() => {
-            productService.calculateDraft(categoryName, values).then(({ sum, price }) => {
-                if (categoryName === 'bag') {
-                    setFieldValue(
-                        'fields.weight',
-                        getWeightOfBag(
-                            Number(values.fields.length),
-                            Number(values.fields.width),
-                            Number(values.fields.thickness),
-                            Number(values.fields.quantity),
-                        ),
-                    );
-                }
+            if (isFirstRender.current) {
+                isFirstRender.current = false;
+                return;
+            }
+            if (!isValid) return;
 
-                console.log(price);
+            console.log('COMPONENT times', ++counter);
+            setSubmitting(true);
+            productService.calculateDraft(id, values).then((updatedValues) => {
+                const { price, totalAmount, weight } = updatedValues;
 
-                setFieldValue('price', price);
-                setFieldValue('totalAmount', sum);
+                setTotalAmount(totalAmount);
+                setWeight(weight);
+                setPrice(price);
+
                 setSubmitting(false);
             });
-        }, [values, isValid]);
+        }, [values.fields, values.modifiers]);
 
         return null;
     };
     return (
         <Formik
             validationSchema={schema}
-            initialValues={initialValues}
-            validateOnMount={true}
+            initialValues={values}
+            // validateOnMount={true}
+            // validateOnChange={true}
             enableReinitialize={true}
-            onSubmit={onFormSubmit}
+            onSubmit={(values: ProductToCreateDTO, FormikHelpers: FormikHelpers<ProductToCreateDTO>) => {
+                const action = () => {
+                    return !!id
+                        ? productService.updateProduct(id, values)
+                        : productService.createProduct(values.categoryName, values);
+                };
+
+                action()
+                    .then((product) => {
+                        notify({ message: `Продукт успішно ${!!id ? 'оновлено' : 'створено'} `, severity: 'success' });
+                    })
+                    .catch((error) => {
+                        notify({
+                            message: `Помилка при ${!!id ? 'оновленні' : 'створенні'} продукту`,
+                            severity: 'error',
+                        });
+                        console.error('Error editing product:', error);
+                    })
+                    .finally(() => {
+                        FormikHelpers.setSubmitting(false);
+                    });
+            }}
+            context={{ categoryName: values.categoryName }}
         >
             {({ isSubmitting, setFieldValue, values, errors, touched, handleBlur, handleChange }) => {
+                const { modifiers, fields } = values;
+
                 return (
                     <Form>
-                        {!!product &&
-                            product.modifiers &&
-                            product.modifiers.map((item, index) => {
-                                const getError = (): string => {
-                                    const error = errors.modifiers?.[item.id];
-                                    const isTouched = touched.modifiers?.[item.id];
+                        <AutoCalc />
+                        <FieldArray
+                            name="modifiers"
+                            render={() => (
+                                <Box>
+                                    {modifiers.length > 0 &&
+                                        modifiers.map((modifier, index) => {
+                                            const fieldName = `modifiers.${index}.value`;
+                                            const error = getIn(errors, fieldName);
 
-                                    return isTouched ? (error ?? '') : '';
-                                };
+                                            return (
+                                                <FormControl fullWidth margin="dense" key={index}>
+                                                    <InputLabel id={fieldName}>{modifier.name}</InputLabel>
+                                                    <Select
+                                                        aria-labelledby={fieldName}
+                                                        id={`modifier-select-${modifier.id}`}
+                                                        name={fieldName}
+                                                        value={modifier.value}
+                                                        onChange={handleChange}
+                                                        error={!!error}
+                                                    >
+                                                        {modifier.list.map((i, itemIdx) => (
+                                                            <MenuItem
+                                                                key={itemIdx}
+                                                                value={i.id}
+                                                                sx={{ textTransform: 'capitalize' }}
+                                                            >
+                                                                {i.name} {i.price}грн.
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
 
-                                return (
-                                    <FormControl fullWidth margin="dense" key={item.id}>
-                                        <InputLabel id={`modifierSelectLabel_${item.id}`}>{item.name}</InputLabel>
-                                        <Select
-                                            aria-labelledby={`modifierSelectLabel_${item.id}`}
-                                            id={`modifier-select-${item.id}`}
-                                            label={`modifier-select-${item.id}`}
-                                            name={`modifiers.${item.id}`}
-                                            value={values.modifiers?.[item.id] ?? ''}
-                                            onChange={handleChange}
-                                            error={!!getError()}
-                                        >
-                                            {item.list.map((i, itemIdx) => (
-                                                <MenuItem
-                                                    key={itemIdx}
-                                                    value={i.id}
-                                                    sx={{ textTransform: 'capitalize' }}
+                                                    <FormHelperText error={!!error}>{error}</FormHelperText>
+                                                </FormControl>
+                                            );
+                                        })}
+                                </Box>
+                            )}
+                        />
+
+                        <FieldArray
+                            name="fields"
+                            render={() => (
+                                <Stack direction={'row'} flexWrap={'wrap'} spacing={1} useFlexGap>
+                                    {fields.length > 0 &&
+                                        fields.map((field, index) => {
+                                            const fieldName = `fields.${index}.value`;
+                                            const error = getIn(errors, fieldName);
+
+                                            const isWeightField = field.name === 'weight';
+                                            field.value = isWeightField ? weight : field.value;
+
+                                            return (
+                                                <FormControl
+                                                    sx={{
+                                                        flex: field.name === 'name' ? '2 1 100%' : '1 1 40%',
+                                                    }}
+                                                    margin="dense"
+                                                    key={index}
                                                 >
-                                                    {i.name} {i.price}грн.
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
+                                                    <TextField
+                                                        placeholder={field.placeholder ?? ''}
+                                                        disabled={field.disabled}
+                                                        hiddenLabel={field.fieldType === 'hidden'}
+                                                        name={fieldName}
+                                                        type={field.fieldType}
+                                                        label={field.title}
+                                                        value={field.value !== 0 ? field.value : ''}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        // onFocus={(e) => {
+                                                        //     if (e.target.value == '0')
+                                                        //         setFieldValue(fieldName, '', false);
+                                                        // }}
+                                                        helperText={error}
+                                                        error={!!error}
+                                                    />
+                                                </FormControl>
+                                            );
+                                        })}
+                                </Stack>
+                            )}
+                        />
 
-                                        <FormHelperText error={!!getError()}>{getError()}</FormHelperText>
-                                    </FormControl>
-                                );
-                            })}
-
-                        {!!product && (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: '-8px' }}>
-                                {product.extendedFields?.map((field) => {
-                                    const name = field.name as keyof ProductFormValuesDTO;
-                                    const error = errors?.['fields']?.[name];
-                                    const isTouched = touched.fields?.[name];
-                                    return (
-                                        <FormControl
-                                            sx={{
-                                                flex: field.name === 'name' ? '2 1 100%' : '1 1 40%',
-                                                mx: '8px',
-                                            }}
-                                            margin="dense"
-                                            key={name}
-                                        >
-                                            <TextField
-                                                placeholder={field.placeholder ?? field.placeholder}
-                                                disabled={categoryName === 'bag' && field.name === 'weight'}
-                                                name={`fields[${name}]`}
-                                                type={field.fieldType}
-                                                label={field.title}
-                                                value={values.fields[name] ?? ''}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                onFocus={(e) => {
-                                                    if (e.target.value == '0')
-                                                        setFieldValue(`fields[${name}]`, '', false);
-                                                }}
-                                                helperText={isTouched && typeof error === 'string' ? error : ''}
-                                                error={!!isTouched && !!error}
-                                            />
-                                        </FormControl>
-                                    );
-                                })}
-                            </Box>
-                        )}
                         {!!values.price && (
-                            <Typography variant="h6" sx={{ mt: 1 }} textAlign={'center'}>
-                                Ціна: <b>{priceFormat(values.price)}/кг</b>
+                            <Typography variant="h6" sx={{ my: 2 }} textAlign={'center'}>
+                                Ціна: <b>{priceFormat(price)}/кг</b>
                             </Typography>
                         )}
-
-                        {!!product && <AutoCalc />}
                         <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
                             <Toolbar>
                                 <Button
@@ -209,10 +234,10 @@ export const FormComponent = ({
                                     sx={{ color: 'white', borderColor: 'white' }}
                                     fullWidth
                                     type={'submit'}
-                                    disabled={!product}
+                                    disabled={!values}
                                 >
                                     Підтвердити | Сума:&nbsp;
-                                    <b>{priceFormat(values.totalAmount)}</b>
+                                    <b>{priceFormat(totalAmount)}</b>
                                 </Button>
                             </Toolbar>
                         </AppBar>

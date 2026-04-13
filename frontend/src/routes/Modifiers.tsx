@@ -26,6 +26,7 @@ import type { ProductCategory } from '../../../backend/domain/product/ProductCat
 import type { ProductModifierItemDTO } from '../../../dto/ProductModifierItemDTO';
 import { useNotification } from '../components/NotificationContext';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
+import { NavLink } from 'react-router';
 
 export interface DialogProps {
     open: boolean;
@@ -70,7 +71,14 @@ export default function Modifiers() {
                         <>
                             Помилка, модифікатор використовується в продуктах:
                             {error.details.data.map((i: number) => (
-                                <Button variant="contained" size="small" color="info" key={i} href={`/products/${i}`}>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    color="info"
+                                    key={i}
+                                    component={NavLink}
+                                    to={`/products/${i}`}
+                                >
                                     Продукт ID: {i}
                                 </Button>
                             ))}
@@ -96,10 +104,6 @@ export default function Modifiers() {
     }, []);
 
     function DialogComponent({ open, modifier }: DialogProps) {
-        console.log('modifier', modifier);
-        console.log('categories', categories);
-        console.log('categoriesMap', categoriesMap);
-
         const isEditMode = !!modifier && !!modifier.id;
 
         const initialValues: Values = isEditMode

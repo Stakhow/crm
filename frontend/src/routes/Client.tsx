@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from 'react-router';
+import { Link, useParams, useNavigate, NavLink } from 'react-router';
 import { useNotification } from '../components/NotificationContext';
 import { useEffect, useState } from 'react';
 import Card from '@mui/material/Card';
@@ -106,8 +106,8 @@ export default function ClientPage() {
                     </Typography>
 
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        {/*<Fab href={`tel:${client.phone}`} size={"small"} color={'primary'}><PhoneIcon/></Fab>*/}
-                        <Button href={`/orders/new?clientId=${id}`} size={'large'} variant="outlined" color="success">
+                        
+                        <Button component={NavLink} to={`/orders/new?clientId=${id}`} size={'large'} variant="outlined" color="success">
                             Нове замовлення
                         </Button>
                     </Box>
@@ -145,7 +145,7 @@ export default function ClientPage() {
                             )}
                             <ListItem sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <Stack direction={'row'} mt={2} spacing={1} width={'100%'}>
-                                    <Button fullWidth variant="outlined" href={`/clients/edit/${id}`}>
+                                    <Button fullWidth variant="outlined" component={NavLink} to={`/clients/edit/${id}`}>
                                         Редагувати
                                     </Button>
                                     <Button fullWidth variant="outlined" color="error" onClick={handleClickOpen}>

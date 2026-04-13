@@ -1,4 +1,5 @@
 import type { ProductModifierItemDTO } from "../../../../dto/ProductModifierItemDTO";
+import { AppError } from "../../../../utils/error";
 import type { ProductCategory } from "../ProductCategory";
 import type { IProductModifier } from "./IProductModifier";
 
@@ -11,24 +12,42 @@ export class ProductModifier implements IProductModifier {
     readonly category: ProductCategory[],
     public list: ProductModifierItemDTO[],
   ) {
+    if (typeof id === undefined)
+      throw new AppError("DOMAIN", "Не встановлено ID модифікатора");
+    if (!name || !name.length)
+      throw new AppError("DOMAIN", "Не встановлено назву модифікатора");
+    if (!category.length || category.some((i) => !i))
+      throw new AppError("DOMAIN", "Не встановлено категорії модифікатора");
+
+    if (!list.length || list.some((i) => !i.id || !i.name))
+      throw new AppError("DOMAIN", "Помилка списку модифікатора");
+
     this._list = list;
-    this.list = this.getList();
+    this.list = this._getList();
   }
   showFullData() {
     return {
       id: this.id,
       name: this.name,
       category: this.category,
-      list: this.list,
+      list: this._getList(),
     };
   }
 
-  private getList() {
+  private _getList() {
     return this._list;
   }
 
   select(value: number) {
-    this.list = this.getList().filter((i) => i.id === value);
+    const selectedList =
+      typeof value !== "undefined"
+        ? this._getList().filter((i) => i.id === value)
+        : this._getList().filter((_, idx) => idx === 0);
+
+    if (!selectedList.length)
+      throw new AppError("DOMAIN", "Пустий список модифікатора");
+
+    this.list = selectedList;
   }
 
   apply(price: number) {

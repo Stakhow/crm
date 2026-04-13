@@ -18,12 +18,7 @@ export class ProductRepository implements IProductRepository {
   constructor(private productManager: ProductManager) {}
 
   async save(product: BaseProduct): Promise<number> {
-    const data = {
-      ...product.toPersistence(),
-      createdAt: Date.now(),
-    };
-
-    const productId = await db.products.put(data);
+    const productId = await db.products.put(product.toPersistence());
 
     await db.product_modifiers_relations.bulkAdd(
       product.modifiersPersistence.map((i) => ({
@@ -37,12 +32,24 @@ export class ProductRepository implements IProductRepository {
   }
 
   async update(id: number, product: BaseProduct): Promise<number> {
-    const data = {
-      ...product.toPersistence(),
-      updatedAt: Date.now(),
-    };
+    const persistedProduct = product.toPersistence();
+    const { appliedModifiers } = product;
 
-    return await db.products.update(id, data);
+    return db.transaction(
+      "rw",
+      db.products,
+      db.product_modifiers_relations,
+      async () => {
+        await db.product_modifiers_relations
+          .where("productId")
+          .equals(id)
+          .modify((row) => {
+            row.itemId = appliedModifiers[row.groupId];
+          });
+
+        return await db.products.update(id, persistedProduct);
+      },
+    );
   }
 
   async getById(id: number): Promise<BaseProduct> {
@@ -50,13 +57,25 @@ export class ProductRepository implements IProductRepository {
 
     if (!productDTO) throw new AppError("DOMAIN", "Продукту не існує");
 
-    const modifiers = await this._getProductModifiers([productDTO.id]);
+    const modifiersMap = await this._getProductModifiers([productDTO.id]);
+
+    const modifiers = modifiersMap.get(id);
+    if (!modifiers)
+      throw new AppError("DOMAIN", "Не знайдено модифікаторів продукту");
+
+    const appliedModifiers = await this._getProductsModifiersRelations([id]);
+    if (!appliedModifiers.size || !appliedModifiers.get(id))
+      throw new AppError(
+        "DOMAIN",
+        "Не знайдено збережених модифікаторів продукту",
+      );
 
     const product = this.productManager.createByCategory(
       productDTO.categoryName,
       {
+        modifiers,
         ...productDTO,
-        modifiers: modifiers.get(id),
+        appliedModifiers: appliedModifiers.get(id) ?? [],
       },
     );
 
@@ -72,14 +91,29 @@ export class ProductRepository implements IProductRepository {
     productsDTO: ProductDataDTO[],
   ): Promise<BaseProduct[]> {
     const productIds = productsDTO.map((i) => i.id);
-    const modifiers = await this._getProductModifiers(productIds);
+    const modifiersMap = await this._getProductModifiers(productIds);
 
-    return productsDTO.map((dto) =>
-      this.productManager.createByCategory(dto.categoryName, {
+    const appliedModifiersMap =
+      await this._getProductsModifiersRelations(productIds);
+
+    return productsDTO.map((dto) => {
+      const appliedModifiers = appliedModifiersMap.get(dto.id);
+      if (!appliedModifiers)
+        throw new AppError(
+          "DOMAIN",
+          "Не знайдено збережених даних модифікаторів продукту",
+        );
+
+      const modifiers = modifiersMap.get(dto.id);
+      if (!modifiers)
+        throw new AppError("DOMAIN", "Не знайдено модифікаторів продукту");
+
+      return this.productManager.createByCategory(dto.categoryName, {
         ...dto,
-        modifiers: modifiers.get(dto.id),
-      }),
-    );
+        modifiers,
+        appliedModifiers,
+      });
+    });
   }
 
   async getAll(): Promise<BaseProduct[]> {
@@ -196,8 +230,15 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async getAllModifiers(): Promise<ProductModifier[]> {
-    const modsDTO = await db.modifiers_groups.toArray();
+  async getAllModifiers(
+    categoryName?: ProductCategory,
+  ): Promise<ProductModifier[]> {
+    const modsDTO = categoryName
+      ? await db.modifiers_groups
+          .where("category")
+          .equals(categoryName)
+          .toArray()
+      : await db.modifiers_groups.toArray();
 
     const list: ModListDTO[] = await db.modifiers_values
       .where("groupId")
@@ -220,6 +261,27 @@ export class ProductRepository implements IProductRepository {
     );
 
     return mods;
+  }
+
+  private async _getProductsModifiersRelations(productsId: number[]) {
+    const relations = await db.product_modifiers_relations
+      .where("productId")
+      .anyOf(productsId)
+      .toArray();
+
+
+    const relationMap = relations.reduce((acc, current) => {
+      const row = acc.get(current.productId);
+      if (row) row[current.groupId] = current.itemId;
+      else
+        acc.set(current.productId, {
+          [current.groupId]: current.itemId,
+        });
+
+      return acc;
+    }, new Map<number, Record<number, number>>());
+
+    return relationMap;
   }
 
   private async _getProductModifiers(
@@ -250,6 +312,7 @@ export class ProductRepository implements IProductRepository {
     ]);
 
     const modifiersMap = new Map<number, ProductModifier[]>();
+
     productIds.map((id) => {
       const r = relations
         .filter((i) => i.productId === id)
@@ -257,7 +320,8 @@ export class ProductRepository implements IProductRepository {
           return {
             ...groups.find((g) => g.id === i.groupId),
             list: values.filter(
-              (v) => v.groupId === i.groupId && v.id === i.itemId,
+              (v) => v.groupId === i.groupId,
+              // (v) => v.groupId === i.groupId && v.id === i.itemId, // ONLY ONE ITEM LIST(OPTION) in Modifier
             ),
           };
         })

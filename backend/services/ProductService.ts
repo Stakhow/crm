@@ -6,7 +6,7 @@ import { AppError } from "../../utils/error";
 import type { ProductRepository } from "../repositories/product/ProductRepository";
 import type { ProductViewDTO } from "../../dto/ProductViewDTO";
 import type { ProductModifierItemDTO } from "../../dto/ProductModifierItemDTO";
-import type { ProductFormValuesDTO } from "../../dto/ProductFormValuesDTO";
+import type { ProductToCreateDTO } from "../../dto/ProductToCreateDTO";
 
 export class ProductService {
   constructor(
@@ -24,21 +24,25 @@ export class ProductService {
 
     if (!category) throw new AppError("SERVICE", "Категорію не знайдено");
 
-    // TODO: filter mods
-    const modifiers = await this.productRepository.getAllModifiers();
+    const modifiers =
+      await this.productRepository.getAllModifiers(categoryName);
 
     const props = {
       id: 0,
       category,
-      modifiers: modifiers.filter((i) => i.category.includes(categoryName)),
+      modifiers,
       price: 0,
       totalAmount: 0,
+      name: "",
+      quantity: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      appliedModifiers: [],
     };
 
     return this.productManager.createByCategory(categoryName, props);
   }
 
-  // TODO: remove this method in future
   public async getAllModifiers() {
     const mods = await this.productRepository.getAllModifiers();
 
@@ -93,34 +97,25 @@ export class ProductService {
 
   public async init(categoryName: ProductCategory) {
     const product = await this._create(categoryName);
-
+    console.log(product);
     return product.toCreate();
   }
   public async initToEdit(productId: number) {
-    const _product = await this.productRepository.getById(productId);
+    const product = await this.productRepository.getById(productId);
 
-    const allowedField = ["weight", "name", "quantity"];
-
-    const product = _product.toCreate();
-
-    product.extendedFields = product.extendedFields.filter((i) =>
-      allowedField.includes(i.name),
-    );
-    product.modifiers = [];
-
-    return product;
+    return product.toCreate();
   }
 
-  public async save(
+  public async createProduct(
     categoryName: ProductCategory,
-    values: any,
+    values: ProductToCreateDTO,
   ): Promise<number> {
     const product = await this._create(categoryName);
 
     return new Promise((resolve, reject) => {
       product.fillData(values);
-      console.log(product.toView());
-      if (product.toView().weight === 0)
+
+      if (product.toView().quantity === 0)
         throw new AppError("DOMAIN", "Неправильні дані продукту");
 
       if (product.isValid()) resolve(this.productRepository.save(product));
@@ -139,40 +134,35 @@ export class ProductService {
   }
 
   public async calculateDraft(
-    categoryName: ProductCategory,
-    values: ProductFormValuesDTO,
-  ): Promise<{ sum: number; isValid: boolean; price: number }> {
-    const product = await this._create(categoryName);
+    id: number,
+    values: ProductToCreateDTO,
+  ): Promise<ProductToCreateDTO> {
+    const product = !!id
+      ? await this.getProduct(id)
+      : await this._create(values.categoryName);
+
+    if (!product)
+      throw new AppError("SERVICE", "Помилка при створенні продукту");
+    console.log("vales", values);
     return new Promise((resolve, reject) => {
       try {
-        if (!product)
-          throw new AppError("SERVICE", "Помилка при створенні продукту");
-
         product.fillData(values);
-        setTimeout(() => {
-          resolve(product.calculate());
-        }, 0);
+        console.log("vvvvvv", product);
+        resolve(product.toCreate());
       } catch (error) {
+        console.log(error);
         reject(error);
       }
     });
   }
-
-  public async calculate(
-    id: number,
-    value: number,
-  ): Promise<{ sum: number; isValid: boolean }> {
+  public async getTotalAmount(id: number, value: number): Promise<number> {
     const product = await this.productRepository.getById(id);
-
-    product.setMainParam(value);
 
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        resolve(product.calculate());
+        resolve(product.getTotalAmount(value));
       }, 0);
     });
-
-    // return product.calculate();
   }
 
   public async getByCategory(categoryName: ProductCategory) {
@@ -232,13 +222,11 @@ export class ProductService {
 
   public async getProductToView(productId: number) {
     const product = await this.productRepository.getById(productId);
-
     return product.toView();
   }
 
-  public async updateProduct(productId: number, values: ProductFormValuesDTO) {
+  public async updateProduct(productId: number, values: ProductToCreateDTO) {
     const product = await this.productRepository.getById(productId);
-
     return new Promise<any>((resolve, reject) => {
       product.fillData(values);
 
@@ -251,15 +239,15 @@ export class ProductService {
     });
   }
 
-  public async updateProductMainParam(
+  public async updateProductQuantity(
     productId: number,
     {
       unitOperation,
-      param,
-    }: { unitOperation: "add" | "subtract"; param: number },
+      quantity,
+    }: { unitOperation: "add" | "subtract"; quantity: number },
   ) {
     const product = await this.productRepository.getById(productId);
-    product.updateMainParam(Number(param), unitOperation);
+    product.updateQuantity(Number(quantity), unitOperation);
 
     await this.productRepository.update(productId, product);
 

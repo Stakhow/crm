@@ -17,6 +17,7 @@ import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
 import type { OrderFormValues } from '../../routes/OrderNew';
 import { useEffect, useState } from 'react';
 import { priceFormat } from '../../../../utils/utils';
+import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 
 type ProductQuantityFieldProps = FieldHookConfig<string> & {
     label: string;
@@ -48,10 +49,8 @@ type SelectedProductCardProps = {
     isProductInCart: boolean;
     addCartItem: ({ productId, quantity, clientId }: { productId: number; quantity: number; clientId: number }) => void;
     deleteCartItem: (id: number) => void;
-    calcAmount: (id: number, quantity: number) => Promise<{ sum: number; isValid: boolean }>;
+    calcAmount: (id: number, quantity: number) => Promise<number>;
 };
-
-type ListItemKey = keyof OrderFormValues['list'][number];
 
 const SelectedProductCard = ({
     index,
@@ -64,17 +63,17 @@ const SelectedProductCard = ({
     const { setFieldValue, values, errors, setSubmitting, isValid } = useFormikContext<OrderFormValues>();
     const [amount, setAmount] = useState<number>(0);
 
-    const weightError = getIn(errors, `list.${index}.weight`);
-    const weightValue = getIn(values, `list.${index}.weight`);
+    const weightError = getIn(errors, `list.${index}.quantity`);
+    const weightValue = getIn(values, `list.${index}.quantity`);
     const idValue = getIn(values, `list.${index}.id`);
 
     useEffect(() => {
         if (!weightError) {
             setSubmitting(true);
             calcAmount(product.id, weightValue)
-                .then((data) => {
+                .then((totalAmount) => {
                     setSubmitting(false);
-                    setAmount(data.sum);
+                    setAmount(totalAmount);
                 })
                 .catch(() => {
                     setSubmitting(false);
@@ -83,19 +82,19 @@ const SelectedProductCard = ({
     }, [weightValue, weightError]);
 
     useEffect(() => {
-        setFieldValue(`list.${index}.stock`, product.weight, false);
+        setFieldValue(`list.${index}.stock`, product.quantity, false);
         if (!isProductInCart) {
-            setFieldValue(`list.${index}.weight`, '', false);
+            setFieldValue(`list.${index}.quantity`, '', false);
         }
     }, [idValue]);
 
     return (
-        <ProductCard product={product}>
+        <ProductCard product={product} isInCart={isProductInCart}>
             <Stack direction={'column'} p={2}>
-                {Number(product.weight) > 0 ? (
+                {Number(product.quantity) > 0 ? (
                     <ProductQuantityField
-                        name={`list.${index}.weight`}
-                        id={`list.${index}.weight`}
+                        name={`list.${index}.quantity`}
+                        id={`list.${index}.quantity`}
                         label={product.categoryName === 'bag' ? 'Кількість' : 'Вага'}
                         disabled={isProductInCart}
                     />
@@ -161,7 +160,7 @@ type ProductSelectProps = {
     productsInCart: number[];
     addCartItem: (data: { productId: number; quantity: number; clientId: number }) => void;
     deleteCartItem: (id: number) => void;
-    calcAmount: (id: number, quantity: number) => Promise<{ sum: number; isValid: boolean }>;
+    calcAmount: (id: number, quantity: number) => Promise<number>;
     client: number;
     index: number;
 } & FieldHookConfig<string>;

@@ -1,4 +1,4 @@
-import type { ProductCategory } from "..//backend/domain/product/ProductCategory";
+import type { ProductCategory } from "../backend/domain/product/ProductCategory";
 import type { ProductModifierDTO } from "./ProductModifierDTO";
 
 export type ProductToCreateFieldDTO = {
@@ -7,22 +7,18 @@ export type ProductToCreateFieldDTO = {
   fieldType: string;
   value: string | number;
   placeholder?: string;
+  disabled?: boolean;
+};
+
+type ModifierValue = ProductModifierDTO & {
+  value: number;
 };
 
 export type ProductToCreateDTO = {
-  category: {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  };
-  modifiers: ProductModifierDTO[];
-  extendedFields: ProductToCreateFieldDTO[];
-  initialValues: {
-    modifiers: { id: number; itemId: number }[];
-    fields: {
-      name: string;
-      value: number | string;
-    }[];
-  };
   price: number;
+  totalAmount: number;
+  categoryName: ProductCategory;
+  fields: ProductToCreateFieldDTO[];
+  modifiers: ModifierValue[];
+  weight: number;
 };

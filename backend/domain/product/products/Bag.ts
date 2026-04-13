@@ -1,67 +1,51 @@
-import type { ProductFormValuesDTO } from "../../../../dto/ProductFormValuesDTO";
+import type { ProductToCreateDTO } from "../../../../dto/ProductToCreateDTO";
 import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO";
 import { AppError } from "../../../../utils/error";
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
 
 export interface BagProps extends BaseProductProps {
-  width?: number;
-  length?: number;
-  thickness?: number;
-  quantity?: number;
+  width: number;
+  length: number;
+  thickness: number;
+  quantity: number;
+  pricePerItem?: number;
 }
 
 export class Bag extends BaseProduct {
   private length: number;
   private thickness: number;
-  private quantity: number;
+  protected quantity: number;
+  protected weight: number;
   private width: number;
+  private pricePerItem: number;
 
   constructor(props: BagProps) {
     super(props);
 
-    this.width = props.width ?? 0;
-    this.length = props.length ?? 0;
-    this.thickness = props.thickness ?? 0;
-    this.quantity = props.quantity ?? 0;
+    this.width = props.width;
 
-    this.param = this.quantity;
+    this.length = props.length;
+    this.thickness = props.thickness;
+    this.quantity = props.quantity;
+    this.weight = this.getWeight();
+
+    this.pricePerItem = props.pricePerItem ?? 0;
+
+    this.totalAmount = this.getTotalAmount();
   }
 
-  set setName(name: string) {
-    this.name = name;
-  }
+  override getTotalAmount() {
+    try {
+      const totalAmount = Number((this.weight * this.price).toFixed(2));
 
-  set setLength(v: number) {
-    this.length = v;
-  }
-  set setWidth(v: number) {
-    this.width = v;
-  }
-  set setThickness(v: number) {
-    this.thickness = v;
-  }
+      if (Number.isNaN(totalAmount))
+        throw new AppError("DOMAIN", "Помилка обчислення вартості пакета");
 
-  set setQuantity(v: number) {
-    this.quantity = v;
-  }
-
-  override fillData(data: ProductFormValuesDTO) {
-    this.selectModifiers(data);
-
-    const values = data.fields;
-
-    this.setName = values.name ? String(values.name) : this.name;
-    this.setWidth = +values.width ? +values.width : this.width;
-    this.setThickness = +values.thickness ? +values.thickness : this.thickness;
-    this.setLength = +values.length ? +values.length : this.length;
-    this.setQuantity = +values.quantity ? +values.quantity : this.quantity;
-    this.setWeight = this._getWeight();
-
-    this.autofillName();
-
-    this.setTotalAmount();
-
-    return this;
+      return totalAmount;
+    } catch (error) {
+      console.error(error);
+      return 0;
+    }
   }
 
   override autofillName(): void {
@@ -75,14 +59,9 @@ export class Bag extends BaseProduct {
     }
   }
 
-  private _getWeight(): number {
-    if (
-      this.length > 0 &&
-      this.width > 0 &&
-      this.thickness > 0 &&
-      this.quantity > 0
-    )
-      return Number(
+  override getWeight(): number {
+    try {
+      const weight = Number(
         (
           this.length *
           0.01 *
@@ -91,7 +70,21 @@ export class Bag extends BaseProduct {
           (this.thickness * 0.001 * 2 * this.quantity)
         ).toFixed(3),
       );
-    else return 0;
+
+      if (Number.isNaN(weight)) {
+        console.log(`this.length`, this.length);
+        console.log(`this.width`, this.width);
+        console.log(`this.thickness`, this.thickness);
+        console.log(`this.quantity`, this.quantity);
+        throw new AppError("DOMAIN", "Помилка обчислення ваги пакета");
+      }
+
+      return (this.weight = weight);
+    } catch (error) {
+      console.error(error);
+
+      return (this.weight = 0);
+    }
   }
 
   private readonly WIDTH_MIN: number = 30;
@@ -105,7 +98,7 @@ export class Bag extends BaseProduct {
 
   override isValid(): boolean {
     return (
-      this.weight >= 0 &&
+      this.quantity >= 0 &&
       this.width >= this.WIDTH_MIN &&
       this.width <= this.WIDTH_MAX &&
       this.thickness >= this.THICKNESS_MIN &&
@@ -117,8 +110,47 @@ export class Bag extends BaseProduct {
     );
   }
 
-  override getSpecialFields(): ProductToCreateFieldDTO[] {
+  getPricePerItem(): number {
+    try {
+      const result = Number((this.totalAmount / this.quantity).toFixed(2));
+
+      if (Number.isNaN(result)) {
+        console.log("this.totalAmount", this.totalAmount);
+        console.log("this.quantity", this.quantity);
+
+        throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
+      }
+
+      return (this.pricePerItem = result);
+    } catch (error) {
+      return (this.pricePerItem = 0);
+    }
+  }
+
+  override getFields(): ProductToCreateFieldDTO[] {
     return [
+      {
+        name: "weight",
+        title: "Вага (кг)",
+        fieldType: "number",
+        value: this.weight,
+        placeholder: "",
+        disabled: true,
+      },
+      {
+        name: "pricePerItem",
+        title: "Ціна за штуку (грн.)",
+        fieldType: "number",
+        value: this.getPricePerItem(),
+        disabled: true,
+      },
+      {
+        name: "name",
+        title: "Назва продукту",
+        fieldType: "text",
+        value: this.name,
+        placeholder: "",
+      },
       {
         name: "width",
         title: "Ширина (см)",
@@ -145,23 +177,21 @@ export class Bag extends BaseProduct {
         title: "Кількість (шт.)",
         fieldType: "number",
         value: this.quantity,
+        placeholder: "",
       },
     ];
   }
 
-  override get mainParam() {
-    return this.quantity;
-  }
+  override setQuantity(value: number): void {
+    if (!Number.isInteger(value))
+      throw new AppError("DOMAIN", "Кількість має бути цілим числом");
+    if (value < 0)
+      throw new AppError("DOMAIN", "Кількість не може бути нижче нуля");
 
-  override setMainParam(value: number): void {
-    if (value < 0) throw new AppError("DOMAIN", "quantity cannot be negative");
+    this.quantity = value;
 
-    this.setQuantity = value;
+    this.weight = this.getWeight();
 
-    this.param = value;
-
-    this.setWeight = this._getWeight();
-
-    this.setTotalAmount();
+    this.getTotalAmount();
   }
 }
