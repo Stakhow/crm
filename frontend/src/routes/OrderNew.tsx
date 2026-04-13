@@ -16,7 +16,7 @@ import {
     Backdrop,
     Typography,
 } from '@mui/material';
-import { cartService, clientService, productService } from '../../../backend';
+import { clientService, productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 import { Categories } from '../components/Categories';
@@ -25,9 +25,9 @@ import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { priceFormat } from '../../../utils/utils';
 import * as Yup from 'yup';
 import { NavLink, useSearchParams } from 'react-router';
-import type { CartViewDTO } from '../../../dto/CartViewDTO';
 import { ProductSelect } from '../components/Order';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
+import cartStore from '../../store';
 
 export interface OrderFormValues {
     client: number;
@@ -39,10 +39,14 @@ export default function OrderNew() {
     const [clients, setClients] = useState<ClientViewDTO[]>([]);
     const [client, setClient] = useState<ClientViewDTO['id']>();
     const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);
-    const [cart, setCart] = useState<CartViewDTO>();
     const [state, setState] = useState<Map<ProductCategory, ProductViewDTO[]>>(new Map());
-    const [list, setList] = useState<OrderFormValues['list']>([]);
-    const [productsInCart, setProductsInCart] = useState<number[]>([]);
+
+    const cart = cartStore((state) => state.data);
+    const isLoading = cartStore((state) => state.isLoading);
+    const list = cartStore((state) => state.list);
+    const productsInCart = cartStore((state) => state.productsInCart);
+    const addCartItem = cartStore((state) => state.addCartItem);
+    const deleteCartItem = cartStore((state) => state.deleteCartItem);
 
     const { notify } = useNotification();
     const isProductInCart = (productId: number) => productsInCart.includes(productId);
@@ -72,28 +76,6 @@ export default function OrderNew() {
                     notify({ message: 'Помилка отримання продуктів', severity: 'error' });
                 });
     };
-
-    useEffect(() => {
-        cartService.getCartToView().then((data) => {
-
-            setCart(data);
-            // setClient(data.clientId);
-
-            const products = data.products;
-
-            if (products.length) {
-                setProductsInCart(products.map(({ id }) => id));
-                setList(
-                    products.map((i) => ({
-                        categoryName: i.categoryName,
-                        id: i.id,
-                        quantity: i.quantity,
-                        stock: i.stock,
-                    })),
-                );
-            }
-        });
-    }, []);
 
     useEffect(() => {
         if (!!clientId) {
@@ -129,7 +111,6 @@ export default function OrderNew() {
                 notify({ message: 'Помилка отримання категорій', severity: 'error' });
             });
     }, [client]);
-
 
     const calc = (prodictId: number, value: number) => {
         return productService.getTotalAmount(prodictId, value);
@@ -178,89 +159,6 @@ export default function OrderNew() {
     }, [list]);
 
     const isClientSelected = () => clientId !== null || !!cart?.clientId;
-
-    const addCartItem = (data: { productId: number; quantity: number; clientId: number }) => {
-        console.warn('addCartItem');
-        cartService
-            .addCartItem(data)
-            .then((data) => {
-                return window.location.reload();
-
-                setProductsInCart(data.products.map((i) => i.id));
-
-                setCart(data);
-
-                const products = data.products;
-
-                if (products.length) {
-                    setProductsInCart(products.map(({ id }) => id));
-                    setList(
-                        products.map((i) => ({
-                            categoryName: i.categoryName,
-                            id: i.id,
-                            quantity: i.quantity,
-                            stock: i.stock,
-                        })),
-                    );
-                }
-
-                notify({
-                    message: 'Товар додано в корзину',
-                    severity: 'success',
-                });
-            })
-            .catch((error) => {
-                notify({
-                    message: `Помилка додавання товару: ${error.message}`,
-                    severity: 'error',
-                });
-            })
-            .finally(() => {
-                // setSubmitting(false);
-            });
-    };
-
-    const deleteCartItem = (id: number) => {
-        console.warn('deleteCartItem');
-        cartService
-            .deleteCartItem(id)
-            .then((data) => {
-                return window.location.reload();
-
-                setProductsInCart(data.products.map((i) => i.id));
-
-                setCart(data);
-                // setClient(data.clientId);
-
-                const products = data.products;
-
-                if (products.length) {
-                    setProductsInCart(products.map(({ id }) => id));
-                    setList(
-                        products.map((i) => ({
-                            categoryName: i.categoryName,
-                            id: i.id,
-                            quantity: i.quantity,
-                            stock: i.stock,
-                        })),
-                    );
-                }
-
-                notify({
-                    message: 'Товар видалено з корзини',
-                    severity: 'success',
-                });
-            })
-            .catch((error) => {
-                notify({
-                    message: `Помилка видалення з корзини: ${error.message}`,
-                    severity: 'error',
-                });
-            })
-            .finally(() => {
-                // setSubmitting(false);
-            });
-    };
 
     const CategoriesComponent = ({
         onChange,
@@ -435,7 +333,7 @@ export default function OrderNew() {
 
                             <Backdrop
                                 sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                                open={isSubmitting}
+                                open={isSubmitting || isLoading}
                             >
                                 <CircularProgress color="inherit" />
                             </Backdrop>

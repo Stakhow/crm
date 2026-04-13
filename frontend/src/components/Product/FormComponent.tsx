@@ -15,7 +15,7 @@ import {
     Stack,
 } from '@mui/material';
 import { useFormikContext, Formik, Form, type FormikHelpers, FieldArray, getIn } from 'formik';
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
@@ -34,8 +34,6 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
         totalAmount: values.totalAmount,
         pricePerItem: values.pricePerItem,
     });
-
-    console.log(calculatedData);
 
     const isFirstRender = useRef(true);
 

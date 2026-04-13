@@ -14,8 +14,8 @@ import { NavLink, useLocation } from 'react-router';
 import { useEffect, useState } from 'react';
 import { Badge, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import { cartService } from '../../backend';
-import { ThemeProvider, createTheme, useColorScheme } from '@mui/material/styles';
+import { useColorScheme } from '@mui/material/styles';
+import cartStore from '../store/';
 
 interface Props {
     /**
@@ -42,22 +42,20 @@ const navItems = [
 export default function App(props: Props) {
     const { children } = props;
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [cart, setCart] = useState<{
-        quantity: number;
-    }>();
-    const { mode, setMode } = useColorScheme();
 
+    const { mode, setMode } = useColorScheme();
     const { pathname } = useLocation();
+
+    const fetchData = cartStore((state) => state.fetchData);
+    const cartData = cartStore((state) => state.data);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
-
-    useEffect(() => {
-        cartService.getCartToView().then((data) => {
-            setCart(data);
-        });
-    }, []);
 
     const drawer = (
         <Stack
@@ -148,7 +146,7 @@ export default function App(props: Props) {
                         ))}
                     </Box>
 
-                    {!!cart && cart.quantity > 0 && (
+                    {!!cartData && (
                         <IconButton
                             component={NavLink}
                             to="/cart"
@@ -156,7 +154,7 @@ export default function App(props: Props) {
                             aria-label="show 4 new mails"
                             color="inherit"
                         >
-                            <Badge badgeContent={cart.quantity} color="error">
+                            <Badge badgeContent={cartData.quantity} color="error">
                                 <ShoppingCartIcon />
                             </Badge>
                         </IconButton>
