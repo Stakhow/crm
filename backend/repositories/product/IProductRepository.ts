@@ -1,5 +1,4 @@
 import { BaseProduct } from "../../domain/product/BaseProduct";
-import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
 import type { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
 
 export interface IProductRepository {

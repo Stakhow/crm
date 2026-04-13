@@ -158,10 +158,8 @@ export class ProductService {
   public async getTotalAmount(id: number, value: number): Promise<number> {
     const product = await this.productRepository.getById(id);
 
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(product.getTotalAmount(value));
-      }, 0);
+    return new Promise((resolve) => {
+      resolve(product.getTotalAmount(value));
     });
   }
 

@@ -1,4 +1,3 @@
-import type { ProductToCreateDTO } from "../../../../dto/ProductToCreateDTO";
 import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO";
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
 

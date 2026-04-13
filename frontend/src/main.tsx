@@ -48,7 +48,7 @@ const customTheme = createTheme({
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <ThemeProvider theme={customTheme}>
-            <BrowserRouter>
+            <BrowserRouter basename="/crm/">
                 <App>
                     <NotificationProvider>
                         <Routes>

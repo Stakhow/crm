@@ -1,5 +1,4 @@
 import { AppError } from "../../utils/error";
-import { Cart, CartItem } from "../domain/cart/Cart";
 import { CartRepository } from "../repositories/cart/CartRepository";
 import type { ProductService } from "./ProductService";
 import type { CartViewDTO } from "../../dto/CartViewDTO";

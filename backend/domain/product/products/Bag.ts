@@ -1,4 +1,3 @@
-import type { ProductToCreateDTO } from "../../../../dto/ProductToCreateDTO";
 import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO";
 import { AppError } from "../../../../utils/error";
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
@@ -141,7 +140,7 @@ export class Bag extends BaseProduct {
         name: "pricePerItem",
         title: "Ціна за штуку (грн.)",
         fieldType: "number",
-        value: this.getPricePerItem(),
+        value: this.pricePerItem,
         disabled: true,
       },
       {

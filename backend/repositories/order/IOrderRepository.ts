@@ -1,4 +1,3 @@
-import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import { Order } from "../../domain/order/Order";
 import type { BaseProduct } from "../../domain/product/BaseProduct";
 

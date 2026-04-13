@@ -1,9 +1,11 @@
+// @ts-ignore
 import { Optional } from "dexie";
+
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
 import type { ClientDTO } from "../dto/ClientDTO";
 import type { OrderStatus } from "../backend/domain/order/Order";
 import type { ProductViewDTO } from "../dto/ProductViewDTO";
-import { ProductDataDTO } from "../dto/ProductDataDTO";
+import type { ProductDataDTO } from "../dto/ProductDataDTO";
 
 // ---------- PRODUCTS ----------
 export type ProductDB = ProductDataDTO;

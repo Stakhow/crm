@@ -6,6 +6,7 @@
   "author": "dima stakhov",
   "type": "module",
   "main": "index.js",
+  "homepage": "https://Stakhow.github.io/crm/",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

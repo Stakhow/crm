@@ -270,7 +270,8 @@ export default function OrderNew() {
         onChange,
         ...props
     }: { onChange: (e: React.ChangeEvent<any>) => void } & FieldHookConfig<string>) => {
-        const [field, helpers] = useField(props);
+        // @ts-ignore
+        const [field, meta, helpers] = useField(props);
 
         const handleChange = (e: React.ChangeEvent<any>) => {
             const categoryName = e.target.value;

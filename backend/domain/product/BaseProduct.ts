@@ -102,6 +102,7 @@ export abstract class BaseProduct {
 
     values.map((i) => {
       if (i.name in this) {
+        // @ts-ignore
         this[i.name] = i.value;
       }
     });
