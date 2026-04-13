@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, Link } from 'react-router';
+import { useLocation, Link } from 'react-router';
 import { Box, Button, Typography } from '@mui/material';
 import { NotFoundImg } from '../components/NotFound';
 

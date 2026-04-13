@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
 import { useParams } from 'react-router';
-import { Backdrop, Box, Card, CircularProgress, Paper } from '@mui/material';
+import { Backdrop, Box, Card, CircularProgress } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import type { ProductToCreateDTO } from '../../../dto/ProductToCreateDTO';
@@ -37,18 +37,18 @@ export default function Product() {
                     setLoading(false);
                 });
 
-            // productService
-            //     .getProductToView(productId)
-            //     .then((product) => {
-            //         setProductView(product);
-            //     })
-            //     .catch((e) => {
-            //         console.log(e);
-            //         notify({ message: 'Помилка при отриманні продукту getProductToView', severity: 'error' });
-            //     })
-            //     .finally(() => {
-            //         setLoading(false);
-            //     });
+            productService
+                .getProductToView(productId)
+                .then((product) => {
+                    setProductView(product);
+                })
+                .catch((e) => {
+                    console.log(e);
+                    notify({ message: 'Помилка при отриманні продукту getProductToView', severity: 'error' });
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
     }, []);
 

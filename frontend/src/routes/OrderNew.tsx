@@ -1,15 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-    Formik,
-    Form,
-    Field,
-    FieldArray,
-    type FormikHelpers,
-    ErrorMessage,
-    useField,
-    useFormikContext,
-    type FieldHookConfig,
-} from 'formik';
+import { Formik, Form, FieldArray, useField, useFormikContext, type FieldHookConfig } from 'formik';
 import {
     FormControl,
     InputLabel,
@@ -20,16 +10,13 @@ import {
     CircularProgress,
     Stack,
     Box,
-    Skeleton,
-    TextField,
     AppBar,
     Button,
     Toolbar,
     Backdrop,
     Typography,
-    dividerClasses,
 } from '@mui/material';
-import { cartService, clientService, orderService, productService } from '../../../backend';
+import { cartService, clientService, productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 import { Categories } from '../components/Categories';
@@ -37,7 +24,7 @@ import type { ProductCategory } from '../../../backend/domain/product/ProductCat
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { priceFormat } from '../../../utils/utils';
 import * as Yup from 'yup';
-import { NavLink, useParams, useSearchParams } from 'react-router';
+import { NavLink, useSearchParams } from 'react-router';
 import type { CartViewDTO } from '../../../dto/CartViewDTO';
 import { ProductSelect } from '../components/Order';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
@@ -52,7 +39,6 @@ export default function OrderNew() {
     const [clients, setClients] = useState<ClientViewDTO[]>([]);
     const [client, setClient] = useState<ClientViewDTO['id']>();
     const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);
-    const [isLoading, setLoading] = useState<boolean>(false);
     const [cart, setCart] = useState<CartViewDTO>();
     const [state, setState] = useState<Map<ProductCategory, ProductViewDTO[]>>(new Map());
     const [list, setList] = useState<OrderFormValues['list']>([]);
@@ -63,7 +49,6 @@ export default function OrderNew() {
 
     const [searchParams] = useSearchParams();
     const clientId = searchParams.get('clientId');
-    const { id } = useParams(); // order ID
 
     const getProductsByCategory = (categoryName: ProductCategory) => {
         if (state?.has(categoryName)) return state.get(categoryName);
@@ -87,13 +72,6 @@ export default function OrderNew() {
                     notify({ message: 'Помилка отримання продуктів', severity: 'error' });
                 });
     };
-
-    !!id &&
-        useEffect(() => {
-            orderService.getById(Number(id)).then((order) => {
-                console.log('GET ORDER by ID', id);
-            });
-        }, []);
 
     useEffect(() => {
         cartService.getCartToView().then((data) => {
@@ -143,17 +121,13 @@ export default function OrderNew() {
     }, []);
 
     useEffect(() => {
-        setLoading(true);
-
         productService
             .getCategories()
             .then((categories) => {
                 setCategories(categories);
-                setLoading(false);
             })
             .catch(() => {
                 notify({ message: 'Помилка отримання категорій', severity: 'error' });
-                setLoading(false);
             });
     }, [client]);
 
@@ -296,13 +270,14 @@ export default function OrderNew() {
         onChange,
         ...props
     }: { onChange: (e: React.ChangeEvent<any>) => void } & FieldHookConfig<string>) => {
-        const [field, meta, helpers] = useField(props);
+        const [field, helpers] = useField(props);
 
         const handleChange = (e: React.ChangeEvent<any>) => {
             const categoryName = e.target.value;
 
             getProductsByCategory(categoryName);
 
+            // @ts-ignore
             helpers.setValue(categoryName);
         };
 
@@ -320,8 +295,8 @@ export default function OrderNew() {
     };
 
     const SelectedProductList = () => {
-        const { values, isValid, handleChange, errors, setFieldValue } = useFormikContext<OrderFormValues>();
-        const { list, client } = values;
+        const { values, handleChange } = useFormikContext<OrderFormValues>();
+        const { list } = values;
 
         const ItemNotFound = () => (
             <Typography
@@ -413,12 +388,7 @@ export default function OrderNew() {
             <Formik
                 initialValues={initialValues}
                 validateOnBlur={false}
-                onSubmit={(
-                    values: OrderFormValues,
-                    { setSubmitting, setFieldValue, resetForm }: FormikHelpers<OrderFormValues>,
-                ) => {
-                    setSubmitting(false);
-                }}
+                onSubmit={() => {}}
                 validationSchema={validationSchema}
                 enableReinitialize={true}
             >
@@ -458,7 +428,6 @@ export default function OrderNew() {
                                         variant="outlined"
                                         sx={{ color: 'white', borderColor: 'white' }}
                                         fullWidth
-                                        
                                         disabled={values.totalAmount === 0}
                                     >
                                         Перейти в Корзину | Сума:&nbsp;

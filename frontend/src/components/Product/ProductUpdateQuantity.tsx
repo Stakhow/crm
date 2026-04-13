@@ -1,5 +1,5 @@
 import { Button, DialogActions, DialogContent, DialogTitle, FormControl, TextField } from '@mui/material';
-import { Formik, Field, Form } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import type { ProductCategory } from '../../../../backend/domain/product/ProductCategory';
 import { useEffect, useRef } from 'react';

@@ -1,5 +1,4 @@
 import {
-    Box,
     FormControl,
     InputLabel,
     Select,
@@ -10,14 +9,13 @@ import {
     TextField,
     Chip,
 } from '@mui/material';
-import { Field, FieldArray, useField, useFormikContext, type FieldHookConfig, getIn } from 'formik';
+import { Field, useField, useFormikContext, type FieldHookConfig, getIn } from 'formik';
 
 import { ProductCard } from '../Product/ProductCard';
 import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
 import type { OrderFormValues } from '../../routes/OrderNew';
 import { useEffect, useState } from 'react';
 import { priceFormat } from '../../../../utils/utils';
-import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 
 type ProductQuantityFieldProps = FieldHookConfig<string> & {
     label: string;
@@ -60,7 +58,7 @@ const SelectedProductCard = ({
     deleteCartItem,
     calcAmount,
 }: SelectedProductCardProps) => {
-    const { setFieldValue, values, errors, setSubmitting, isValid } = useFormikContext<OrderFormValues>();
+    const { setFieldValue, values, errors, setSubmitting } = useFormikContext<OrderFormValues>();
     const [amount, setAmount] = useState<number>(0);
 
     const weightError = getIn(errors, `list.${index}.quantity`);
@@ -176,7 +174,7 @@ export const ProductSelect = ({
     client,
     ...props
 }: ProductSelectProps) => {
-    const [field, meta, helpers] = useField(props);
+    const [field] = useField(props);
     const selectedProductId = field.value ?? '';
 
     const options = products.map((item, itemIdx) => (

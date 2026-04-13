@@ -6,13 +6,11 @@ import {
     OutlinedInput,
     Select,
     type SelectProps,
-    type SelectChangeEvent,
 } from '@mui/material';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 
 type CategoriesProps = {
     categories: { name: ProductCategory; title: string }[];
-    // Use a looser type that only requires target name and value
     onChange: (event: any) => void;
     value: any;
     name: string;

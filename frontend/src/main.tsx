@@ -11,7 +11,7 @@ import ClientPage from './routes/Client.tsx';
 import Page404 from './routes/404';
 import Order from './routes/Order';
 import Products from './routes/Products.tsx';
-import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material';
 import Product from './routes/Product.tsx';
 import ProductNew from './routes/ProductNew.tsx';
 import OrderNew from './routes/OrderNew.tsx';
@@ -48,7 +48,6 @@ const customTheme = createTheme({
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <ThemeProvider theme={customTheme}>
-            {/* <CssBaseline /> */}
             <BrowserRouter>
                 <App>
                     <NotificationProvider>

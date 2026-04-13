@@ -1,39 +1,18 @@
-import { Link, useParams, useNavigate, NavLink } from 'react-router';
+import { useParams, useNavigate, NavLink } from 'react-router';
 import { useNotification } from '../components/NotificationContext';
 import { useEffect, useState } from 'react';
 import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CallIcon from '@mui/icons-material/Call';
-import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    List,
-    DialogTitle,
-    Divider,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    ListSubheader,
-    Collapse,
-    ListItem,
-    IconButton,
-    Fab,
-} from '@mui/material';
+import { Dialog, DialogActions, List, DialogTitle, Divider, ListItem } from '@mui/material';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { styled } from '@mui/material/styles';
-import PhoneIcon from '@mui/icons-material/Phone';
-import { ExpandLess, ExpandMore, StarBorder } from '@mui/icons-material';
 import { clientService, orderService } from '../../../backend/index';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
-import { dateToLocalString, priceFormat } from '../../../utils/utils';
+import { dateToLocalString } from '../../../utils/utils';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 
@@ -106,8 +85,13 @@ export default function ClientPage() {
                     </Typography>
 
                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        
-                        <Button component={NavLink} to={`/orders/new?clientId=${id}`} size={'large'} variant="outlined" color="success">
+                        <Button
+                            component={NavLink}
+                            to={`/orders/new?clientId=${id}`}
+                            size={'large'}
+                            variant="outlined"
+                            color="success"
+                        >
                             Нове замовлення
                         </Button>
                     </Box>

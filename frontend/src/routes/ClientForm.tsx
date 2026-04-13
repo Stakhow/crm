@@ -1,10 +1,9 @@
-import { Formik, Form, Field } from 'formik';
+import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { Button, Stack, Typography, Box, TextField, Paper } from '@mui/material';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Button, Stack, Box, TextField, Paper } from '@mui/material';
+import { Link, useParams } from 'react-router';
 import { useNotification } from '../components/NotificationContext';
 import { clientService } from '../../../backend/index';
-import type React from 'react';
 import { useEffect, useState } from 'react';
 import type { ClientDTO } from '../../../dto/ClientDTO';
 
@@ -42,7 +41,7 @@ export default function ClientForm() {
                 onSubmit={(values, { setSubmitting, resetForm }) => {
                     clientService
                         .save(values)
-                        .then((data) => {
+                        .then(() => {
                             const message = id ? 'відредаговано' : 'додано';
 
                             notify({ message: `Клієнта ${message}`, severity: 'success' });
@@ -61,7 +60,7 @@ export default function ClientForm() {
                         });
                 }}
             >
-                {({ errors, handleSubmit, values, setFieldValue, handleChange }) => (
+                {({ errors, handleSubmit, values, handleChange }) => (
                     <Stack
                         component={'form'}
                         sx={{

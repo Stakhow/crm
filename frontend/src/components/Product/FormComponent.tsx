@@ -14,13 +14,12 @@ import {
     CircularProgress,
     Stack,
 } from '@mui/material';
-import { useFormikContext, Formik, Form, type FormikHelpers, FieldArray, getIn, Field } from 'formik';
+import { useFormikContext, Formik, Form, type FormikHelpers, FieldArray, getIn } from 'formik';
 import { useMemo, useEffect, useState, useRef } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
 import { productService } from '../../../../backend';
-import { useParams } from 'react-router';
 import { useNotification } from '../NotificationContext';
 
 let counter = 0;
@@ -50,16 +49,18 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                 Yup.object({
                     name: Yup.string().required(),
 
+                    // @ts-ignore
                     value: Yup.lazy((value, { parent, options }) => {
                         const name = parent.name;
                         const categoryName = options?.context?.categoryName;
 
+                        // @ts-ignore
                         let schema = allFields[name];
 
                         if (!schema) {
                             return Yup.mixed();
                         }
-
+                        // @ts-ignore
                         schema = schema.transform((val, originalVal) =>
                             originalVal === '' ? undefined : Number(originalVal),
                         );
@@ -117,7 +118,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                 };
 
                 action()
-                    .then((product) => {
+                    .then(() => {
                         notify({ message: `Продукт успішно ${!!id ? 'оновлено' : 'створено'} `, severity: 'success' });
                     })
                     .catch((error) => {
@@ -133,7 +134,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
             }}
             context={{ categoryName: values.categoryName }}
         >
-            {({ isSubmitting, setFieldValue, values, errors, touched, handleBlur, handleChange }) => {
+            {({ isSubmitting, values, errors, handleBlur, handleChange }) => {
                 const { modifiers, fields } = values;
 
                 return (

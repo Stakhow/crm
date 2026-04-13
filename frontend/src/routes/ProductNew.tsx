@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
-import { Backdrop, Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { Backdrop, CircularProgress, Paper } from '@mui/material';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 import type { ProductToCreateDTO } from '../../../dto/ProductToCreateDTO';

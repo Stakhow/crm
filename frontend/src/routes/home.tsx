@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import Badge from '@mui/material/Badge';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -6,14 +6,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PickerDay, type PickerDayProps } from '@mui/x-date-pickers/PickerDay';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { DayCalendarSkeleton } from '@mui/x-date-pickers/DayCalendarSkeleton';
-import { Backdrop, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Backdrop, Box, CircularProgress, Paper, Typography } from '@mui/material';
 import type { PickerValue } from '@mui/x-date-pickers/internals';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { orderService } from '../../../backend';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 import type { ButtonProps } from '@mui/material';
-import { grey, red, green } from '@mui/material/colors';
+import { grey } from '@mui/material/colors';
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale('en', {

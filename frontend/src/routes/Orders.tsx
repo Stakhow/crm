@@ -1,9 +1,6 @@
-import * as Yup from 'yup';
-import { useLocation, useParams, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
-import { clientService, orderService } from '../../../backend';
-import type { Client } from '../../../backend/domain/client/Client';
-import { Box, Link, Paper, Stack, Typography } from '@mui/material';
+import { orderService } from '../../../backend';
+import { Box, Typography } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 

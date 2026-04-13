@@ -10,7 +10,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link, NavLink, useParams, useLocation } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { useEffect, useState } from 'react';
 import { Badge, Button } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -39,7 +39,7 @@ const navItems = [
 ];
 
 export default function App(props: Props) {
-    const { window, children } = props;
+    const { children } = props;
     const [mobileOpen, setMobileOpen] = useState(false);
     const [cart, setCart] = useState<{
         quantity: number;
