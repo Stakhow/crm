@@ -34,6 +34,10 @@ export class ProductService {
       price: 0,
       totalAmount: 0,
       name: "",
+      length: 0,
+      width: 0,
+      thickness: 0,
+      weight: 0,
       quantity: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -97,7 +101,6 @@ export class ProductService {
 
   public async init(categoryName: ProductCategory) {
     const product = await this._create(categoryName);
-    console.log(product);
     return product.toCreate();
   }
   public async initToEdit(productId: number) {
@@ -143,11 +146,9 @@ export class ProductService {
 
     if (!product)
       throw new AppError("SERVICE", "Помилка при створенні продукту");
-    console.log("vales", values);
     return new Promise((resolve, reject) => {
       try {
         product.fillData(values);
-        console.log("vvvvvv", product);
         resolve(product.toCreate());
       } catch (error) {
         console.log(error);

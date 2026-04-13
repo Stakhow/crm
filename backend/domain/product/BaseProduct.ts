@@ -23,6 +23,7 @@ export interface BaseProductProps {
   name: string;
   quantity: number;
   price: number;
+  pricePerItem?: number;
   totalAmount: number;
   appliedModifiers: AppliedModifiersType;
 }
@@ -47,6 +48,7 @@ export abstract class BaseProduct {
   protected weight: number;
   protected price: number;
   protected totalAmount: number;
+  protected pricePerItem: number;
 
   protected constructor(props: BaseProductProps) {
     this.id = props.id;
@@ -60,6 +62,7 @@ export abstract class BaseProduct {
     this.modifiers = props.modifiers ?? [];
     this.availableModifiers = [];
     this.appliedModifiers = props.appliedModifiers ?? [];
+    this.pricePerItem = props.pricePerItem ?? this.getPricePerItem() ?? 0;
 
     if (!props.category) throw new AppError("DOMAIN", "Не вказана категорія");
 
@@ -114,8 +117,6 @@ export abstract class BaseProduct {
     return this;
   }
   protected applyModifiers(): number {
-    console.log(this.modifiers);
-    console.log(this.appliedModifiers);
     return this.modifiers.reduce((price, modifier) => {
       modifier.select(this.appliedModifiers[modifier.id]);
 
@@ -125,6 +126,24 @@ export abstract class BaseProduct {
 
   isValid(): boolean {
     return this.quantity >= 0 && this.price > 0;
+  }
+
+  getPricePerItem(): number {
+    try {
+      const result = Number((this.totalAmount / this.quantity).toFixed(2));
+
+      if (Number.isNaN(result)) {
+        throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
+      }
+
+      this.pricePerItem = result;
+
+      return this.pricePerItem;
+    } catch (error) {
+      this.pricePerItem = 0;
+
+      return this.pricePerItem;
+    }
   }
 
   get modifiersPersistence() {
@@ -210,6 +229,7 @@ export abstract class BaseProduct {
       categoryName: this.category.name,
       fields,
       weight: this.weight,
+      pricePerItem: this.pricePerItem,
       modifiers: modifiers.map((mod) => ({
         ...mod,
         value:

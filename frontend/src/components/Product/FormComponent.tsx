@@ -22,12 +22,20 @@ import * as Yup from 'yup';
 import { productService } from '../../../../backend';
 import { useNotification } from '../NotificationContext';
 
-let counter = 0;
-
 export const FormComponent = ({ id, values }: { id: number; values: ProductToCreateDTO }) => {
-    const [weight, setWeight] = useState(values.weight);
-    const [price, setPrice] = useState(values.price);
-    const [totalAmount, setTotalAmount] = useState(values.totalAmount);
+    const calculatedData = useRef<{
+        price: number;
+        weight: number;
+        totalAmount: number;
+        pricePerItem: number;
+    }>({
+        price: values.price,
+        weight: values.weight,
+        totalAmount: values.totalAmount,
+        pricePerItem: values.pricePerItem,
+    });
+
+    console.log(calculatedData);
 
     const isFirstRender = useRef(true);
 
@@ -88,14 +96,11 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
             }
             if (!isValid) return;
 
-            console.log('COMPONENT times', ++counter);
             setSubmitting(true);
             productService.calculateDraft(id, values).then((updatedValues) => {
-                const { price, totalAmount, weight } = updatedValues;
+                const { price, totalAmount, weight, pricePerItem } = updatedValues;
 
-                setTotalAmount(totalAmount);
-                setWeight(weight);
-                setPrice(price);
+                calculatedData.current = { price, totalAmount, weight, pricePerItem };
 
                 setSubmitting(false);
             });
@@ -120,6 +125,8 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                 action()
                     .then(() => {
                         notify({ message: `Продукт успішно ${!!id ? 'оновлено' : 'створено'} `, severity: 'success' });
+
+                        FormikHelpers.resetForm();
                     })
                     .catch((error) => {
                         notify({
@@ -188,8 +195,11 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                                             const fieldName = `fields.${index}.value`;
                                             const error = getIn(errors, fieldName);
 
-                                            const isWeightField = field.name === 'weight';
-                                            field.value = isWeightField ? weight : field.value;
+                                            const name = field.name as keyof typeof calculatedData.current;
+                                            field.value =
+                                                name in calculatedData.current
+                                                    ? calculatedData.current[name]
+                                                    : field.value;
 
                                             return (
                                                 <FormControl
@@ -209,10 +219,6 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                                                         value={field.value !== 0 ? field.value : ''}
                                                         onChange={handleChange}
                                                         onBlur={handleBlur}
-                                                        // onFocus={(e) => {
-                                                        //     if (e.target.value == '0')
-                                                        //         setFieldValue(fieldName, '', false);
-                                                        // }}
                                                         helperText={error}
                                                         error={!!error}
                                                     />
@@ -225,7 +231,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
 
                         {!!values.price && (
                             <Typography variant="h6" sx={{ my: 2 }} textAlign={'center'}>
-                                Ціна: <b>{priceFormat(price)}/кг</b>
+                                Ціна: <b>{priceFormat(calculatedData.current.price)}/кг</b>
                             </Typography>
                         )}
                         <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
@@ -238,7 +244,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                                     disabled={!values}
                                 >
                                     Підтвердити | Сума:&nbsp;
-                                    <b>{priceFormat(totalAmount)}</b>
+                                    <b>{priceFormat(calculatedData.current.totalAmount)}</b>
                                 </Button>
                             </Toolbar>
                         </AppBar>

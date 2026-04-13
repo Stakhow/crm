@@ -126,7 +126,6 @@ export default function Modifiers() {
             list: Yup.array().of(variant).min(1, 'Мінімум один варіант').required("Поле обов'язкове"),
         });
 
-        console.log({ initialValues });
 
         return (
             <Dialog onClose={handleClose} open={open}>

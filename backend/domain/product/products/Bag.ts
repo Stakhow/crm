@@ -7,7 +7,6 @@ export interface BagProps extends BaseProductProps {
   length: number;
   thickness: number;
   quantity: number;
-  pricePerItem?: number;
 }
 
 export class Bag extends BaseProduct {
@@ -16,7 +15,6 @@ export class Bag extends BaseProduct {
   protected quantity: number;
   protected weight: number;
   private width: number;
-  private pricePerItem: number;
 
   constructor(props: BagProps) {
     super(props);
@@ -27,8 +25,6 @@ export class Bag extends BaseProduct {
     this.thickness = props.thickness;
     this.quantity = props.quantity;
     this.weight = this.getWeight();
-
-    this.pricePerItem = props.pricePerItem ?? this.getPricePerItem() ?? 0;
 
     this.totalAmount = this.getTotalAmount();
   }
@@ -71,10 +67,6 @@ export class Bag extends BaseProduct {
       );
 
       if (Number.isNaN(weight)) {
-        console.log(`this.length`, this.length);
-        console.log(`this.width`, this.width);
-        console.log(`this.thickness`, this.thickness);
-        console.log(`this.quantity`, this.quantity);
         throw new AppError("DOMAIN", "Помилка обчислення ваги пакета");
       }
 
@@ -107,27 +99,6 @@ export class Bag extends BaseProduct {
       this.quantity >= 0 &&
       this.price > 0
     );
-  }
-
-  getPricePerItem(): number {
-    try {
-      const result = Number((this.totalAmount / this.quantity).toFixed(2));
-
-      if (Number.isNaN(result)) {
-        console.log("this.totalAmount", this.totalAmount);
-        console.log("this.quantity", this.quantity);
-
-        throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
-      }
-
-      this.pricePerItem = result;
-
-      return this.pricePerItem;
-    } catch (error) {
-      this.pricePerItem = 0;
-
-      return this.pricePerItem;
-    }
   }
 
   override getFields(): ProductToCreateFieldDTO[] {

@@ -52,7 +52,6 @@ export default function ClientPage() {
         clientService
             .getById(+id)
             .then((data) => {
-                console.log(data);
                 if (!data) err404();
                 else setClient(data);
             })

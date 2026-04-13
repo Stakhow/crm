@@ -75,7 +75,6 @@ export default function OrderNew() {
 
     useEffect(() => {
         cartService.getCartToView().then((data) => {
-            console.log('getCartToView', data);
 
             setCart(data);
             // setClient(data.clientId);
@@ -131,9 +130,6 @@ export default function OrderNew() {
             });
     }, [client]);
 
-    useEffect(() => {
-        console.log('STATE', state);
-    }, [state]);
 
     const calc = (prodictId: number, value: number) => {
         return productService.getTotalAmount(prodictId, value);

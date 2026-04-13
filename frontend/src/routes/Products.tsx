@@ -48,7 +48,6 @@ export default function Products() {
             .getProducts(categoryName)
             .then((products) => {
                 setProducts(products);
-                console.log('useEffect getProductsByCategory', products);
                 setLoading(false);
             })
             .catch((e) => {

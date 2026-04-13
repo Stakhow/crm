@@ -36,7 +36,6 @@ export default function ProductNew() {
             productService
                 .init(categoryName)
                 .then((product) => {
-                    console.log(product);
                     setProduct(product);
                 })
                 .catch((error) => {

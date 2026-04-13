@@ -21,4 +21,5 @@ export type ProductToCreateDTO = {
   fields: ProductToCreateFieldDTO[];
   modifiers: ModifierValue[];
   weight: number;
+  pricePerItem: number;
 };
