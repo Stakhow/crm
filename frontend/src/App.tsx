@@ -157,7 +157,7 @@ export default function App(props: Props) {
                     {drawer}
                 </Drawer>
             </nav>
-            <Box component="main" sx={{ p: 3, width: '100%' }}>
+            <Box component="main" sx={{ p: 1, width: '100%' }}>
                 {children}
             </Box>
         </Box>

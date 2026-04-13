@@ -191,7 +191,7 @@ export abstract class BaseProduct {
       price: this.price,
       totalAmount: this.totalAmount,
       fields: this.getFields()
-        .filter((i) => ["name"].includes(i.name))
+        .filter((i) => !["name"].includes(i.name))
         .map(({ title, value, name }) => ({
           title,
           value,

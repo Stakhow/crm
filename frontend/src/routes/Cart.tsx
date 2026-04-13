@@ -1,16 +1,6 @@
 import { NavLink, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
-import {
-    AppBar,
-    Box,
-    Button,
-    CardActions,
-    FormControl,
-    Paper,
-    Stack,
-    Toolbar,
-    Typography,
-} from '@mui/material';
+import { AppBar, Box, Button, CardActions, FormControl, Paper, Stack, Toolbar, Typography } from '@mui/material';
 import { cartService, orderService } from '../../../backend';
 import { priceFormat } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
@@ -37,6 +27,7 @@ export default function Cart() {
     const deleteCart = () => {
         cartService.deleteCart().then(() => {
             setCart(undefined);
+            return window.location.reload();
         });
     };
 

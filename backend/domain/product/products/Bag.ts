@@ -28,7 +28,7 @@ export class Bag extends BaseProduct {
     this.quantity = props.quantity;
     this.weight = this.getWeight();
 
-    this.pricePerItem = props.pricePerItem ?? 0;
+    this.pricePerItem = props.pricePerItem ?? this.getPricePerItem() ?? 0;
 
     this.totalAmount = this.getTotalAmount();
   }
@@ -120,9 +120,13 @@ export class Bag extends BaseProduct {
         throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
       }
 
-      return (this.pricePerItem = result);
+      this.pricePerItem = result;
+
+      return this.pricePerItem;
     } catch (error) {
-      return (this.pricePerItem = 0);
+      this.pricePerItem = 0;
+
+      return this.pricePerItem;
     }
   }
 
@@ -140,7 +144,7 @@ export class Bag extends BaseProduct {
         name: "pricePerItem",
         title: "Ціна за штуку (грн.)",
         fieldType: "number",
-        value: this.pricePerItem,
+        value: this.getPricePerItem(),
         disabled: true,
       },
       {
