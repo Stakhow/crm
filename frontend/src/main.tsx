@@ -23,11 +23,8 @@ const customTheme = createTheme({
     typography: {
         fontFamily: ['SN Pro', 'sans-serif'].join(','),
     },
-    palette: {
-        background: {
-            default: '#f0f0f0', // Your desired color
-            paper: '#fafafa', // Color for Paper components
-        },
+    colorSchemes: {
+        dark: true,
     },
     components: {
         MuiTextField: {
@@ -47,7 +44,7 @@ const customTheme = createTheme({
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <ThemeProvider theme={customTheme}>
+        <ThemeProvider theme={customTheme} defaultMode="system">
             <BrowserRouter basename="/crm/">
                 <App>
                     <NotificationProvider>

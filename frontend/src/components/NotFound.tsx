@@ -42,7 +42,6 @@ export function NotFoundImg() {
                     </g>
                 </g>
             </svg>
-            ;
         </Box>
     );
 }

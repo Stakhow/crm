@@ -12,9 +12,10 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { NavLink, useLocation } from 'react-router';
 import { useEffect, useState } from 'react';
-import { Badge, Button } from '@mui/material';
+import { Badge, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { cartService } from '../../backend';
+import { ThemeProvider, createTheme, useColorScheme } from '@mui/material/styles';
 
 interface Props {
     /**
@@ -44,6 +45,7 @@ export default function App(props: Props) {
     const [cart, setCart] = useState<{
         quantity: number;
     }>();
+    const { mode, setMode } = useColorScheme();
 
     const { pathname } = useLocation();
 
@@ -58,12 +60,17 @@ export default function App(props: Props) {
     }, []);
 
     const drawer = (
-        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
+        <Stack
+            direction={'column'}
+            justifyContent={'space-between'}
+            onClick={handleDrawerToggle}
+            sx={{ textAlign: 'center' }}
+        >
             <Typography variant="h6" sx={{ my: 2 }}>
                 CRM
             </Typography>
             <Divider />
-            <List sx={{ ml: 1 }}>
+            <List sx={{ ml: 1, flex: 1 }}>
                 {navItems.map((item, idx) => (
                     <ListItem key={idx} disablePadding>
                         <Button
@@ -84,7 +91,25 @@ export default function App(props: Props) {
                     </ListItem>
                 ))}
             </List>
-        </Box>
+
+            <Divider />
+
+            <FormControl sx={{ mt: 2, p: 2 }}>
+                <FormLabel sx={{ mb: 1 }} id="color-theme-toggle">
+                    Тема
+                </FormLabel>
+                <RadioGroup
+                    aria-labelledby="color-theme-toggle"
+                    name="theme-toggle"
+                    row
+                    value={mode}
+                    onChange={(event) => setMode(event.target.value as 'light' | 'dark')}
+                >
+                    <FormControlLabel value="light" control={<Radio />} label="Світла" />
+                    <FormControlLabel value="dark" control={<Radio />} label="Темна" />
+                </RadioGroup>
+            </FormControl>
+        </Stack>
     );
 
     return (

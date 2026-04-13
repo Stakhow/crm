@@ -141,10 +141,10 @@ export default function Products() {
                                     Видалити
                                 </Button>
                             </Stack>
-                            <Divider orientation="vertical" sx={{ my: 0.4, width: '100%' }} flexItem />
+                            <Divider orientation="vertical" sx={{ my: 1, width: '100%' }} flexItem />
                             <Stack direction="row" spacing={1} divider={<Divider orientation="vertical" flexItem />}>
                                 <Button
-                                    size="small"
+                                    size="large"
                                     fullWidth
                                     onClick={() => {
                                         updateQuantityModal(product, 'add');
@@ -154,7 +154,7 @@ export default function Products() {
                                     Додати Кількість
                                 </Button>
                                 <Button
-                                    size="small"
+                                    size="large"
                                     fullWidth
                                     disabled={!product.quantity}
                                     onClick={() => {
