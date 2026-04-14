@@ -11,7 +11,7 @@ import { clientService } from '../../../backend/index';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 import { styled } from '@mui/system';
 
-export default function Clients() {
+export default function ClientsPage() {
     const [list, setList] = useState<ClientViewDTO[]>([]);
 
     const { notify } = useNotification();

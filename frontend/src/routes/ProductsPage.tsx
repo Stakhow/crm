@@ -18,7 +18,7 @@ interface Dialog {
     handleConfirmClick?: () => void;
 }
 
-export default function Products() {
+export default function ProductsPage() {
     const [products, setProducts] = useState<ProductViewDTO[]>([]);
     const [isLoading, setLoading] = useState<boolean>(true);
     const [categoryName, setCategoryName] = useState<ProductCategoryDTO['name']>();

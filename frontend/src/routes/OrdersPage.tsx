@@ -4,7 +4,7 @@ import { Box, Typography } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 
-export default function Orders() {
+export default function OrdersPage() {
     const [orders, setOrders] = useState<OrderViewDTO[]>();
 
     useEffect(() => {

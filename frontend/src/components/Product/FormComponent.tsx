@@ -21,6 +21,7 @@ import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
 import { productService } from '../../../../backend';
 import { useNotification } from '../NotificationContext';
+import { useNavigate } from 'react-router';
 
 export const FormComponent = ({ id, values }: { id: number; values: ProductToCreateDTO }) => {
     const calculatedData = useRef<{
@@ -35,6 +36,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
         pricePerItem: values.pricePerItem,
     });
 
+    const navigate = useNavigate();
     const isFirstRender = useRef(true);
 
     const { notify } = useNotification();
@@ -121,10 +123,10 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                 };
 
                 action()
-                    .then(() => {
+                    .then((productId) => {
                         notify({ message: `Продукт успішно ${!!id ? 'оновлено' : 'створено'} `, severity: 'success' });
 
-                        FormikHelpers.resetForm();
+                        if (productId) navigate(`/products/${productId}`);
                     })
                     .catch((error) => {
                         notify({

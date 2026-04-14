@@ -8,7 +8,7 @@ import type { ProductToCreateDTO } from '../../../dto/ProductToCreateDTO';
 import { Categories } from '../components/Categories';
 import { FormComponent } from '../components/Product/FormComponent';
 
-export default function ProductNew() {
+export default function ProductPageNew() {
     const [isLoading, setLoading] = useState<boolean>(false);
     const [categoryName, setCategoryName] = useState<ProductCategory>();
     const [categories, setCategories] = useState<ProductCategoryDTO[]>();

@@ -3,7 +3,7 @@ import { Field, useField, useFormikContext, type FieldHookConfig, getIn } from '
 
 import { ProductCard } from '../Product/ProductCard';
 import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
-import type { OrderFormValues } from '../../routes/OrderNew';
+import type { OrderFormValues } from '../../routes/OrderNewPage';
 import { useEffect, useState } from 'react';
 import { priceFormat } from '../../../../utils/utils';
 

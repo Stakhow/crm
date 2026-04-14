@@ -24,7 +24,16 @@ export function ProductCard({
         ));
 
     return (
-        <Card sx={{ minWidth: 275, my: 2 }} raised>
+        <Card
+            sx={{
+                minWidth: 275,
+                my: 2,
+                ...(!product.quantity && {
+                    boxShadow: '0px 5px 15px rgba(255, 0, 0, 0.3)',
+                }),
+            }}
+            raised
+        >
             <CardContent>
                 <Typography gutterBottom variant="h5" component="div">
                     {product.name}

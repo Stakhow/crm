@@ -13,7 +13,7 @@ dayjs.updateLocale('en', {
     weekStart: 1,
 });
 
-export default function Home() {
+export default function HomePage() {
     const [isLoading, setIsLoading] = useState(false);
     const [date, setDate] = useState<PickerValue>(dayjs());
     const [monthOrders, setMonthOrders] = useState<Map<number, OrderViewDTO[]>>();

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { cartService } from '../../backend';
 import type { CartViewDTO } from '../../dto/CartViewDTO';
 import { AppError } from '../../utils/error';
-import type { OrderFormValues } from '../src/routes/OrderNew';
+import type { OrderFormValues } from '../src/routes/OrderNewPage';
 
 export type RootState = ReturnType<typeof cartStore.getState>;
 
@@ -112,4 +112,3 @@ export const cartStore = create<CartState>((set) => ({
         }
     },
 }));
-

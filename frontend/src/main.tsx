@@ -3,21 +3,21 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 import { BrowserRouter, Routes, Route } from 'react-router';
-import Clients from './routes/Clients.tsx';
-import ClientForm from './routes/ClientForm';
-import Home from './routes/home';
+import ClientsPage from './routes/ClientsPage.tsx';
+import ClientFormPage from './routes/ClientFormPage.tsx';
+import HomePage from './routes/HomePage.tsx';
 import { NotificationProvider } from './components/NotificationContext';
-import ClientPage from './routes/Client.tsx';
+import ClientPage from './routes/ClientPage.tsx';
 import Page404 from './routes/404';
-import Order from './routes/Order';
-import Products from './routes/Products.tsx';
+import OrderPage from './routes/OrderPage.tsx';
+import ProductsPage from './routes/ProductsPage.tsx';
 import { createTheme, ThemeProvider } from '@mui/material';
-import Product from './routes/Product.tsx';
-import ProductNew from './routes/ProductNew.tsx';
-import OrderNew from './routes/OrderNew.tsx';
-import Orders from './routes/Orders.tsx';
-import Cart from './routes/Cart.tsx';
-import Modifiers from './routes/Modifiers.tsx';
+import ProductPage from './routes/ProductPage.tsx';
+import ProductPageNew from './routes/ProductPageNew.tsx';
+import OrderPageNew from './routes/OrderNewPage.tsx';
+import OrdersPage from './routes/OrdersPage.tsx';
+import CartPage from './routes/CartPage.tsx';
+import ModifiersPage from './routes/ModifiersPage.tsx';
 
 const customTheme = createTheme({
     typography: {
@@ -50,38 +50,38 @@ createRoot(document.getElementById('root')!).render(
                 <App>
                     <NotificationProvider>
                         <Routes>
-                            <Route index path="/" element={<Home />} />
+                            <Route index path="/" element={<HomePage />} />
                             <Route path="clients">
-                                <Route index element={<Clients />} />
+                                <Route index element={<ClientsPage />} />
                                 <Route path=":id">
                                     <Route index element={<ClientPage />} />
-                                    <Route path="order" element={<Order />} />
+                                    <Route path="order" element={<OrderPage />} />
                                 </Route>
-                                <Route path="new" element={<ClientForm />} />
+                                <Route path="new" element={<ClientFormPage />} />
                                 <Route path="edit">
-                                    <Route index element={<ClientForm />} />
-                                    <Route path=":id" element={<ClientForm />} />
+                                    <Route index element={<ClientFormPage />} />
+                                    <Route path=":id" element={<ClientFormPage />} />
                                 </Route>
                             </Route>
 
                             <Route path="products">
-                                <Route index element={<Products />} />
-                                <Route path=":id" element={<Product />} />
-                                <Route path="new" element={<ProductNew />} />
+                                <Route index element={<ProductsPage />} />
+                                <Route path=":id" element={<ProductPage />} />
+                                <Route path="new" element={<ProductPageNew />} />
                             </Route>
 
                             <Route path="orders">
-                                <Route index element={<Orders />} />
-                                <Route path=":id" element={<Order />} />
+                                <Route index element={<OrdersPage />} />
+                                <Route path=":id" element={<OrderPage />} />
                                 <Route path="new">
-                                    <Route index element={<OrderNew />} />
-                                    <Route path=":id" element={<OrderNew />} />
+                                    <Route index element={<OrderPageNew />} />
+                                    <Route path=":id" element={<OrderPageNew />} />
                                 </Route>
                             </Route>
 
-                            <Route path="cart" element={<Cart />} />
+                            <Route path="cart" element={<CartPage />} />
 
-                            <Route path="modifiers" element={<Modifiers />} />
+                            <Route path="modifiers" element={<ModifiersPage />} />
 
                             <Route path="*" element={<Page404 />} />
                         </Routes>

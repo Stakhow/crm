@@ -35,7 +35,7 @@ export interface OrderFormValues {
     list: { categoryName: ProductCategory; id: number; quantity: number; stock: number }[];
 }
 
-export default function OrderNew() {
+export default function OrderPageNew() {
     const [clients, setClients] = useState<ClientViewDTO[]>([]);
     const [client, setClient] = useState<ClientViewDTO['id']>();
     const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);

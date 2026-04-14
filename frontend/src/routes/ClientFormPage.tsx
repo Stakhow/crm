@@ -14,7 +14,7 @@ const DisplayingErrorMessagesSchema = Yup.object().shape({
         .required("Поле обов'язкове"),
 });
 
-export default function ClientForm() {
+export default function ClientFormPage() {
     const { notify } = useNotification();
     const { id } = useParams();
 

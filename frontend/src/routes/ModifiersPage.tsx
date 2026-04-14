@@ -42,7 +42,7 @@ interface Values {
     list: ProductModifierItemDTO[];
 }
 
-export default function Modifiers() {
+export default function ModifiersPage() {
     const [modifiers, setModifiers] = useState<ProductModifierDTO[]>([]);
     const [modifier, setModifier] = useState<ProductModifierDTO>();
     const [open, setOpen] = useState(false);

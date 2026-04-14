@@ -59,7 +59,7 @@ const SelectComponent = ({
     );
 };
 
-export default function Order() {
+export default function OrderPage() {
     let { id } = useParams();
 
     const [order, setOrder] = useState<OrderViewDTO>();

@@ -9,8 +9,7 @@ import type { ProductToCreateDTO } from '../../../dto/ProductToCreateDTO';
 
 import { FormComponent } from '../components/Product/FormComponent';
 
-
-export default function Product() {
+export default function ProductPage() {
     const [isLoading, setLoading] = useState<boolean>(false);
     const [productView, setProductView] = useState<ProductViewDTO | null>(null);
     const [values, setValues] = useState<ProductToCreateDTO>();
@@ -19,7 +18,6 @@ export default function Product() {
 
     const { id } = useParams();
     const productId = id ? +id : 0;
-
 
     useEffect(() => {
         if (!!productId) {
@@ -55,8 +53,6 @@ export default function Product() {
     return (
         <Box>
             {!!productView && <ProductCard product={productView} />}
-
-            
 
             {!!values && (
                 <Card raised sx={{ p: 2, mb: 2 }}>

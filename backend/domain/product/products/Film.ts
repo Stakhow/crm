@@ -2,8 +2,8 @@ import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
 
 export interface FilmProps extends BaseProductProps {
-  width?: number;
-  thickness?: number;
+  width: number;
+  thickness: number;
 }
 
 export class Film extends BaseProduct {
@@ -13,8 +13,8 @@ export class Film extends BaseProduct {
   constructor(props: FilmProps) {
     super(props);
     this.category = props.category;
-    this.width = props.width ?? 0;
-    this.thickness = props.thickness ?? 0;
+    this.width = props.width;
+    this.thickness = props.thickness;
   }
 
   set setWidth(v: number) {

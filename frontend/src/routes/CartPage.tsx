@@ -9,7 +9,7 @@ import { cartStore } from '../../store';
 import { CalendarInput } from '../components/Calendar';
 import type { PickerValue } from '@mui/x-date-pickers/internals';
 
-export default function Cart() {
+export default function CartPage() {
     const [deadline, setDeadline] = useState<PickerValue | null>(null);
 
     const cart = cartStore((state) => state.data);
