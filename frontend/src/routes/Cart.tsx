@@ -86,7 +86,7 @@ export default function Cart() {
                         />
                     ))}
 
-                    <Paper sx={{ mt: 2, p: 2 }}>
+                    <Paper sx={{ mt: 2, p: 2, mb: 14 }}>
                         <Stack spacing={2}>
                             <Button variant="outlined" color="info" fullWidth to={'/orders/new'} component={NavLink}>
                                 Додати товар
