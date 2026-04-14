@@ -1,41 +1,31 @@
 import { NavLink, useNavigate } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AppBar, Box, Button, CardActions, FormControl, Paper, Stack, Toolbar, Typography } from '@mui/material';
-import { cartService, orderService } from '../../../backend';
+import { orderService } from '../../../backend';
 import { priceFormat } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
 import { useNotification } from '../components/NotificationContext';
-import type { CartViewDTO } from '../../../dto/CartViewDTO';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { cartStore } from '../../store';
+import { CalendarInput } from '../components/Calendar';
+import type { PickerValue } from '@mui/x-date-pickers/internals';
 
 export default function Cart() {
-    const [cart, setCart] = useState<CartViewDTO>();
-    const [deadline, setDeadline] = useState<number>(0);
+    const [deadline, setDeadline] = useState<PickerValue | null>(null);
+
+    const cart = cartStore((state) => state.data);
+    const deleteCartItem = cartStore((state) => state.deleteCartItem);
+    const deleteCart = cartStore((state) => state.deleteCart);
+    const fetchData = cartStore((state) => state.fetchData);
 
     const navigate = useNavigate();
     const { notify } = useNotification();
 
-    const deleteCartItem = (itemId: number) => {
-        cartService.deleteCartItem(itemId).then((cart) => {
-            setCart(cart);
-            notify({ message: 'Товар видалено з корзини', severity: 'success' });
-        });
-    };
-
-    const deleteCart = () => {
-        cartService.deleteCart().then(() => {
-            setCart(undefined);
-            return window.location.reload();
-        });
-    };
-
     const createOrder = () => {
         if (!!deadline)
             orderService
-                .createOrder(deadline)
+                .createOrder(deadline.valueOf())
                 .then((orderId) => {
+                    fetchData();
                     navigate(`/orders/${orderId}`);
                     notify({ message: 'Замовлення успішно створено', severity: 'success' });
                 })
@@ -45,12 +35,6 @@ export default function Cart() {
                 });
         else notify({ message: 'Помилка створення замовлення: Дата виконання не встановлена', severity: 'success' });
     };
-
-    useEffect(() => {
-        cartService.getCartToView().then((cart) => {
-            setCart(cart);
-        });
-    }, []);
 
     return (
         <Box>
@@ -93,6 +77,7 @@ export default function Cart() {
                             </Button>
 
                             <Button
+                                size={'large'}
                                 variant="outlined"
                                 color="error"
                                 fullWidth
@@ -105,20 +90,20 @@ export default function Cart() {
                             </Button>
 
                             <FormControl fullWidth margin="dense">
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DemoContainer components={['DatePicker']}>
-                                        <DatePicker
-                                            label="Виконати на"
-                                            disablePast
-                                            format="DD/MM/YYYY"
-                                            onChange={(val) => {
-                                                setDeadline(val ? val.valueOf() : 0);
+                                <CalendarInput
+                                    value={deadline}
+                                    label="Виконати на"
+                                    onChange={(val: PickerValue) => {
+                                        if (val) setDeadline(val);
 
-                                                return val;
-                                            }}
-                                        />
-                                    </DemoContainer>
-                                </LocalizationProvider>
+                                        return val;
+                                    }}
+                                    error={!deadline}
+                                    disablePast
+                                />
+                            </FormControl>
+                            <FormControl fullWidth margin="dense">
+                                {/* <Test /> */}
                             </FormControl>
                         </Stack>
                     </Paper>
@@ -131,6 +116,7 @@ export default function Cart() {
                                 </Typography>
 
                                 <Button
+                                    size={'large'}
                                     variant="contained"
                                     fullWidth
                                     disabled={!deadline}
@@ -150,7 +136,7 @@ export default function Cart() {
                         Корзина порожня
                     </Typography>
 
-                    <Button end to={'/orders/new'} component={NavLink} variant="outlined">
+                    <Button size={'large'} end to={'/orders/new'} component={NavLink} variant="outlined">
                         Нове Замовлення
                     </Button>
                 </Stack>

@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { Badge, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useColorScheme } from '@mui/material/styles';
-import cartStore from '../store/';
+import { cartStore } from '../store/';
 
 interface Props {
     /**
@@ -103,6 +103,7 @@ export default function App(props: Props) {
                     value={mode}
                     onChange={(event) => setMode(event.target.value as 'light' | 'dark')}
                 >
+                    <FormControlLabel value="system" control={<Radio />} label="Системна" />
                     <FormControlLabel value="light" control={<Radio />} label="Світла" />
                     <FormControlLabel value="dark" control={<Radio />} label="Темна" />
                 </RadioGroup>

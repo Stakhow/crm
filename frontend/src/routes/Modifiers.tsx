@@ -11,6 +11,7 @@ import {
     ListItem,
     ListItemText,
     Dialog,
+    Card,
 } from '@mui/material';
 import { useEffect, useState, type ReactNode } from 'react';
 import { productService } from '../../../backend';
@@ -21,7 +22,6 @@ import * as Yup from 'yup';
 import DialogTitle from '@mui/material/DialogTitle';
 import { Formik, type FormikHelpers, Form, FieldArray, getIn } from 'formik';
 import { Categories } from '../components/Categories';
-import { grey } from '@mui/material/colors';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 import type { ProductModifierItemDTO } from '../../../dto/ProductModifierItemDTO';
 import { useNotification } from '../components/NotificationContext';
@@ -126,13 +126,21 @@ export default function Modifiers() {
             list: Yup.array().of(variant).min(1, 'Мінімум один варіант').required("Поле обов'язкове"),
         });
 
-
         return (
-            <Dialog onClose={handleClose} open={open}>
+            <Dialog
+                onClose={handleClose}
+                open={open}
+                sx={{ m: 1 }}
+                slotProps={{
+                    paper: {
+                        sx: { m: 1 },
+                    },
+                }}
+            >
                 <DialogTitle textAlign={'center'}>
                     {isEditMode ? `Редагування: ${modifier.name}` : 'Новий модифікатор'}
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{ p: 1, m: 0 }}>
                     <Formik
                         enableReinitialize={true}
                         validateOnMount={true}
@@ -209,7 +217,7 @@ export default function Modifiers() {
                                     <FieldArray
                                         name="list"
                                         render={(arrayHelpers) => (
-                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: grey[200] }}>
+                                            <Paper variant="outlined" sx={{ p: 2 }}>
                                                 {values.list &&
                                                     values.list.length > 0 &&
                                                     values.list.map((item, index) => {
@@ -222,7 +230,7 @@ export default function Modifiers() {
                                                         const isPriceTouched = getIn(touched, `list.${index}.price`);
 
                                                         return (
-                                                            <Paper sx={{ p: 2, mb: 2 }} variant="outlined" key={index}>
+                                                            <Card sx={{ p: 1, mb: 2 }} key={index} raised={true}>
                                                                 <TextField
                                                                     name={`list.${index}.id`}
                                                                     value={item.id ?? index}
@@ -258,17 +266,19 @@ export default function Modifiers() {
                                                                 <FormControl margin="dense" fullWidth>
                                                                     <Button
                                                                         disabled={
-                                                                            values.list.length === 1 || isEditMode
+                                                                            values.list.length === 1 ||
+                                                                            (isEditMode && !!item.id)
                                                                         }
                                                                         size={'small'}
                                                                         variant="outlined"
                                                                         fullWidth
+                                                                        color="error"
                                                                         onClick={() => arrayHelpers.remove(index)}
                                                                     >
                                                                         Видалити Варіант
                                                                     </Button>
                                                                 </FormControl>
-                                                            </Paper>
+                                                            </Card>
                                                         );
                                                     })}
 

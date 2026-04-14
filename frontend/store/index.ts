@@ -16,9 +16,10 @@ interface CartState {
 
     addCartItem: (data: { productId: number; quantity: number; clientId: number }) => void;
     deleteCartItem: (id: number) => void;
+    deleteCart: () => void;
 }
 
-const cartStore = create<CartState>((set) => ({
+export const cartStore = create<CartState>((set) => ({
     data: undefined,
     isLoading: false,
     list: [],
@@ -96,6 +97,19 @@ const cartStore = create<CartState>((set) => ({
             set({ error: err.message, isLoading: false });
         }
     },
+    deleteCart: async () => {
+        set({ isLoading: true });
+        try {
+            set({
+                data: undefined,
+                isLoading: false,
+                list: undefined,
+                productsInCart: undefined,
+            });
+        } catch (error) {
+            // @ts-ignore
+            set({ error: error.message, isLoading: false });
+        }
+    },
 }));
 
-export default cartStore;

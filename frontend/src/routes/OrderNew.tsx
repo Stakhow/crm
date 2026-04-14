@@ -27,7 +27,7 @@ import * as Yup from 'yup';
 import { NavLink, useSearchParams } from 'react-router';
 import { ProductSelect } from '../components/Order';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
-import cartStore from '../../store';
+import { cartStore } from '../../store';
 
 export interface OrderFormValues {
     client: number;
@@ -185,6 +185,7 @@ export default function OrderNew() {
                     onChange(e);
                 }}
                 name={field.name}
+                disabled={props.disabled ?? false}
             />
         );
     };
@@ -223,9 +224,8 @@ export default function OrderNew() {
                                 const _products = !!cartProduct ? [cartProduct] : state.get(item.categoryName);
                                 const categoryHasProducts = !!_products?.length;
                                 const productInCart = isProductInCart(item.id);
-
                                 return (
-                                    <Paper key={index} sx={{ p: 2, my: 2 }} elevation={3}>
+                                    <Paper key={index} sx={{ p: 1, my: 2 }} elevation={3}>
                                         <CategoriesComponent
                                             name={`list.${index}.categoryName`}
                                             onChange={(e: React.ChangeEvent<any>) => {
@@ -262,7 +262,7 @@ export default function OrderNew() {
 
                         <Stack direction={'row'} p={2} spacing={1}>
                             <Button
-                                size={'small'}
+                                size={'large'}
                                 variant="outlined"
                                 fullWidth
                                 onClick={() => {
@@ -279,7 +279,7 @@ export default function OrderNew() {
     };
 
     return (
-        <Paper elevation={12} sx={{ p: 2, mb: 3 }}>
+        <Paper elevation={12} sx={{ p: 2, mb: 14 }}>
             <Formik
                 initialValues={initialValues}
                 validateOnBlur={false}
@@ -314,7 +314,7 @@ export default function OrderNew() {
 
                             {!!values.client && <SelectedProductList />}
 
-                            <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+                            <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
                                 <Toolbar>
                                     <Button
                                         end

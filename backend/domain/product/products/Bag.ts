@@ -29,7 +29,11 @@ export class Bag extends BaseProduct {
     this.totalAmount = this.getTotalAmount();
   }
 
-  override getTotalAmount() {
+  override getTotalAmount(quantity: number = this.quantity) {
+    this.quantity = quantity;
+
+    this.getWeight();
+
     try {
       const totalAmount = Number((this.weight * this.price).toFixed(2));
 
@@ -55,6 +59,13 @@ export class Bag extends BaseProduct {
   }
 
   override getWeight(): number {
+    console.log(
+      this.length,
+      this.width,
+      this.thickness,
+      this.quantity,
+      this.weight,
+    );
     try {
       const weight = Number(
         (

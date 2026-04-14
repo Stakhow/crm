@@ -22,6 +22,7 @@ import Modifiers from './routes/Modifiers.tsx';
 const customTheme = createTheme({
     typography: {
         fontFamily: ['SN Pro', 'sans-serif'].join(','),
+        htmlFontSize: 15,
     },
     colorSchemes: {
         dark: true,

@@ -8,6 +8,9 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate', // Automatically updates the SW when new content is available
+            devOptions: {
+                enabled: true, // This allows the PWA to work on localhost during dev
+            },
             manifest: {
                 name: 'CRM App',
                 short_name: 'CRM',

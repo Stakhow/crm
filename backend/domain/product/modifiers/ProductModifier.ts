@@ -19,7 +19,7 @@ export class ProductModifier implements IProductModifier {
     if (!category.length || category.some((i) => !i))
       throw new AppError("DOMAIN", "Не встановлено категорії модифікатора");
 
-    if (!list.length || list.some((i) => !i.id || !i.name))
+    if (!list.length || list.some((i) => !i.name))
       throw new AppError("DOMAIN", "Помилка списку модифікатора");
 
     this._list = list;

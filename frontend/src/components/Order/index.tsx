@@ -1,14 +1,4 @@
-import {
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Typography,
-    Stack,
-    Button,
-    TextField,
-    Chip,
-} from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Typography, Stack, Button, TextField, Chip } from '@mui/material';
 import { Field, useField, useFormikContext, type FieldHookConfig, getIn } from 'formik';
 
 import { ProductCard } from '../Product/ProductCard';
@@ -109,7 +99,6 @@ const SelectedProductCard = ({
                 ) : (
                     <FormControl margin="dense" fullWidth>
                         <Button
-                            size={'small'}
                             variant="outlined"
                             fullWidth
                             color="success"
@@ -129,7 +118,6 @@ const SelectedProductCard = ({
 
                 <FormControl margin="dense" fullWidth>
                     <Button
-                        size={'small'}
                         variant="outlined"
                         fullWidth
                         color="error"
@@ -191,7 +179,7 @@ export const ProductSelect = ({
         <>
             <FormControl fullWidth margin="dense">
                 <InputLabel>{label}</InputLabel>
-                <Select id={field.name} {...field}>
+                <Select id={field.name} disabled={productsInCart.includes(+field.value)} {...field}>
                     {options}
                 </Select>
             </FormControl>

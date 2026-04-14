@@ -144,103 +144,100 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
 
                 return (
                     <Form>
-                        <AutoCalc />
-                        <FieldArray
-                            name="modifiers"
-                            render={() => (
-                                <Box>
-                                    {modifiers.length > 0 &&
-                                        modifiers.map((modifier, index) => {
-                                            const fieldName = `modifiers.${index}.value`;
-                                            const error = getIn(errors, fieldName);
+                        <Box sx={{ mb: 8 }}>
+                            <AutoCalc />
+                            <FieldArray
+                                name="modifiers"
+                                render={() => (
+                                    <Box>
+                                        {modifiers.length > 0 &&
+                                            modifiers.map((modifier, index) => {
+                                                const fieldName = `modifiers.${index}.value`;
+                                                const error = getIn(errors, fieldName);
 
-                                            return (
-                                                <FormControl fullWidth margin="dense" key={index}>
-                                                    <InputLabel id={fieldName}>{modifier.name}</InputLabel>
-                                                    <Select
-                                                        aria-labelledby={fieldName}
-                                                        id={`modifier-select-${modifier.id}`}
-                                                        name={fieldName}
-                                                        value={modifier.value}
-                                                        onChange={handleChange}
-                                                        error={!!error}
+                                                return (
+                                                    <FormControl fullWidth margin="dense" key={index}>
+                                                        <InputLabel id={fieldName}>{modifier.name}</InputLabel>
+                                                        <Select
+                                                            aria-labelledby={fieldName}
+                                                            id={`modifier-select-${modifier.id}`}
+                                                            name={fieldName}
+                                                            value={modifier.value}
+                                                            onChange={handleChange}
+                                                            error={!!error}
+                                                        >
+                                                            {modifier.list.map((i, itemIdx) => (
+                                                                <MenuItem
+                                                                    key={itemIdx}
+                                                                    value={i.id}
+                                                                    sx={{ textTransform: 'capitalize' }}
+                                                                >
+                                                                    {i.name} {i.price}грн.
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+
+                                                        <FormHelperText error={!!error}>{error}</FormHelperText>
+                                                    </FormControl>
+                                                );
+                                            })}
+                                    </Box>
+                                )}
+                            />
+
+                            <FieldArray
+                                name="fields"
+                                render={() => (
+                                    <Stack direction={'row'} flexWrap={'wrap'} spacing={1} useFlexGap>
+                                        {fields.length > 0 &&
+                                            fields.map((field, index) => {
+                                                const fieldName = `fields.${index}.value`;
+                                                const error = getIn(errors, fieldName);
+
+                                                const name = field.name as keyof typeof calculatedData.current;
+                                                field.value =
+                                                    name in calculatedData.current
+                                                        ? calculatedData.current[name]
+                                                        : field.value;
+
+                                                return (
+                                                    <FormControl
+                                                        sx={{
+                                                            flex: field.name === 'name' ? '2 1 100%' : '1 1 40%',
+                                                        }}
+                                                        margin="dense"
+                                                        key={index}
                                                     >
-                                                        {modifier.list.map((i, itemIdx) => (
-                                                            <MenuItem
-                                                                key={itemIdx}
-                                                                value={i.id}
-                                                                sx={{ textTransform: 'capitalize' }}
-                                                            >
-                                                                {i.name} {i.price}грн.
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
+                                                        <TextField
+                                                            placeholder={field.placeholder ?? ''}
+                                                            disabled={field.disabled}
+                                                            hiddenLabel={field.fieldType === 'hidden'}
+                                                            name={fieldName}
+                                                            type={field.fieldType}
+                                                            label={field.title}
+                                                            value={field.value !== 0 ? field.value : ''}
+                                                            onChange={handleChange}
+                                                            onBlur={handleBlur}
+                                                            helperText={error}
+                                                            error={!!error}
+                                                        />
+                                                    </FormControl>
+                                                );
+                                            })}
+                                    </Stack>
+                                )}
+                            />
 
-                                                    <FormHelperText error={!!error}>{error}</FormHelperText>
-                                                </FormControl>
-                                            );
-                                        })}
-                                </Box>
+                            {!!values.price && (
+                                <Typography variant="h6" sx={{ my: 2 }} textAlign={'center'}>
+                                    Ціна: <b>{priceFormat(calculatedData.current.price)}/кг</b>
+                                </Typography>
                             )}
-                        />
+                        </Box>
 
-                        <FieldArray
-                            name="fields"
-                            render={() => (
-                                <Stack direction={'row'} flexWrap={'wrap'} spacing={1} useFlexGap>
-                                    {fields.length > 0 &&
-                                        fields.map((field, index) => {
-                                            const fieldName = `fields.${index}.value`;
-                                            const error = getIn(errors, fieldName);
-
-                                            const name = field.name as keyof typeof calculatedData.current;
-                                            field.value =
-                                                name in calculatedData.current
-                                                    ? calculatedData.current[name]
-                                                    : field.value;
-
-                                            return (
-                                                <FormControl
-                                                    sx={{
-                                                        flex: field.name === 'name' ? '2 1 100%' : '1 1 40%',
-                                                    }}
-                                                    margin="dense"
-                                                    key={index}
-                                                >
-                                                    <TextField
-                                                        placeholder={field.placeholder ?? ''}
-                                                        disabled={field.disabled}
-                                                        hiddenLabel={field.fieldType === 'hidden'}
-                                                        name={fieldName}
-                                                        type={field.fieldType}
-                                                        label={field.title}
-                                                        value={field.value !== 0 ? field.value : ''}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        helperText={error}
-                                                        error={!!error}
-                                                    />
-                                                </FormControl>
-                                            );
-                                        })}
-                                </Stack>
-                            )}
-                        />
-
-                        {!!values.price && (
-                            <Typography variant="h6" sx={{ my: 2 }} textAlign={'center'}>
-                                Ціна: <b>{priceFormat(calculatedData.current.price)}/кг</b>
-                            </Typography>
-                        )}
-                        <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+                        <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
                             <Toolbar>
-                                <Button
-                                    variant="outlined"
-                                    sx={{ color: 'white', borderColor: 'white' }}
-                                    fullWidth
-                                    type={'submit'}
-                                    disabled={!values}
-                                >
+                                <Button variant="outlined" fullWidth type={'submit'} color="inherit" disabled={!values}>
                                     Підтвердити | Сума:&nbsp;
                                     <b>{priceFormat(calculatedData.current.totalAmount)}</b>
                                 </Button>
