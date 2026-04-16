@@ -3,7 +3,7 @@ import { orderService } from '../../../backend';
 import { Box } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
-import { ComponentNotFound } from '../components/ComponentNotFound';
+import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<OrderViewDTO[]>();
@@ -14,11 +14,7 @@ export default function OrdersPage() {
 
     return (
         <Box>
-            {!!orders && !!orders.length ? (
-                orders.map((i) => <OrderItem key={i.id} order={i} />)
-            ) : (
-                <ComponentNotFound title={'Немає замовлень'} buttonText={'Створити замовлення'} link={'/orders/new'} />
-            )}
+            {!!orders && !!orders.length ? orders.map((i) => <OrderItem key={i.id} order={i} />) : <OrdersNotFound />}
         </Box>
     );
 }

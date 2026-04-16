@@ -47,7 +47,7 @@ export default function App(props: Props) {
     const { pathname } = useLocation();
 
     const fetchData = cartStore((state) => state.getCartToView);
-    const cartData = cartStore((state) => state.data);
+    const cartData = cartStore((state) => state.cart);
 
     useEffect(() => {
         fetchData();

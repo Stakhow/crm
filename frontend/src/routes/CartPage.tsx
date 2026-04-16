@@ -8,14 +8,11 @@ import { useNotification } from '../components/NotificationContext';
 import { cartStore } from '../../store';
 import { CalendarInput } from '../components/Calendar';
 import type { PickerValue } from '@mui/x-date-pickers/internals';
+import { ClientItem } from '../components/ClientItem';
 
 export default function CartPage() {
     const [deadline, setDeadline] = useState<PickerValue | null>(null);
-
-    const cart = cartStore((state) => state.data);
-    const deleteCartItem = cartStore((state) => state.deleteCartItem);
-    const deleteCart = cartStore((state) => state.deleteCart);
-    const getCartToView = cartStore((state) => state.getCartToView);
+    const { cart, deleteCartItem, deleteCart, getCartToView } = cartStore((state) => state);
 
     const navigate = useNavigate();
     const { notify } = useNotification();
@@ -41,10 +38,11 @@ export default function CartPage() {
             {!!cart && cart.quantity > 0 ? (
                 <Box>
                     {!!cart.client && (
-                        <Paper sx={{ mt: 2, p: 2 }}>
-                            <Typography>{cart.client.name}</Typography>
-                            <Typography>{cart.client.phone}</Typography>
-                        </Paper>
+                        <ClientItem client={cart.client} />
+                        // <Paper sx={{ mt: 2, p: 2 }}>
+                        //     <Typography>{cart.client.name}</Typography>
+                        //     <Typography>{cart.client.phone}</Typography>
+                        // </Paper>
                     )}
 
                     {cart.products.map((product, idx) => (

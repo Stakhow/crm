@@ -1,16 +1,10 @@
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
 import { useEffect, useState } from 'react';
-import { Button, Card } from '@mui/material';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNotification } from '../components/NotificationContext';
-import { NavLink } from 'react-router';
 import { clientService } from '../../../backend/index';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
-import { styled } from '@mui/system';
 import { ComponentNotFound } from '../components/ComponentNotFound';
+import { ClientItem } from '../components/ClientItem';
 
 export default function ClientsPage() {
     const [list, setList] = useState<ClientViewDTO[]>([]);
@@ -29,38 +23,16 @@ export default function ClientsPage() {
             });
     }, []);
 
-    const StyledNavLink = styled(NavLink)({
-        width: '100%',
-        display: 'block',
-    });
-
-    const clientList = list.map((i) => (
-        <ListItem
-            key={i.id}
-            sx={{
-                margin: '8px 0',
-                boxShadow: 3,
-                borderRadius: 1,
-                backgroundColor: 'background.paper',
-                padding: 3,
-            }}
-            color={'primary'}
-        >
-            <ListItemAvatar>
-                <AccountCircleIcon fontSize={'large'} />
-            </ListItemAvatar>
-            <StyledNavLink to={`${i.id}`}>
-                <Button variant="outlined" fullWidth>
-                    <ListItemText primary={i.name} secondary={i.phone} />
-                </Button>
-            </StyledNavLink>
-        </ListItem>
-    ));
+    const ClientsList = () => (
+        <List>
+            {list.map((i) => (
+                <ClientItem client={i} key={i.id} />
+            ))}
+        </List>
+    );
 
     return !!list.length ? (
-        <List component={Card} raised>
-            {clientList}
-        </List>
+        <ClientsList />
     ) : (
         <ComponentNotFound title={'Клієнтів не знайдено'} buttonText={'Додати клієнта'} link={'/clients/new'} />
     );

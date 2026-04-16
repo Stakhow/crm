@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, Select, MenuItem, Typography, Stack, Button, TextField, Chip } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Typography, Stack, Button, TextField, Chip, Card } from '@mui/material';
 import { Field, useField, useFormikContext, type FieldHookConfig, getIn } from 'formik';
 
 import { ProductCard } from '../Product/ProductCard';
@@ -176,7 +176,7 @@ export const ProductSelect = ({
     const product = !!selectedProductId ? products.find((i) => +selectedProductId === i.id) : undefined;
 
     return (
-        <>
+        <Card sx={{ p: 2 }} raised>
             <FormControl fullWidth margin="dense">
                 <InputLabel>{label}</InputLabel>
                 <Select id={field.name} disabled={productsInCart.includes(+field.value)} {...field}>
@@ -196,6 +196,6 @@ export const ProductSelect = ({
                     }}
                 />
             )}
-        </>
+        </Card>
     );
 };

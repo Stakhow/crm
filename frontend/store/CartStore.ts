@@ -7,7 +7,7 @@ import { notify } from './NotificationStore';
 import { devtools } from 'zustand/middleware';
 
 interface CartState {
-    data: CartViewDTO | undefined;
+    cart: CartViewDTO | undefined;
     isLoading: boolean;
     error: string;
     list: OrderFormValues['list'];
@@ -22,26 +22,26 @@ const name = 'cartStore';
 export const cartStore = create<CartState>()(
     devtools(
         (set, get) => ({
-            data: undefined,
+            cart: undefined,
             isLoading: false,
             list: [],
             productsInCart: [],
             error: '',
             getCartToView: async () => {
                 set(
-                    { data: undefined, isLoading: true, list: [], productsInCart: [], error: '' },
+                    { cart: undefined, isLoading: true, list: [], productsInCart: [], error: '' },
                     false,
                     `${name}/getCartToView:start`,
                 );
 
                 try {
-                    const data = await cartService.getCartToView();
+                    const cart = await cartService.getCartToView();
 
-                    const products = data.products;
+                    const products = cart.products;
 
                     set(
                         {
-                            data,
+                            cart: cart,
                             isLoading: false,
                             list: products.map((i) => ({
                                 categoryName: i.categoryName,
@@ -65,13 +65,13 @@ export const cartStore = create<CartState>()(
                 set({ isLoading: true }, false, `${name}/addCartItem:start`);
 
                 try {
-                    const data = await cartService.addCartItem(props);
+                    const cart = await cartService.addCartItem(props);
 
-                    const products = data.products;
+                    const products = cart.products;
 
                     set(
                         {
-                            data,
+                            cart: cart,
                             isLoading: false,
                             list: products.map((i) => ({
                                 categoryName: i.categoryName,
@@ -97,13 +97,13 @@ export const cartStore = create<CartState>()(
                 set({ isLoading: true }, false, `${name}/deleteCartItem:start`);
 
                 try {
-                    const data = await cartService.deleteCartItem(id);
+                    const cart = await cartService.deleteCartItem(id);
 
-                    const products = data.products;
+                    const products = cart.products;
 
                     set(
                         {
-                            data,
+                            cart: cart,
                             isLoading: false,
                             list: products.map((i) => ({
                                 categoryName: i.categoryName,
@@ -130,7 +130,7 @@ export const cartStore = create<CartState>()(
                 try {
                     set(
                         {
-                            data: undefined,
+                            cart: undefined,
                             isLoading: false,
                             list: undefined,
                             productsInCart: undefined,

@@ -6,7 +6,6 @@ import {
     Select,
     MenuItem,
     FormHelperText,
-    Paper,
     CircularProgress,
     Stack,
     Box,
@@ -14,6 +13,7 @@ import {
     Button,
     Toolbar,
     Backdrop,
+    Card,
 } from '@mui/material';
 import { clientService, productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
@@ -42,12 +42,7 @@ export default function OrderPageNew() {
     const [categories, setCategories] = useState<ProductCategoryDTO[]>([]);
     const [state, setState] = useState<Map<ProductCategory, ProductViewDTO[]>>(new Map());
 
-    const cart = cartStore((state) => state.data);
-    const isLoading = cartStore((state) => state.isLoading);
-    const list = cartStore((state) => state.list);
-    const productsInCart = cartStore((state) => state.productsInCart);
-    const addCartItem = cartStore((state) => state.addCartItem);
-    const deleteCartItem = cartStore((state) => state.deleteCartItem);
+    const { cart, isLoading, list, productsInCart, addCartItem, deleteCartItem } = cartStore((state) => state);
 
     const { notify } = useNotification();
     const isProductInCart = (productId: number) => productsInCart.includes(productId);
@@ -214,8 +209,9 @@ export default function OrderPageNew() {
                                 const _products = !!cartProduct ? [cartProduct] : state.get(item.categoryName);
                                 const categoryHasProducts = !!_products?.length;
                                 const productInCart = isProductInCart(item.id);
+
                                 return (
-                                    <Paper key={index} sx={{ p: 1, my: 2 }} elevation={3}>
+                                    <>
                                         <CategoriesComponent
                                             name={`list.${index}.categoryName`}
                                             onChange={(e: React.ChangeEvent<any>) => {
@@ -246,7 +242,7 @@ export default function OrderPageNew() {
                                             ) : (
                                                 <ProductNotFound />
                                             ))}
-                                    </Paper>
+                                    </>
                                 );
                             })}
 
@@ -279,35 +275,44 @@ export default function OrderPageNew() {
             {({ errors, values, isSubmitting, handleChange }) => {
                 return (
                     <Form>
-                        {!!clients.length ? (
-                            <FormControl fullWidth margin="dense">
-                                <InputLabel id={`clientList`}>Список клієнтів</InputLabel>
-                                <Select
-                                    disabled={isClientSelected()}
-                                    aria-labelledby={`clientList`}
-                                    id={`clientList`}
-                                    label={`clientList`}
-                                    name="client"
-                                    value={values.client ? values.client : ''}
-                                    onChange={handleChange}
-                                    error={!!errors.client}
-                                >
-                                    {clients.map((item, itemIdx) => (
-                                        <MenuItem key={itemIdx} value={item.id} sx={{ textTransform: 'capitalize' }}>
-                                            {item.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
+                        {isLoading}
+                        <Box mb={2}>
+                            {!!clients.length ? (
+                                <Card sx={{ p: 2 }} raised>
+                                    <FormControl fullWidth margin="dense">
+                                        <InputLabel id={`clientList`}>Список клієнтів</InputLabel>
+                                        <Select
+                                            disabled={isClientSelected()}
+                                            aria-labelledby={`clientList`}
+                                            id={`clientList`}
+                                            label={`clientList`}
+                                            name="client"
+                                            value={values.client ? values.client : ''}
+                                            onChange={handleChange}
+                                            error={!!errors.client}
+                                        >
+                                            {clients.map((item, itemIdx) => (
+                                                <MenuItem
+                                                    key={itemIdx}
+                                                    value={item.id}
+                                                    sx={{ textTransform: 'capitalize' }}
+                                                >
+                                                    {item.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
 
-                                <FormHelperText error={!!errors.client}>{errors.client}</FormHelperText>
-                            </FormControl>
-                        ) : (
-                            <ComponentNotFound
-                                title={'Клієнтів не знайдено'}
-                                buttonText={'Додати клієнта'}
-                                link={'/clients/new'}
-                            />
-                        )}
+                                        <FormHelperText error={!!errors.client}>{errors.client}</FormHelperText>
+                                    </FormControl>
+                                </Card>
+                            ) : (
+                                <ComponentNotFound
+                                    title={'Клієнтів не знайдено'}
+                                    buttonText={'Додати клієнта'}
+                                    link={'/clients/new'}
+                                />
+                            )}
+                        </Box>
 
                         {!!values.client && (
                             <>

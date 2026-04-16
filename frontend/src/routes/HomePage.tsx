@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
-import { Backdrop, Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { Backdrop, Box, Card, CircularProgress } from '@mui/material';
 import type { PickerValue } from '@mui/x-date-pickers/internals';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { orderService } from '../../../backend';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
 import { Calendar } from '../components/Calendar';
+import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale('en', {
@@ -43,30 +44,26 @@ export default function HomePage() {
     };
 
     return (
-        <Paper sx={{ p: 2 }}>
-            <Calendar
-                date={date}
-                setDate={setDate}
-                isLoading={isLoading}
-                handleMonthChange={handleMonthChange}
-                monthOrders={monthOrders}
-                onChange={(newValue: PickerValue) => setDate(newValue)}
-                onMonthChange={handleMonthChange}
-            />
+        <Box sx={{ p: 2 }}>
+            <Card sx={{ p: 2 }} raised>
+                <Calendar
+                    date={date}
+                    setDate={setDate}
+                    isLoading={isLoading}
+                    handleMonthChange={handleMonthChange}
+                    monthOrders={monthOrders}
+                    onChange={(newValue: PickerValue) => setDate(newValue)}
+                    onMonthChange={handleMonthChange}
+                />
+            </Card>
 
             <Box mt={2}>
-                {!!orders.length ? (
-                    orders.map((i) => <OrderItem key={i.id} order={i} />)
-                ) : (
-                    <Typography textAlign={'center'} variant="h5" component={'h1'}>
-                        Немає замовлень
-                    </Typography>
-                )}
+                {!!orders.length ? orders.map((i) => <OrderItem key={i.id} order={i} />) : <OrdersNotFound />}
             </Box>
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
                 <CircularProgress color="inherit" />
             </Backdrop>
-        </Paper>
+        </Box>
     );
 }
