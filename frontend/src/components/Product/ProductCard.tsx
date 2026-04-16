@@ -3,8 +3,8 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import { dateToLocalString, priceFormat } from '../../../../utils/utils';
 import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
-
 import type { ReactNode } from 'react';
+import { Divider } from '@mui/material';
 
 export function ProductCard({
     product,
@@ -29,7 +29,7 @@ export function ProductCard({
                 minWidth: 275,
                 my: 2,
                 ...(!product.quantity && {
-                    boxShadow: '0px 5px 15px rgba(255, 0, 0, 0.3)',
+                    border: '3px dashed rgba(255, 0, 0, .8)',
                 }),
             }}
             raised
@@ -39,6 +39,8 @@ export function ProductCard({
                     {product.name}
                 </Typography>
 
+                <Divider sx={{ my: 1 }} />
+
                 <small>ID: {product.id}</small>
 
                 <Details data={product.modifiers} />
@@ -47,7 +49,7 @@ export function ProductCard({
 
                 {!!product.createdAt && <Typography>Створено: {dateToLocalString(product.createdAt)}</Typography>}
 
-                <hr />
+                <Divider sx={{ my: 2 }} />
 
                 <Typography>
                     {isInCart ? 'Вага' : 'Доступно на складі'}
@@ -59,11 +61,9 @@ export function ProductCard({
                     Ціна за кг: <b>{priceFormat(product.price)}</b>
                 </Typography>
 
-                <Typography>
+                <Typography gutterBottom>
                     Вартість: <b>{priceFormat(product.totalAmount)}</b>
                 </Typography>
-
-                <Typography variant="body2">{}</Typography>
             </CardContent>
             {children}
         </Card>

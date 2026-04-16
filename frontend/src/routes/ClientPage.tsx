@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CallIcon from '@mui/icons-material/Call';
 import { Dialog, DialogActions, List, DialogTitle, Divider, ListItem } from '@mui/material';
-import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { clientService, orderService } from '../../../backend/index';
@@ -15,6 +14,7 @@ import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 import { dateToLocalString } from '../../../utils/utils';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
+import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export default function ClientPage() {
     const [client, setClient] = useState<ClientViewDTO>();
@@ -83,18 +83,6 @@ export default function ClientPage() {
                         {client.name}
                     </Typography>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Button
-                            component={NavLink}
-                            to={`/orders/new?clientId=${id}`}
-                            size={'large'}
-                            variant="outlined"
-                            color="success"
-                        >
-                            Нове замовлення
-                        </Button>
-                    </Box>
-
                     <Divider sx={{ my: 2 }} />
 
                     <List
@@ -154,9 +142,11 @@ export default function ClientPage() {
                         </Stack>
                     </>
                 ) : (
-                    <Typography variant="h6" textAlign={'center'}>
-                        Замовлення відсутні
-                    </Typography>
+                    <ComponentNotFound
+                        title={'Замовлення відсутні'}
+                        buttonText={'Нове замовлення'}
+                        link={`/orders/new?clientId=${id}`}
+                    />
                 )}
             </Paper>
 

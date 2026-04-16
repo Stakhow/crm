@@ -69,7 +69,13 @@ export function ProductUpdateQuantity({
                         <Button variant="outlined" fullWidth onClick={handleClose}>
                             Відміна
                         </Button>
-                        <Button variant="outlined" disabled={!!errors.quantity} fullWidth color={'error'} type="submit">
+                        <Button
+                            variant="outlined"
+                            disabled={!!errors.quantity}
+                            fullWidth
+                            color={'success'}
+                            type="submit"
+                        >
                             Підтвердити
                         </Button>
                     </DialogActions>

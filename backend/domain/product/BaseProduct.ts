@@ -216,6 +216,8 @@ export abstract class BaseProduct {
           value,
           name,
         })),
+
+      productToCreate: this.toCreate()
     };
   }
 

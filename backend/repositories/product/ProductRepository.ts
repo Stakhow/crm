@@ -1,11 +1,15 @@
 import type { IProductRepository } from "./IProductRepository";
 import { db } from "../../../config/db";
-import { BaseProduct } from "../../domain/product/BaseProduct";
+import {
+  BaseProduct,
+  type BaseProductProps,
+} from "../../domain/product/BaseProduct";
 import { AppError } from "../../../utils/error";
 import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
 import type { ProductCategory } from "../../domain/product/ProductCategory";
 import type { ProductManager } from "../../domain/product/ProductManager";
 import { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
+import type { ProductByCategory } from "../../domain/product/ProductByCategory";
 
 type ModListDTO = {
   id: number;
@@ -31,6 +35,47 @@ export class ProductRepository implements IProductRepository {
     return productId;
   }
 
+  private _getCategories(): {
+    id: number;
+    name: ProductCategory;
+    title: string;
+  }[] {
+    const categories: ProductCategory[] = ["film", "bag", "stretch", "granule"];
+
+    return categories.map((category, id) => {
+      let title = "";
+      switch (category) {
+        case "film":
+          title = "Плівка";
+          break;
+        case "bag":
+          title = "Пакет";
+          break;
+        case "stretch":
+          title = "Стрейч";
+          break;
+        case "granule":
+          title = "Гранула";
+          break;
+      }
+      return { id, name: category, title };
+    });
+  }
+
+  public async getCategories(): Promise<
+    { id: number; name: ProductCategory; title: string }[]
+  > {
+    return this._getCategories();
+  }
+
+  private _getCategory(categoryName: ProductCategory | string | number) {
+    try {
+      return this._getCategories().find((i) => i.name === categoryName);
+    } catch (error) {
+      throw new AppError("SERVICE", `Категорія відсутня ${categoryName}`);
+    }
+  }
+
   async update(id: number, product: BaseProduct): Promise<number> {
     const persistedProduct = product.toPersistence();
     const { appliedModifiers } = product;
@@ -52,8 +97,37 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async getById(id: number): Promise<BaseProduct> {
+  private async __getPropsByCategoryName(
+    categoryName: ProductCategory,
+  ): Promise<BaseProductProps> {
+    const category = this._getCategory(categoryName);
+
+    if (!category) throw new AppError("SERVICE", "Категорію не знайдено");
+    
+    const modifiers = await this.getAllModifiers(categoryName);
+
+    return {
+      id: 0,
+      category,
+      modifiers,
+      price: 0,
+      totalAmount: 0,
+      name: "",
+      // length: 0,
+      // width: 0,
+      // thickness: 0,
+      // weight: 0,
+      quantity: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      appliedModifiers: [],
+    };
+  }
+
+  private async _getPropsById(id: number): Promise<BaseProductProps> {
+    
     const productDTO = await db.products.get(id);
+    
 
     if (!productDTO) throw new AppError("DOMAIN", "Продукту не існує");
 
@@ -70,17 +144,36 @@ export class ProductRepository implements IProductRepository {
         "Не знайдено збережених модифікаторів продукту",
       );
 
+    return {
+      modifiers,
+      ...productDTO,
+      appliedModifiers: appliedModifiers.get(id) ?? [],
+    };
+  }
+
+  private async _getProduct(
+    props: BaseProductProps,
+  ): Promise<InstanceType<(typeof ProductByCategory)[ProductCategory]>> {
     const product = this.productManager.createByCategory(
-      productDTO.categoryName,
-      {
-        modifiers,
-        ...productDTO,
-        appliedModifiers: appliedModifiers.get(id) ?? [],
-      },
+      props.category.name,
+      props,
     );
 
     return product;
   }
+
+  public async getByCategoryName(categoryName: ProductCategory) {
+    const props = await this.__getPropsByCategoryName(categoryName);
+
+    return await this._getProduct(props);
+  }
+
+  public async getById(id: number): Promise<BaseProduct> {
+    const props = await this._getPropsById(id);
+
+    return await this._getProduct(props);
+  }
+
   async getByIds(ids: number[]): Promise<BaseProduct[]> {
     const productsDTO = await db.products.bulkGet(ids);
 
@@ -117,13 +210,18 @@ export class ProductRepository implements IProductRepository {
   }
 
   async getAll(): Promise<BaseProduct[]> {
-    const productsDTO: ProductDataDTO[] = await db.products.toArray();
+    const productsDTO: ProductDataDTO[] = await db.products.reverse().toArray();
 
     return this._getProducts(productsDTO);
   }
 
-  async getByCategory(categoryName: ProductCategory): Promise<BaseProduct[]> {
-    const productsDTO = await db.products.where({ categoryName }).toArray();
+  async getProductsByCategory(
+    categoryName: ProductCategory,
+  ): Promise<BaseProduct[]> {
+    const productsDTO = await db.products
+      .where({ categoryName })
+      .reverse()
+      .toArray();
     return this._getProducts(productsDTO);
   }
 
@@ -268,7 +366,6 @@ export class ProductRepository implements IProductRepository {
       .where("productId")
       .anyOf(productsId)
       .toArray();
-
 
     const relationMap = relations.reduce((acc, current) => {
       const row = acc.get(current.productId);

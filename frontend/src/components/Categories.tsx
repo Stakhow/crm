@@ -1,4 +1,5 @@
 import {
+    Card,
     FormControl,
     FormHelperText,
     InputLabel,
@@ -18,7 +19,21 @@ type CategoriesProps = {
     error?: any;
 } & Omit<SelectProps, 'onChange' | 'value' | 'error' | 'color' | 'size'>;
 
-export function Categories({ categories, value, onChange, multiple = false, error, name, ...rest }: CategoriesProps) {
+export const Categories = (props: CategoriesProps) => (
+    <Card sx={{ p: 2, mb: 2 }} raised>
+        <CategoriesField {...props} />
+    </Card>
+);
+
+export function CategoriesField({
+    categories,
+    value,
+    onChange,
+    multiple = false,
+    error,
+    name,
+    ...rest
+}: CategoriesProps) {
     const categoriesItems = categories.map((category, idx) => (
         <MenuItem key={++idx} value={category.name} sx={{ textTransform: 'capitalize' }}>
             {category.title}

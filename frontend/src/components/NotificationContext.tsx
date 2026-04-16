@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { Snackbar, Alert } from '@mui/material';
 
+import { useEffect } from 'react';
+import { useNotificationStore } from '../../store';
+
 export type NotifyFunction = (args: NotifyArgs) => void;
 
 type NotificationContextType = {
@@ -33,14 +36,16 @@ type NotifyArgs = {
 };
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
+    const { notifications, remove } = useNotificationStore();
+
     const [notification, setNotification] = useState<NotificationState>({
         open: false,
         message: '',
         severity: 'info',
-        duration: 4000,
+        duration: 3000,
     });
 
-    const notify: NotifyFunction = useCallback(({ message, severity = 'info', duration = 4000 }: NotifyArgs) => {
+    const notify: NotifyFunction = useCallback(({ message, severity = 'info', duration = 3000 }: NotifyArgs) => {
         setNotification({
             open: true,
             message,
@@ -54,6 +59,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
         setNotification((prev) => ({ ...prev, open: false }));
     };
+
+    useEffect(() => {
+        notifications.forEach((n) => {
+            notify({ message: n.message, severity: n.type });
+
+            remove(n.id);
+        });
+    }, [notifications]);
 
     return (
         <NotificationContext.Provider value={{ notify }}>

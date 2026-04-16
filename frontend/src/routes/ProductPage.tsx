@@ -1,63 +1,76 @@
 import { useEffect, useState } from 'react';
-import { productService } from '../../../backend';
-import { useNotification } from '../components/NotificationContext';
-import { useParams } from 'react-router';
-import { Backdrop, Box, Card, CircularProgress } from '@mui/material';
+import { useNavigate, useParams } from 'react-router';
+import { Backdrop, Box, Button, Card, CardActions, CircularProgress, Stack } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
-import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
-import type { ProductToCreateDTO } from '../../../dto/ProductToCreateDTO';
 
 import { FormComponent } from '../components/Product/FormComponent';
+import { productStore } from '../../store';
+import { ConfirmationDialog } from '../components/ConfirmationDialog';
+import { ProductNotFound } from '../components/Product/ProductNotFound';
 
 export default function ProductPage() {
-    const [isLoading, setLoading] = useState<boolean>(false);
-    const [productView, setProductView] = useState<ProductViewDTO | null>(null);
-    const [values, setValues] = useState<ProductToCreateDTO>();
-
-    const { notify } = useNotification();
+    const { getProduct, product, isLoading, saveProduct, deleteProduct, error } = productStore((state) => state);
+    const [openDialog, setOpenDialog] = useState(false);
 
     const { id } = useParams();
-    const productId = id ? +id : 0;
+    const navigate = useNavigate();
+
+    const onDelete = async (id: number) => {
+        await deleteProduct(id);
+        if (!error) navigate(`/products/`, { replace: true });
+    };
 
     useEffect(() => {
-        if (!!productId) {
-            setLoading(true);
-            productService
-                .initToEdit(productId)
-                .then((product) => {
-                    setValues(product);
-                })
-                .catch((error) => {
-                    console.log(error);
-                    notify({ message: `Помилка при отриманні продукту: ${error.message}`, severity: 'error' });
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-
-            productService
-                .getProductToView(productId)
-                .then((product) => {
-                    setProductView(product);
-                })
-                .catch((e) => {
-                    console.log(e);
-                    notify({ message: 'Помилка при отриманні продукту getProductToView', severity: 'error' });
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        }
+        console.log(Number(id));
+        if (Number(id)) getProduct(Number(id));
+        // else navigate(`/products/`, { replace: true });
     }, []);
 
     return (
         <Box>
-            {!!productView && <ProductCard product={productView} />}
+            {!!product ? (
+                <>
+                    <ProductCard
+                        product={product}
+                        children={
+                            <CardActions sx={{ p: 2 }}>
+                                <Stack sx={{ width: '100%' }}>
+                                    <Button
+                                        size="small"
+                                        color="error"
+                                        fullWidth
+                                        onClick={() => {
+                                            setOpenDialog(true);
+                                        }}
+                                        variant="outlined"
+                                    >
+                                        Видалити
+                                    </Button>
+                                </Stack>
+                            </CardActions>
+                        }
+                    />
+                    <Card raised sx={{ p: 2, mb: 2 }}>
+                        <FormComponent
+                            id={product.id}
+                            values={product.productToCreate}
+                            onSubmit={(values) => {
+                                saveProduct(values, product.id);
+                            }}
+                        />
+                    </Card>
 
-            {!!values && (
-                <Card raised sx={{ p: 2, mb: 2 }}>
-                    {<FormComponent id={productId} values={values} />}
-                </Card>
+                    <ConfirmationDialog
+                        isOpen={openDialog}
+                        title={'Видалити продукт?'}
+                        handleClose={() => setOpenDialog(false)}
+                        handleConfirmClick={() => {
+                            onDelete(product.id);
+                        }}
+                    />
+                </>
+            ) : (
+                <ProductNotFound />
             )}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>

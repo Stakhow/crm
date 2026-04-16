@@ -15,7 +15,7 @@ export default function CartPage() {
     const cart = cartStore((state) => state.data);
     const deleteCartItem = cartStore((state) => state.deleteCartItem);
     const deleteCart = cartStore((state) => state.deleteCart);
-    const fetchData = cartStore((state) => state.fetchData);
+    const getCartToView = cartStore((state) => state.getCartToView);
 
     const navigate = useNavigate();
     const { notify } = useNotification();
@@ -25,7 +25,7 @@ export default function CartPage() {
             orderService
                 .createOrder(deadline.valueOf())
                 .then((orderId) => {
-                    fetchData();
+                    getCartToView();
                     navigate(`/orders/${orderId}`);
                     notify({ message: 'Замовлення успішно створено', severity: 'success' });
                 })

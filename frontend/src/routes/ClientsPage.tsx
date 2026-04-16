@@ -3,13 +3,14 @@ import ListItem from '@mui/material/ListItem';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import { useEffect, useState } from 'react';
-import { Button, Paper } from '@mui/material';
+import { Button, Card } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNotification } from '../components/NotificationContext';
 import { NavLink } from 'react-router';
 import { clientService } from '../../../backend/index';
 import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 import { styled } from '@mui/system';
+import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export default function ClientsPage() {
     const [list, setList] = useState<ClientViewDTO[]>([]);
@@ -56,9 +57,11 @@ export default function ClientsPage() {
         </ListItem>
     ));
 
-    return (
-        <Paper sx={{ p: 2 }} elevation={12}>
-            {!!list.length ? <List>{clientList}</List> : 'Немає Клієнтів'}
-        </Paper>
+    return !!list.length ? (
+        <List component={Card} raised>
+            {clientList}
+        </List>
+    ) : (
+        <ComponentNotFound title={'Клієнтів не знайдено'} buttonText={'Додати клієнта'} link={'/clients/new'} />
     );
 }

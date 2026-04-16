@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { orderService } from '../../../backend';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderItem } from '../components/OrderItem';
+import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<OrderViewDTO[]>();
@@ -16,9 +17,7 @@ export default function OrdersPage() {
             {!!orders && !!orders.length ? (
                 orders.map((i) => <OrderItem key={i.id} order={i} />)
             ) : (
-                <Typography textAlign={'center'} variant="h5" component={'h1'}>
-                    Немає замовлень
-                </Typography>
+                <ComponentNotFound title={'Немає замовлень'} buttonText={'Створити замовлення'} link={'/orders/new'} />
             )}
         </Box>
     );

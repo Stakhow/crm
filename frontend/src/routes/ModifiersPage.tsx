@@ -21,7 +21,7 @@ import * as Yup from 'yup';
 
 import DialogTitle from '@mui/material/DialogTitle';
 import { Formik, type FormikHelpers, Form, FieldArray, getIn } from 'formik';
-import { Categories } from '../components/Categories';
+import { CategoriesField } from '../components/Categories';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 import type { ProductModifierItemDTO } from '../../../dto/ProductModifierItemDTO';
 import { useNotification } from '../components/NotificationContext';
@@ -186,6 +186,18 @@ export default function ModifiersPage() {
                         {({ setFieldValue, values, errors, handleChange, touched }) => {
                             return (
                                 <Form>
+                                    <CategoriesField
+                                        name={'categoryName'}
+                                        categories={categories}
+                                        value={values.category}
+                                        onChange={(e) => {
+                                            setFieldValue('category', e.target.value);
+                                        }}
+                                        multiple={true}
+                                        error={errors['category']}
+                                        disabled={isEditMode}
+                                    />
+
                                     <FormControl margin="dense" fullWidth>
                                         <TextField
                                             name="name"
@@ -197,18 +209,6 @@ export default function ModifiersPage() {
                                             error={!!errors['name']}
                                         />
                                     </FormControl>
-
-                                    <Categories
-                                        name={'categoryName'}
-                                        categories={categories}
-                                        value={values.category}
-                                        onChange={(e) => {
-                                            setFieldValue('category', e.target.value);
-                                        }}
-                                        multiple={true}
-                                        error={errors['category']}
-                                        disabled={isEditMode}
-                                    />
 
                                     <Typography variant="h6" mt={1} textAlign={'center'}>
                                         Варіанти:
@@ -317,7 +317,7 @@ export default function ModifiersPage() {
         const categories = data.category.map((i) => categoriesMap?.get(i)).join(', ');
 
         return (
-            <Paper sx={{ p: 2, mb: 2 }}>
+            <Card sx={{ p: 2, mb: 2 }} raised>
                 <Typography>
                     <b>ID:</b> {data.id}
                 </Typography>
@@ -376,7 +376,7 @@ export default function ModifiersPage() {
                         Видалити
                     </Button>
                 </Stack>
-            </Paper>
+            </Card>
         );
     };
 

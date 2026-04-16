@@ -24,12 +24,13 @@ const cartRepository = new CartRepository();
 
 export const clientService = new ClientService(clientRepository);
 
-export const productService = new ProductService(
-  productManager,
-  productRepository,
-);
+export const productService = new ProductService(productRepository);
 
-export const cartService = new CartService(cartRepository, productService, clientService);
+export const cartService = new CartService(
+  cartRepository,
+  productService,
+  clientService,
+);
 
 export const orderService = new OrderService(
   orderRepository,

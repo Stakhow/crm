@@ -1,4 +1,5 @@
 import type { ProductCategory } from "./../backend/domain/product/ProductCategory";
+import type { ProductToCreateDTO } from "./ProductToCreateDTO";
 
 export type ProductViewDTO = {
   id: number;
@@ -16,4 +17,5 @@ export type ProductViewDTO = {
   price: number;
   totalAmount: number;
   fields: { title: string; value: number | string; name: string }[];
+  productToCreate: ProductToCreateDTO;
 };

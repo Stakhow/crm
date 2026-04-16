@@ -69,7 +69,7 @@ export class CartService {
   }): Promise<CartViewDTO> {
     const cart = await this.getCart();
 
-    const product = await this.productService.getProduct(data.productId);
+    const product = await this.productService.getProductById(data.productId);
     product.setQuantity(data.quantity);
 
     const productData = product.toView();

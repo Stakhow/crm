@@ -46,7 +46,7 @@ export default function App(props: Props) {
     const { mode, setMode } = useColorScheme();
     const { pathname } = useLocation();
 
-    const fetchData = cartStore((state) => state.fetchData);
+    const fetchData = cartStore((state) => state.getCartToView);
     const cartData = cartStore((state) => state.data);
 
     useEffect(() => {

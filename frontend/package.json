@@ -17,6 +17,7 @@
         "@mui/icons-material": "^7.3.7",
         "@mui/material": "^7.3.7",
         "@mui/x-date-pickers": "^9.0.0",
+        "@react-input/mask": "^2.0.4",
         "dayjs": "^1.11.20",
         "formik": "^2.4.9",
         "react": "^19.2.0",

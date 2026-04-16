@@ -50,6 +50,9 @@ function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewD
             color={isPast ? 'info' : color}
             badgeContent={orders ? orders.length : undefined}
             sx={{
+                '& .MuiBadge-badge': {
+                    boxShadow: '1px 1px 3px 1px rgba(0, 0, 0, 0.7)',
+                },
                 '& .MuiBadge-colorInfo': {
                     backgroundColor: grey[500],
                 },

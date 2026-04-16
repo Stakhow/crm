@@ -13,17 +13,22 @@ import {
     Backdrop,
     CircularProgress,
     Stack,
+    Card,
 } from '@mui/material';
-import { useFormikContext, Formik, Form, type FormikHelpers, FieldArray, getIn } from 'formik';
-import { useMemo, useEffect, useRef } from 'react';
+import { Formik, Form, type FormikHelpers, FieldArray, getIn } from 'formik';
+import { useMemo, useRef } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
-import { productService } from '../../../../backend';
-import { useNotification } from '../NotificationContext';
-import { useNavigate } from 'react-router';
 
-export const FormComponent = ({ id, values }: { id: number; values: ProductToCreateDTO }) => {
+export const FormComponent = ({
+    values,
+    onSubmit,
+}: {
+    id: number;
+    values: ProductToCreateDTO;
+    onSubmit: (values: ProductToCreateDTO) => void;
+}) => {
     const calculatedData = useRef<{
         price: number;
         weight: number;
@@ -36,10 +41,8 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
         pricePerItem: values.pricePerItem,
     });
 
-    const navigate = useNavigate();
-    const isFirstRender = useRef(true);
+    calculatedData.current = values;
 
-    const { notify } = useNotification();
     const validationSchema = () => {
         const allFields = {
             width: Yup.number().min(30, 'Замалий розмір').max(100, 'Завеликий розмір').required("Поле обов'язкове"),
@@ -86,28 +89,6 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
 
     const schema = useMemo(() => validationSchema(), [values]);
 
-    const AutoCalc = () => {
-        const { values, isValid, setSubmitting } = useFormikContext<ProductToCreateDTO>();
-
-        useEffect(() => {
-            if (isFirstRender.current) {
-                isFirstRender.current = false;
-                return;
-            }
-            if (!isValid) return;
-
-            setSubmitting(true);
-            productService.calculateDraft(id, values).then((updatedValues) => {
-                const { price, totalAmount, weight, pricePerItem } = updatedValues;
-
-                calculatedData.current = { price, totalAmount, weight, pricePerItem };
-
-                setSubmitting(false);
-            });
-        }, [values.fields, values.modifiers]);
-
-        return null;
-    };
     return (
         <Formik
             validationSchema={schema}
@@ -115,29 +96,9 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
             // validateOnMount={true}
             // validateOnChange={true}
             enableReinitialize={true}
-            onSubmit={(values: ProductToCreateDTO, FormikHelpers: FormikHelpers<ProductToCreateDTO>) => {
-                const action = () => {
-                    return !!id
-                        ? productService.updateProduct(id, values)
-                        : productService.createProduct(values.categoryName, values);
-                };
-
-                action()
-                    .then((productId) => {
-                        notify({ message: `Продукт успішно ${!!id ? 'оновлено' : 'створено'} `, severity: 'success' });
-
-                        if (productId) navigate(`/products/${productId}`);
-                    })
-                    .catch((error) => {
-                        notify({
-                            message: `Помилка при ${!!id ? 'оновленні' : 'створенні'} продукту`,
-                            severity: 'error',
-                        });
-                        console.error('Error editing product:', error);
-                    })
-                    .finally(() => {
-                        FormikHelpers.setSubmitting(false);
-                    });
+            onSubmit={(values: ProductToCreateDTO, { setSubmitting }: FormikHelpers<ProductToCreateDTO>) => {
+                onSubmit(values);
+                setSubmitting(false);
             }}
             context={{ categoryName: values.categoryName }}
         >
@@ -146,8 +107,7 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
 
                 return (
                     <Form>
-                        <Box sx={{ mb: 8 }}>
-                            <AutoCalc />
+                        <Card sx={{ mb: 8, p: 2 }} raised>
                             <FieldArray
                                 name="modifiers"
                                 render={() => (
@@ -235,13 +195,12 @@ export const FormComponent = ({ id, values }: { id: number; values: ProductToCre
                                     Ціна: <b>{priceFormat(calculatedData.current.price)}/кг</b>
                                 </Typography>
                             )}
-                        </Box>
+                        </Card>
 
                         <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
                             <Toolbar>
                                 <Button variant="outlined" fullWidth type={'submit'} color="inherit" disabled={!values}>
-                                    Підтвердити | Сума:&nbsp;
-                                    <b>{priceFormat(calculatedData.current.totalAmount)}</b>
+                                    Підтвердити
                                 </Button>
                             </Toolbar>
                         </AppBar>

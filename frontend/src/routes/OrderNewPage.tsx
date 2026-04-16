@@ -14,7 +14,6 @@ import {
     Button,
     Toolbar,
     Backdrop,
-    Typography,
 } from '@mui/material';
 import { clientService, productService } from '../../../backend';
 import { useNotification } from '../components/NotificationContext';
@@ -28,6 +27,8 @@ import { NavLink, useSearchParams } from 'react-router';
 import { ProductSelect } from '../components/Order';
 import type { ProductCategoryDTO } from '../../../dto/ProductCategoryDTO';
 import { cartStore } from '../../store';
+import { ProductNotFound } from '../components/Product/ProductNotFound';
+import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export interface OrderFormValues {
     client: number;
@@ -194,17 +195,6 @@ export default function OrderPageNew() {
         const { values, handleChange } = useFormikContext<OrderFormValues>();
         const { list } = values;
 
-        const ItemNotFound = () => (
-            <Typography
-                justifyContent={'center'}
-                height={56}
-                variant="h6"
-                sx={{ display: 'flex', alignItems: 'center' }}
-            >
-                Не знайдено продуктів
-            </Typography>
-        );
-
         const emptyItem = {
             categoryName: '',
             id: '',
@@ -216,7 +206,7 @@ export default function OrderPageNew() {
             <FieldArray
                 name="list"
                 render={(arrayHelpers) => (
-                    <Box>
+                    <Box sx={{ mb: 14 }}>
                         {list.length > 0 &&
                             list.map((item, index) => {
                                 const cartProduct = cart?.products.find((p) => p.id === item.id);
@@ -254,7 +244,7 @@ export default function OrderPageNew() {
                                                     productsInCart={productsInCart}
                                                 />
                                             ) : (
-                                                <ItemNotFound />
+                                                <ProductNotFound />
                                             ))}
                                     </Paper>
                                 );
@@ -279,17 +269,17 @@ export default function OrderPageNew() {
     };
 
     return (
-        <Paper elevation={12} sx={{ p: 2, mb: 14 }}>
-            <Formik
-                initialValues={initialValues}
-                validateOnBlur={false}
-                onSubmit={() => {}}
-                validationSchema={validationSchema}
-                enableReinitialize={true}
-            >
-                {({ errors, values, isSubmitting, handleChange }) => {
-                    return (
-                        <Form>
+        <Formik
+            initialValues={initialValues}
+            validateOnBlur={false}
+            onSubmit={() => {}}
+            validationSchema={validationSchema}
+            enableReinitialize={true}
+        >
+            {({ errors, values, isSubmitting, handleChange }) => {
+                return (
+                    <Form>
+                        {!!clients.length ? (
                             <FormControl fullWidth margin="dense">
                                 <InputLabel id={`clientList`}>Список клієнтів</InputLabel>
                                 <Select
@@ -311,36 +301,45 @@ export default function OrderPageNew() {
 
                                 <FormHelperText error={!!errors.client}>{errors.client}</FormHelperText>
                             </FormControl>
+                        ) : (
+                            <ComponentNotFound
+                                title={'Клієнтів не знайдено'}
+                                buttonText={'Додати клієнта'}
+                                link={'/clients/new'}
+                            />
+                        )}
 
-                            {!!values.client && <SelectedProductList />}
+                        {!!values.client && (
+                            <>
+                                <SelectedProductList />
+                                <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
+                                    <Toolbar>
+                                        <Button
+                                            end
+                                            to={'/cart'}
+                                            component={NavLink}
+                                            variant="outlined"
+                                            sx={{ color: 'white', borderColor: 'white' }}
+                                            fullWidth
+                                            disabled={values.totalAmount === 0}
+                                        >
+                                            Перейти в Корзину | Сума:&nbsp;
+                                            <b>{priceFormat(values.totalAmount)}</b>
+                                        </Button>
+                                    </Toolbar>
+                                </AppBar>
+                            </>
+                        )}
 
-                            <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
-                                <Toolbar>
-                                    <Button
-                                        end
-                                        to={'/cart'}
-                                        component={NavLink}
-                                        variant="outlined"
-                                        sx={{ color: 'white', borderColor: 'white' }}
-                                        fullWidth
-                                        disabled={values.totalAmount === 0}
-                                    >
-                                        Перейти в Корзину | Сума:&nbsp;
-                                        <b>{priceFormat(values.totalAmount)}</b>
-                                    </Button>
-                                </Toolbar>
-                            </AppBar>
-
-                            <Backdrop
-                                sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                                open={isSubmitting || isLoading}
-                            >
-                                <CircularProgress color="inherit" />
-                            </Backdrop>
-                        </Form>
-                    );
-                }}
-            </Formik>
-        </Paper>
+                        <Backdrop
+                            sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                            open={isSubmitting || isLoading}
+                        >
+                            <CircularProgress color="inherit" />
+                        </Backdrop>
+                    </Form>
+                );
+            }}
+        </Formik>
     );
 }
