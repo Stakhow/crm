@@ -15,6 +15,9 @@ export class Film extends BaseProduct {
     this.category = props.category;
     this.width = props.width;
     this.thickness = props.thickness;
+
+    this.price = this.getPrice();
+    this.totalAmount = this.getTotalAmount(this.quantity);
   }
 
   set setWidth(v: number) {

@@ -27,7 +27,6 @@ export const ClientsListSelect = () => {
                         name="client"
                         value={_clientId ?? ''}
                         onChange={(e) => {
-                            console.log(e.target.value);
                             setClient(e.target.value);
                         }}
                         // error={!!errors.client}

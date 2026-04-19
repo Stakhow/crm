@@ -93,7 +93,6 @@ export class OrderService {
 
   async repeatOrder(id: number) {
     const order = await this.orderRepository.getById(id);
-    console.log("repeatOrder", id);
     return this.cartService.createFromOrder(
       order.items.map((i) => ({
         productId: i.id,

@@ -17,8 +17,6 @@ export const calendarStore = create<CalendarState>()(
             modth: null,
             setDate: (date) => {
                 set({ date }, false, `${name}/setDate`);
-
-                console.log('setDate', date);
             },
         }),
         { name, enabled: false },

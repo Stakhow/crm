@@ -62,8 +62,7 @@ export const productStore = create<ProductState>()(
                 );
 
                 try {
-                    const products = await productService.getProducts(categoryName);
-                    console.log(products);
+                    const products = await productService.getProductsToView(categoryName);
                     set(
                         {
                             products,
@@ -128,7 +127,6 @@ export const productStore = create<ProductState>()(
                 }
             },
             getProduct: async (id, categoryName) => {
-                console.log(id, categoryName);
                 set(
                     { isLoading: true, product: undefined, products: [], error: '', success: false },
                     false,
@@ -137,7 +135,6 @@ export const productStore = create<ProductState>()(
 
                 try {
                     const product = await productService.getProductToView(id, categoryName);
-                    console.log(product);
                     set(
                         {
                             isLoading: false,
@@ -234,6 +231,8 @@ export const productStore = create<ProductState>()(
                     );
 
                     notify.success(`Продукт ${!!id ? 'оновлено' : 'створено'} `);
+
+                    return product;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/saveProduct:errorMessage`);

@@ -10,10 +10,11 @@ export interface BagProps extends BaseProductProps {
 }
 
 export class Bag extends BaseProduct {
-  private length: number;
-  private thickness: number;
+  protected length: number;
+  protected thickness: number;
   protected quantity: number;
-  private width: number;
+  protected width: number;
+  protected weight: number;
 
   constructor(props: BagProps) {
     super(props);
@@ -22,18 +23,24 @@ export class Bag extends BaseProduct {
     this.length = !!props.length ? props.length : 0;
     this.thickness = !!props.thickness ? props.thickness : 0;
     this.quantity = !!props.quantity ? props.quantity : 0;
+
+    this.weight = this.getWeight();
+    this.price = this.getPrice();
+    this.totalAmount = this.getTotalAmount(this.quantity);
   }
 
-  override getTotalAmount(quantity: number = this.quantity) {
+  override getTotalAmount(quantity: number) {
     let totalAmount = 0;
 
     try {
-      totalAmount = Number(
-        (this._getBagWeight(quantity) * this.price).toFixed(2),
-      );
+      const weight = this._getBagWeight(quantity);
+      const price = this.price;
 
-      if (Number.isNaN(totalAmount))
+      totalAmount = Number(Number(weight * price).toFixed(2));
+
+      if (Number.isNaN(totalAmount)) {
         throw new AppError("DOMAIN", "Помилка обчислення вартості пакета");
+      }
     } catch (error) {
       console.error(error);
     }
@@ -109,7 +116,7 @@ export class Bag extends BaseProduct {
         name: "weight",
         title: "Вага (кг)",
         fieldType: "number",
-        value: this.weight,
+        value: this.getWeight(),
         placeholder: "",
         disabled: true,
       },
@@ -158,8 +165,7 @@ export class Bag extends BaseProduct {
     ];
   }
 
-  override setQuantity(value: number): void {
-    console.log("value", value);
+  override setQuantity(value: number): number {
     if (!Number.isInteger(value))
       throw new AppError("DOMAIN", "Кількість має бути цілим числом");
     if (value < 0)
@@ -167,8 +173,6 @@ export class Bag extends BaseProduct {
 
     this.quantity = value;
 
-    this.weight = this.getWeight();
-
-    this.getTotalAmount();
+    return this.quantity;
   }
 }

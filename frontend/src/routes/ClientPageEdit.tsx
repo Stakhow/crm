@@ -1,5 +1,5 @@
 import { Box, Backdrop, CircularProgress } from '@mui/material';
-import { useNavigate, useParams, useLocation } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useEffect } from 'react';
 import { clientStore } from '../../store';
 import { ClientForm } from '../components/Client/ClientForm';
@@ -7,9 +7,6 @@ import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 
 export default function ClientPageEdit() {
     const { id } = useParams();
-    const location = useLocation();
-    console.log(useParams());
-    console.log(location);
 
     const navigate = useNavigate();
 

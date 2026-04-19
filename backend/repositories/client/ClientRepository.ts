@@ -52,7 +52,6 @@ export class ClientRepository implements IClientRepository {
   }
 
   async save(client: Client): Promise<number> {
-    console.log("passed to save Client;", client);
     const { id, name, phone } = client.toView();
     const existingClient = await this.getByPhone(phone);
 
@@ -67,8 +66,6 @@ export class ClientRepository implements IClientRepository {
     };
 
     const savedClientId = existingClient ? await db.clients.update(id, data) : await db.clients.put({ ...data, createdAt: Date.now() })
-
-    console.log('savedClientId', savedClientId);
 
     return savedClientId;
   }

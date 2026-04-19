@@ -52,7 +52,7 @@ export class ProductModifier implements IProductModifier {
 
   apply(price: number) {
     return this.list.reduce(
-      (result, modifier) => result + modifier.price,
+      (result, modifier) => Number(result) + Number(modifier.price),
       price,
     );
   }

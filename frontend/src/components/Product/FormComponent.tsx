@@ -13,8 +13,8 @@ import {
     Stack,
     Card,
 } from '@mui/material';
-import { Formik, Form, type FormikHelpers, FieldArray, getIn } from 'formik';
-import { useMemo, useRef } from 'react';
+import { Formik, Form, FieldArray, getIn } from 'formik';
+import { useMemo } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
@@ -28,20 +28,6 @@ export const FormComponent = ({
     values: ProductToCreateDTO;
     onSubmit: (values: ProductToCreateDTO) => void;
 }) => {
-    const calculatedData = useRef<{
-        price: number;
-        weight: number;
-        totalAmount: number;
-        pricePerItem: number;
-    }>({
-        price: values.price,
-        weight: values.weight,
-        totalAmount: values.totalAmount,
-        pricePerItem: values.pricePerItem,
-    });
-
-    calculatedData.current = values;
-
     const validationSchema = () => {
         const allFields = {
             width: Yup.number().min(30, 'Замалий розмір').max(100, 'Завеликий розмір').required("Поле обов'язкове"),
@@ -52,7 +38,6 @@ export const FormComponent = ({
 
         return Yup.object({
             categoryName: Yup.string().required(),
-            // totalAmount: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
             // price: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
 
             fields: Yup.array().of(
@@ -92,11 +77,7 @@ export const FormComponent = ({
         <Formik
             validationSchema={schema}
             initialValues={values}
-            enableReinitialize={true}
-            onSubmit={(values: ProductToCreateDTO, { setSubmitting }: FormikHelpers<ProductToCreateDTO>) => {
-                onSubmit(values);
-                setSubmitting(false);
-            }}
+            onSubmit={onSubmit}
             context={{ categoryName: values.categoryName }}
         >
             {({ isSubmitting, values, errors, handleBlur, handleChange }) => {
@@ -113,13 +94,11 @@ export const FormComponent = ({
                                             modifiers.map((modifier, index) => {
                                                 const fieldName = `modifiers.${index}.value`;
                                                 const error = getIn(errors, fieldName);
-
                                                 return (
                                                     <FormControl fullWidth margin="dense" key={index}>
                                                         <InputLabel id={fieldName}>{modifier.name}</InputLabel>
                                                         <Select
-                                                            aria-labelledby={fieldName}
-                                                            id={`modifier-select-${modifier.id}`}
+                                                            label={modifier.name}
                                                             name={fieldName}
                                                             value={modifier.value}
                                                             onChange={handleChange}
@@ -153,12 +132,6 @@ export const FormComponent = ({
                                                 const fieldName = `fields.${index}.value`;
                                                 const error = getIn(errors, fieldName);
 
-                                                const name = field.name as keyof typeof calculatedData.current;
-                                                field.value =
-                                                    name in calculatedData.current
-                                                        ? calculatedData.current[name]
-                                                        : field.value;
-
                                                 return (
                                                     <FormControl
                                                         sx={{
@@ -189,7 +162,7 @@ export const FormComponent = ({
 
                             {!!values.price && (
                                 <Typography variant="h6" sx={{ my: 2 }} textAlign={'center'}>
-                                    Ціна: <b>{priceFormat(calculatedData.current.price)}/кг</b>
+                                    Ціна: <b>{priceFormat(values.price)}/кг</b>
                                 </Typography>
                             )}
                         </Card>

@@ -9,7 +9,7 @@ import { categoryStore, productStore } from '../../store/index';
 import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export default function ProductPageNew() {
-    const { initCreate, isLoading, saveProduct, success, getProduct, product } = productStore((state) => state);
+    const { initCreate, isLoading, saveProduct, getProduct, product } = productStore((state) => state);
 
     const { categories, categoryName, setCategory, getCategories } = categoryStore((state) => state);
     const navigate = useNavigate();
@@ -17,9 +17,6 @@ export default function ProductPageNew() {
     useEffect(() => {
         initCreate();
         getCategories();
-
-        console.log(product);
-        console.log('useEffect categoryName', categoryName);
     }, []);
 
     useEffect(() => {
@@ -44,11 +41,9 @@ export default function ProductPageNew() {
                             id={product.id}
                             values={product.productToCreate}
                             onSubmit={async (values) => {
-                                await saveProduct(values);
+                                const product = await saveProduct(values);
 
-                                if (!!success && !!product) {
-                                    if (!!product.id) navigate(`/products/${product.id}`);
-                                }
+                                if (!!product && !!product.id) navigate(`/products/${product.id}`);
                             }}
                         />
                     ) : (

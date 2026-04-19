@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Backdrop, Box, Button, Card, CircularProgress } from '@mui/material';
+import { Backdrop, Box, Button, CircularProgress } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 
 import { FormComponent } from '../components/Product/FormComponent';
@@ -45,15 +45,13 @@ export default function ProductPage() {
                             </Button>
                         }
                     />
-                    <Card raised sx={{ p: 2, mb: 2 }}>
-                        <FormComponent
-                            id={product.id}
-                            values={product.productToCreate}
-                            onSubmit={(values) => {
-                                saveProduct(values, product.id);
-                            }}
-                        />
-                    </Card>
+                    <FormComponent
+                        id={product.id}
+                        values={product.productToCreate}
+                        onSubmit={(values) => {
+                            saveProduct(values, product.id);
+                        }}
+                    />
 
                     <ConfirmationDialog
                         isOpen={openDialog}

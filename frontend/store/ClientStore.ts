@@ -38,11 +38,9 @@ export const clientStore = create<ClientState>()(
                     `${name}/getClient:start`,
                 );
 
-                console.log('getClient clientId', clientId);
 
                 try {
                     const _client = await clientService.getByIdToView(clientId);
-                    console.log('_client', _client);
 
                     set({ client: _client, isLoading: false, error: '' }, false, `${name}/getClient:success`);
 
@@ -101,13 +99,11 @@ export const clientStore = create<ClientState>()(
 
                 try {
                     const saveClient = await clientService.save(client);
-                    console.log({ saveClient });
                     set({ client: saveClient, isLoading: false, error: '' }, false, `${name}/saveClient:success`);
                     notify.success(`Клієнта успішно збережено`);
 
                     return saveClient;
                 } catch (error) {
-                    console.log(client);
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/saveClient:errosMessage`);
                     set({ isLoading: false }, false, `${name}/saveClient:error`);

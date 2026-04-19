@@ -40,12 +40,10 @@ export default function ClientPage() {
     };
 
     useEffect(() => {
-        console.log('ONE CLIENT PAGE');
         getClient(Number(id));
     }, []);
 
     useEffect(() => {
-        console.log('useEffect client', client);
         if (!!client) getOrdersByClient(client.id);
     }, [client]);
 

@@ -8,7 +8,6 @@ export default function ClientsPage() {
     const { clients, getClients } = clientStore((state) => state);
 
     useEffect(() => {
-        console.log('CLIENTS PAGE');
         getClients();
     }, []);
 

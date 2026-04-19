@@ -16,10 +16,8 @@ type ModifierValue = ProductModifierDTO & {
 
 export type ProductToCreateDTO = {
   price: number;
-  totalAmount: number;
   categoryName: ProductCategory;
   fields: ProductToCreateFieldDTO[];
   modifiers: ModifierValue[];
-  weight: number;
-  pricePerItem: number;
+  quantity: number;
 };

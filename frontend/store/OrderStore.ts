@@ -64,7 +64,6 @@ export const orderStore = create<OrderState>()(
                 }
             },
             repeatOrder: async (orderId) => {
-                console.log('repeatOrder', orderId);
                 set({ isLoading: true, error: '' }, false, `${name}/repeatOrder:start`);
 
                 try {
@@ -80,12 +79,10 @@ export const orderStore = create<OrderState>()(
                 }
             },
             getOrdersByMonth: async (date) => {
-                console.log('getOrdersByMonth', date);
                 set({ isLoading: true, error: '', monthOrders: undefined }, false, `${name}/getOrdersByMonth:start`);
 
                 try {
                     const monthOrders = await orderService.getOrdersByMonth(date.valueOf());
-                    console.log('monthOrders', monthOrders);
 
                     set(
                         { isLoading: false, monthOrders, orders: monthOrders.get(date.date()) },
@@ -104,7 +101,6 @@ export const orderStore = create<OrderState>()(
 
                 try {
                     const orders = await orderService.getAllByTargetDate(date.valueOf());
-                    console.log('getOrdersByTargetDate', orders, date);
                     set({ isLoading: false, orders }, false, `${name}/getOrdersByTargetDate:success`);
                 } catch (error: unknown) {
                     if (error instanceof AppError)

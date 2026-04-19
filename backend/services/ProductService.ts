@@ -92,7 +92,7 @@ export class ProductService {
     return await this.productRepository.delete(id);
   }
 
-  public async getProducts(
+  public async getProductsToView(
     category?: ProductCategory | "",
   ): Promise<ProductViewDTO[]> {
     const products = !!category
@@ -121,6 +121,8 @@ export class ProductService {
     const product = !!categoryName
       ? await this.getProductByCategory(categoryName)
       : await this.getProductById(productId);
+
+    console.log("product.toView()", product.toView());
 
     return product.toView();
   }

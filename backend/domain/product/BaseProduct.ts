@@ -44,10 +44,8 @@ export abstract class BaseProduct {
   public name: string;
   protected modifiers: ProductModifier[];
   protected quantity: number;
-  protected weight: number;
   protected price: number;
   protected totalAmount: number;
-  protected pricePerItem: number;
 
   protected constructor(props: BaseProductProps) {
     this.id = props.id;
@@ -64,21 +62,9 @@ export abstract class BaseProduct {
       throw new AppError("DOMAIN", "Не вказані модифікатори");
     this.modifiers = props.modifiers;
     this.appliedModifiers = props.appliedModifiers ?? [];
-    this.price = props.price;
+    this.price = props.price ?? 0;
 
-    this.weight = 0;
-    this.pricePerItem = 0;
     this.totalAmount = 0;
-
-    // this.pricePerItem = props.pricePerItem ?? this.getPricePerItem() ?? 0;
-    // this.weight = this.getWeight();
-    // this.setPrice();
-    // this.pricePerItem = props.pricePerItem ?? this.getPricePerItem() ?? 0;
-    // this.totalAmount = this.getTotalAmount();
-  }
-
-  get getPrice() {
-    return this.price;
   }
 
   selectModifiers(values: ProductToCreateDTO) {
@@ -86,8 +72,6 @@ export abstract class BaseProduct {
       acc[current.id] = current.value;
       return acc;
     }, {} as AppliedModifiersType);
-
-    this.setPrice();
   }
 
   get getQuantity() {
@@ -95,7 +79,6 @@ export abstract class BaseProduct {
   }
 
   fillData(data: ProductToCreateDTO) {
-    console.log("fillData start");
     this.selectModifiers(data);
 
     const values = data.fields;
@@ -107,18 +90,16 @@ export abstract class BaseProduct {
       }
     });
 
-    this.weight = this.getWeight();
-
     this.autofillName();
+    this.price = this.getPrice();
 
-    this.totalAmount = this.getTotalAmount();
+    this.totalAmount = this.getTotalAmount(this.quantity);
 
     this.isValid();
 
-    console.log("fillData end");
     return this;
   }
-  protected applyModifiers(): number {
+  protected getPrice(): number {
     return this.modifiers.reduce((price, modifier) => {
       modifier.select(this.appliedModifiers[modifier.id]);
 
@@ -128,23 +109,23 @@ export abstract class BaseProduct {
 
   isValid(): boolean {
     const isValid = this.quantity >= 0 && this.price > 0;
-    console.log("isValid", isValid);
     if (!isValid) throw new AppError("DOMAIN", "Ціна не вказана");
 
     return isValid;
   }
 
   getPricePerItem(): number {
-    let result = 0;
     try {
-      result = Number((this.totalAmount / this.quantity).toFixed(2));
+      const res = Number((this.totalAmount / this.quantity).toFixed(2));
 
-      if (Number.isNaN(result)) {
+      if (Number.isNaN(res)) {
         throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
       }
+
+      return res;
     } catch (error) {}
 
-    return result;
+    return 0;
   }
 
   get modifiersPersistence() {
@@ -163,16 +144,15 @@ export abstract class BaseProduct {
     };
   }
 
-  protected setPrice() {
-    this.price = Number(this.applyModifiers());
-  }
-
-  public getTotalAmount(quantity: number = this.quantity) {
+  public getTotalAmount(quantity: number) {
     const totalAmount = Number((quantity * this.price).toFixed(2));
 
-    if (Number.isNaN(totalAmount)) {
-      console.log(quantity, this.price);
-      throw new AppError("DOMAIN", "Помилка обчислення вартості продукта");
+    try {
+      if (Number.isNaN(totalAmount)) {
+        throw new AppError("DOMAIN", "Помилка обчислення вартості продукта");
+      }
+    } catch (error) {
+      console.log(error);
     }
 
     return totalAmount;
@@ -216,7 +196,7 @@ export abstract class BaseProduct {
       quantity: this.quantity,
       modifiers: this.modifiers.map((i) => i.toView()),
       price: this.price,
-      totalAmount: this.getTotalAmount(),
+      totalAmount: this.getTotalAmount(this.quantity),
       fields: this.getFields()
         .filter((i) => !["name"].includes(i.name))
         .map(({ title, value, name }) => ({
@@ -236,11 +216,10 @@ export abstract class BaseProduct {
 
     return {
       price: this.price,
-      totalAmount: this.totalAmount,
       categoryName: this.category.name,
       fields,
-      weight: this.weight,
-      pricePerItem: this.pricePerItem,
+      quantity: this.quantity,
+
       modifiers: modifiers.map((mod) => ({
         ...mod,
         value:
@@ -264,8 +243,6 @@ export abstract class BaseProduct {
       throw new AppError("DOMAIN", `Вага не може бути нижче нуля: ${value}`);
 
     this.quantity = value;
-
-    this.totalAmount = this.getTotalAmount();
   }
 
   isAvailable() {
