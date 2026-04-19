@@ -1,11 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Categories } from '../components/Categories';
-import { Backdrop, Box, Button, CardActions, CircularProgress, Divider, Stack } from '@mui/material';
+import { Backdrop, Box, Button, CircularProgress, Divider, Stack } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
 import { ProductUpdateQuantity } from '../components/Product/ProductUpdateQuantity';
-import { NavLink } from 'react-router';
 import { productStore, categoryStore } from '../../store';
 import { ProductNotFound } from '../components/Product/ProductNotFound';
 
@@ -60,50 +59,29 @@ export default function ProductsPage() {
                     key={idx}
                     product={product}
                     children={
-                        <CardActions sx={{ p: 2, pt: 0 }}>
-                            <Stack sx={{ width: '100%' }}>
-                                <Stack direction="row" mb={2}>
-                                    <Button
-                                        color="warning"
-                                        size="large"
-                                        fullWidth
-                                        to={`${product.id}`}
-                                        component={NavLink}
-                                        variant="outlined"
-                                    >
-                                        Переглянути
-                                    </Button>
-                                </Stack>
-
-                                <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    divider={<Divider orientation="vertical" flexItem />}
-                                >
-                                    <Button
-                                        size="large"
-                                        fullWidth
-                                        onClick={() => {
-                                            updateQuantityModal(product, 'add');
-                                        }}
-                                        variant="outlined"
-                                    >
-                                        Додати Кількість
-                                    </Button>
-                                    <Button
-                                        size="large"
-                                        fullWidth
-                                        disabled={!product.quantity}
-                                        onClick={() => {
-                                            updateQuantityModal(product, 'subtract');
-                                        }}
-                                        variant="outlined"
-                                    >
-                                        Зменшити Кількість
-                                    </Button>
-                                </Stack>
-                            </Stack>
-                        </CardActions>
+                        <Stack direction="row" spacing={1} divider={<Divider orientation="vertical" flexItem />}>
+                            <Button
+                                size="large"
+                                fullWidth
+                                onClick={() => {
+                                    updateQuantityModal(product, 'add');
+                                }}
+                                variant="outlined"
+                            >
+                                Додати Кількість
+                            </Button>
+                            <Button
+                                size="large"
+                                fullWidth
+                                disabled={!product.quantity}
+                                onClick={() => {
+                                    updateQuantityModal(product, 'subtract');
+                                }}
+                                variant="outlined"
+                            >
+                                Зменшити Кількість
+                            </Button>
+                        </Stack>
                     }
                 />
             );

@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router';
-import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
-import { dateToLocalString, priceFormat } from '../../../utils/utils';
+import { dateToLocalString } from './../../../../utils/utils';
 import { Button, Card, CardActions, CardContent, Paper, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
+import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
+import { OrderTotalAmount } from '../OrderTotalAmount';
 
 export function OrderItem({ order }: { order: OrderViewDTO }) {
     const color = {
@@ -30,14 +31,14 @@ export function OrderItem({ order }: { order: OrderViewDTO }) {
                     Товари: <b>{order.items.map((i) => `${i.name}`).join(' | ')}</b>
                 </Typography>
             </CardContent>
-            <CardActions sx={{ textAlign: 'center', p: 2, pt: 0, justifyContent: 'space-between' }}>
-                <Button size="small" variant="outlined" component={NavLink} to={`/orders/${order.id}`}>
+            <CardActions
+                sx={{ textAlign: 'center', p: 2, pt: 0, justifyContent: 'space-between', flexDirection: 'column' }}
+            >
+                <OrderTotalAmount totalAmount={order.totalAmount} />
+
+                <Button size="large" variant="outlined" component={NavLink} to={`/orders/${order.id}`} fullWidth>
                     Переглянути
                 </Button>
-
-                <Typography gutterBottom variant="h6">
-                    Сума: {priceFormat(order.totalAmount)}
-                </Typography>
             </CardActions>
         </Card>
     );

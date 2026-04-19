@@ -1,4 +1,5 @@
 import {
+    Box,
     Card,
     FormControl,
     FormHelperText,
@@ -6,9 +7,12 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
+    Skeleton,
     type SelectProps,
 } from '@mui/material';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
+import { categoryStore } from '../../store';
+import { useEffect } from 'react';
 
 type CategoriesProps = {
     categories: { name: ProductCategory; title: string }[];
@@ -20,7 +24,7 @@ type CategoriesProps = {
 } & Omit<SelectProps, 'onChange' | 'value' | 'error' | 'color' | 'size'>;
 
 export const Categories = (props: CategoriesProps) => (
-    <Card sx={{ p: 2, mb: 2 }} raised>
+    <Card sx={{ p: 2 }} raised>
         <CategoriesField {...props} />
     </Card>
 );
@@ -68,3 +72,28 @@ export function CategoriesField({
         </FormControl>
     );
 }
+
+export const CategoryWithState = () => {
+    const { categories, categoryName, getCategories, isLoading, setCategory } = categoryStore((s) => s);
+
+    useEffect(() => {
+        getCategories();
+    }, []);
+
+    return (
+        <Box>
+            {isLoading ? (
+                <Skeleton animation="wave" height={56} />
+            ) : (
+                <Categories
+                    categories={categories}
+                    name="categoryName"
+                    onChange={(e) => {
+                        setCategory(e.target.value);
+                    }}
+                    value={categoryName}
+                />
+            )}
+        </Box>
+    );
+};

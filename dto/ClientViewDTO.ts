@@ -3,5 +3,5 @@ export interface ClientViewDTO {
   name: string;
   phone: string;
   createdAt: number;
-  updatedAt?: number;
+  updatedAt: number;
 }

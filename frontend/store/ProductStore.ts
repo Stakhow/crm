@@ -9,14 +9,18 @@ import { devtools } from 'zustand/middleware';
 
 interface ProductState {
     products: ProductViewDTO[];
+    productId: number;
     product: ProductViewDTO | undefined;
     isLoading: boolean;
     error: string;
     success: boolean;
+    productAmount: number;
     initCreate: () => void;
-    getProducts: (categoryName?: ProductCategory) => void;
-    getProduct: (id: number, categoryName?: ProductCategory) => void;
-    deleteProduct: (id: number) => void;
+    selectProduct: (id: number) => void;
+    getProducts: (categoryName?: ProductCategory) => ProductViewDTO[];
+    getProduct: (id: number, categoryName?: ProductCategory) => ProductViewDTO;
+    getProductAmount: (id: number, quantity: number) => number;
+    deleteProduct: (id: number) => number;
     updateProductQuantity: (
         productId: number,
         {
@@ -28,7 +32,7 @@ interface ProductState {
         },
     ) => void;
 
-    saveProduct: (values: ProductToCreateDTO, id?: number) => void;
+    saveProduct: (values: ProductToCreateDTO, id?: number) => ProductViewDTO;
 }
 
 const name = 'productStore';
@@ -45,14 +49,21 @@ export const productStore = create<ProductState>()(
             },
             getProducts: async (categoryName) => {
                 set(
-                    { isLoading: true, product: undefined, products: [], error: '', success: false },
+                    {
+                        isLoading: true,
+                        productId: undefined,
+                        product: undefined,
+                        products: [],
+                        error: '',
+                        success: false,
+                    },
                     false,
                     `${name}/getProducts:start`,
                 );
 
                 try {
                     const products = await productService.getProducts(categoryName);
-
+                    console.log(products);
                     set(
                         {
                             products,
@@ -70,6 +81,52 @@ export const productStore = create<ProductState>()(
                     notify.error(`Помилка отримання продуктів: ${get().error}`);
                 }
             },
+            getProductAmount: async (id, quantity) => {
+                set(
+                    {
+                        productAmount: 0,
+                    },
+                    false,
+                    `${name}/getProductAmount:start`,
+                );
+                try {
+                    const productAmount = await productService.getTotalAmount(id, quantity);
+
+                    set(
+                        {
+                            productAmount,
+                        },
+                        false,
+                        `${name}/getProductAmount:success`,
+                    );
+
+                    return productAmount;
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/getProductAmount:errorMessage`);
+                    notify.error(`Помилка обчислення вартості: ${get().error}`);
+                }
+            },
+            selectProduct: (id) => {
+                try {
+                    const product = get().products.find((i) => i.id === id);
+
+                    set(
+                        {
+                            productId: id,
+                            product,
+                        },
+                        false,
+                        `${name}/selectProduct:success`,
+                    );
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/selectProduct:errorMessage`);
+
+                    set({ isLoading: false }, false, `${name}/selectProduct:error`);
+                    notify.error(`Помилка вибору продукта: ${get().error}`);
+                }
+            },
             getProduct: async (id, categoryName) => {
                 console.log(id, categoryName);
                 set(
@@ -80,7 +137,7 @@ export const productStore = create<ProductState>()(
 
                 try {
                     const product = await productService.getProductToView(id, categoryName);
-
+                    console.log(product);
                     set(
                         {
                             isLoading: false,
@@ -122,6 +179,8 @@ export const productStore = create<ProductState>()(
                     );
 
                     notify.success('Продукт видалено');
+
+                    return id;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/deleteProduct:errorMessage`);

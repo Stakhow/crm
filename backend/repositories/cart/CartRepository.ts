@@ -15,30 +15,33 @@ export class CartRepository {
 
   async save(cart: Cart): Promise<void> {
     await this.delete();
-
     const persistentCart = cart.toPersistent();
 
-    const cartId = await db.cart.put({
-      id: 0,
-      clientId: persistentCart.clientId,
-      createdAt: Date.now(),
-    });
+    db.transaction("rw", db.cart, db.cart_items, async () => {
+      const cartId = await db.cart.put({
+        id: 0,
+        clientId: persistentCart.clientId,
+        createdAt: Date.now(),
+      });
 
-    await db.cart_items.bulkPut(
-      cart.getItems().map((i) => ({
-        productId: i.productId,
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-        cartId,
-        total: i.total,
-      })),
-    );
+      await db.cart_items.bulkPut(
+        cart.getItems().map((i) => ({
+          productId: i.productId,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          cartId,
+          total: i.total,
+        })),
+      );
+    });
   }
 
   async delete() {
-    await db.cart.clear();
-    await db.cart_items.clear();
+    return db.transaction("rw", db.cart, db.cart_items, async () => {
+      await db.cart.clear();
+      await db.cart_items.clear();
+    });
   }
 
   async deleteCartItem(productId: number, cartId: number): Promise<void> {

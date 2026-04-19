@@ -114,6 +114,7 @@ export class OrderRepository implements IOrderRepository {
     const orders = await db.orders
       .where("deadline")
       .between(start, end)
+      .reverse()
       .toArray();
 
     return this.buildOrders(orders);
@@ -125,6 +126,7 @@ export class OrderRepository implements IOrderRepository {
     const orders = await db.orders
       .where("deadline")
       .between(start, end)
+      .reverse()
       .toArray();
 
     return this.buildOrders(orders);

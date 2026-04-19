@@ -1,10 +1,11 @@
 import { AppError } from "../../utils/error";
-
 import type { OrderRepository } from "../repositories/order/OrderRepository";
 import type { CartService } from "./CartService";
 import { Order, type OrderStatus } from "../domain/order/Order";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
 import type { ProductService } from "./ProductService";
+import dayjs from "dayjs";
+import type { ClientService } from "./ClientService";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -13,18 +14,26 @@ export class OrderService {
     private orderRepository: OrderRepository,
     private cartService: CartService,
     private productService: ProductService,
+    private clientService: ClientService,
   ) {}
 
-  async createOrder(deadline: number) {
+  async createOrder(date: number) {
     const cart = await this.cartService.getCart();
+
+    if (!dayjs.unix(date).isValid()) {
+      throw new AppError("SERVICE", "Кінце дата замовлення не вказана");
+    }
 
     if (!cart || !cart.isValid())
       throw new AppError("SERVICE", "Помилка корзини");
 
     const cartToView = await this.cartService.getCartToView();
-    const client = cartToView.client;
+    const clientId = cartToView.clientId;
 
-    if (!client) throw new AppError("SERVICE", "В корзині відсутній клієнт");
+    if (!clientId) throw new AppError("SERVICE", "В корзині відсутній клієнт");
+
+    const _client = await this.clientService.getById(clientId);
+    const client = _client.toView();
 
     const productsId = cart.getProductsId();
     const stockProducts = await this.productService.getProductByIds(productsId);
@@ -33,7 +42,11 @@ export class OrderService {
 
       if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
 
-      product.updateQuantity(cartItem.quantity, "subtract");
+      try {
+        product.updateQuantity(cartItem.quantity, "subtract");
+      } catch (error) {
+        throw new AppError("DOMAIN", "Товару не вистачає");
+      }
 
       return product;
     });
@@ -45,20 +58,29 @@ export class OrderService {
           id: client.id,
           name: client.name,
           phone: client.phone,
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
         },
-        cartToView.products,
+        [],
         cartToView.totalAmount,
         cartToView.quantity,
         this.status,
-        deadline,
+        date,
         Date.now(),
       ),
       stockProducts,
     );
 
-    await this.cartService.resetCart();
+    try {
+      await this.cartService.resetCart();
+    } catch (error) {
+      throw new AppError(
+        "SERVICE",
+        `Помилка при видаленні корзини ${error instanceof AppError && error.message}`,
+      );
+    }
 
-    return orderId;
+    return await this.getById(orderId);
   }
 
   async updateStatus(id: number, status: OrderStatus): Promise<number> {
@@ -71,7 +93,7 @@ export class OrderService {
 
   async repeatOrder(id: number) {
     const order = await this.orderRepository.getById(id);
-
+    console.log("repeatOrder", id);
     return this.cartService.createFromOrder(
       order.items.map((i) => ({
         productId: i.id,

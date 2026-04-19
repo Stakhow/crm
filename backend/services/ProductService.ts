@@ -73,23 +73,13 @@ export class ProductService {
         ? await this.productRepository.getById(productId)
         : await this.productRepository.getByCategoryName(values.categoryName);
 
-    // await this._create(values.categoryName);
+    product.fillData(values);
 
-    return new Promise<any>(async (resolve, reject) => {
-      product.fillData(values);
+    const id = await this.productRepository.save(product);
 
-      const id = await this.productRepository.save(product);
+    const updatedProduct = this.getProductToView(id);
 
-      const updatedProduct = this.getProductToView(id);
-
-      setInterval(() => {
-        try {
-          resolve(updatedProduct);
-        } catch (error) {
-          reject({ values, product: product });
-        }
-      }, 2000);
-    });
+    return updatedProduct;
   }
 
   public async getAll() {
@@ -98,13 +88,7 @@ export class ProductService {
     return products.map((i) => i.toView());
   }
 
-  public async delete(id: number) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(this.productRepository.delete(id));
-      }, 3000);
-    });
-
+  public async delete(id: number): Promise<number> {
     return await this.productRepository.delete(id);
   }
 
@@ -158,10 +142,8 @@ export class ProductService {
 
   public async getTotalAmount(id: number, value: number): Promise<number> {
     const product = await this.productRepository.getById(id);
-
-    return new Promise((resolve) => {
-      resolve(product.getTotalAmount(value));
-    });
+    console.log(product, value);
+    return product.getTotalAmount(value);
   }
 
   public async getByCategory(categoryName: ProductCategory) {

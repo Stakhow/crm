@@ -27,10 +27,15 @@ export function ConfirmationDialog({
                 children
             ) : (
                 <>
-                    <DialogTitle id="alert-dialog-title">{title || ''}</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>{message || ''}</DialogContentText>
-                    </DialogContent>
+                    <DialogTitle id="alert-dialog-title" textAlign={'center'}>
+                        {title || ''}
+                    </DialogTitle>
+                    {!!message && (
+                        <DialogContent>
+                            <DialogContentText>{message}</DialogContentText>
+                        </DialogContent>
+                    )}
+
                     <DialogActions>
                         <Button fullWidth variant="outlined" onClick={handleClose}>
                             Відміна

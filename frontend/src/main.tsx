@@ -4,7 +4,7 @@ import './index.css';
 import App from './App.tsx';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import ClientsPage from './routes/ClientsPage.tsx';
-import ClientFormPage from './routes/ClientFormPage.tsx';
+import ClientPageEdit from './routes/ClientPageEdit.tsx';
 import HomePage from './routes/HomePage.tsx';
 import { NotificationProvider } from './components/NotificationContext';
 import ClientPage from './routes/ClientPage.tsx';
@@ -18,6 +18,7 @@ import OrderPageNew from './routes/OrderNewPage.tsx';
 import OrdersPage from './routes/OrdersPage.tsx';
 import CartPage from './routes/CartPage.tsx';
 import ModifiersPage from './routes/ModifiersPage.tsx';
+import ClientPageNew from './routes/ClientPageNew.tsx';
 
 const customTheme = createTheme({
     typography: {
@@ -51,16 +52,18 @@ createRoot(document.getElementById('root')!).render(
                     <NotificationProvider>
                         <Routes>
                             <Route index path="/" element={<HomePage />} />
+
                             <Route path="clients">
                                 <Route index element={<ClientsPage />} />
+                                <Route path="new" element={<ClientPageNew />} />
+                                <Route path="edit">
+                                    <Route index element={<ClientPageEdit />} />
+                                    <Route path=":id" element={<ClientPageEdit />} />
+                                </Route>
+
                                 <Route path=":id">
                                     <Route index element={<ClientPage />} />
                                     <Route path="order" element={<OrderPage />} />
-                                </Route>
-                                <Route path="new" element={<ClientFormPage />} />
-                                <Route path="edit">
-                                    <Route index element={<ClientFormPage />} />
-                                    <Route path=":id" element={<ClientFormPage />} />
                                 </Route>
                             </Route>
 

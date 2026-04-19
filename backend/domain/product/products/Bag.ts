@@ -13,38 +13,32 @@ export class Bag extends BaseProduct {
   private length: number;
   private thickness: number;
   protected quantity: number;
-  protected weight: number;
   private width: number;
 
   constructor(props: BagProps) {
     super(props);
 
-    this.width = props.width;
-
-    this.length = props.length;
-    this.thickness = props.thickness;
-    this.quantity = props.quantity;
-    this.weight = this.getWeight();
-
-    this.totalAmount = this.getTotalAmount();
+    this.width = !!props.width ? props.width : 0;
+    this.length = !!props.length ? props.length : 0;
+    this.thickness = !!props.thickness ? props.thickness : 0;
+    this.quantity = !!props.quantity ? props.quantity : 0;
   }
 
   override getTotalAmount(quantity: number = this.quantity) {
-    this.quantity = quantity;
-
-    this.getWeight();
+    let totalAmount = 0;
 
     try {
-      const totalAmount = Number((this.weight * this.price).toFixed(2));
+      totalAmount = Number(
+        (this._getBagWeight(quantity) * this.price).toFixed(2),
+      );
 
       if (Number.isNaN(totalAmount))
         throw new AppError("DOMAIN", "Помилка обчислення вартості пакета");
-
-      return totalAmount;
     } catch (error) {
       console.error(error);
-      return 0;
     }
+
+    return totalAmount;
   }
 
   override autofillName(): void {
@@ -58,35 +52,32 @@ export class Bag extends BaseProduct {
     }
   }
 
-  override getWeight(): number {
-    console.log(
-      this.length,
-      this.width,
-      this.thickness,
-      this.quantity,
-      this.weight,
-    );
+  private _getBagWeight(q: number) {
     try {
-      const weight = Number(
-        (
+      const result = Number(
+        Number(
           this.length *
-          0.01 *
-          this.width *
-          0.01 *
-          (this.thickness * 0.001 * 2 * this.quantity)
+            0.01 *
+            this.width *
+            0.01 *
+            (this.thickness * 0.001 * 2 * q),
         ).toFixed(3),
       );
 
-      if (Number.isNaN(weight)) {
+      if (Number.isNaN(result)) {
         throw new AppError("DOMAIN", "Помилка обчислення ваги пакета");
       }
 
-      return (this.weight = weight);
+      return result;
     } catch (error) {
       console.error(error);
-
-      return (this.weight = 0);
     }
+
+    return 0;
+  }
+
+  override getWeight(): number {
+    return this._getBagWeight(this.quantity);
   }
 
   private readonly WIDTH_MIN: number = 30;
@@ -168,6 +159,7 @@ export class Bag extends BaseProduct {
   }
 
   override setQuantity(value: number): void {
+    console.log("value", value);
     if (!Number.isInteger(value))
       throw new AppError("DOMAIN", "Кількість має бути цілим числом");
     if (value < 0)

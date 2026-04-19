@@ -1,20 +1,14 @@
-import { Button, ListItem, ListItemText } from '@mui/material';
+import { Button, Card, ListItem, ListItemText, type CardProps } from '@mui/material';
 import { NavLink } from 'react-router';
-import type { ClientDTO } from '../../../dto/ClientDTO';
+import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 
-export const ClientItem = ({ client }: { client: ClientDTO }) => (
-    <ListItem
-        key={client.id}
-        sx={{
-            margin: '8px 0',
-            boxShadow: 3,
-            borderRadius: 1,
-            backgroundColor: 'background.paper',
-            padding: 3,
-        }}
-        color={'primary'}
-    >
-        <Button variant="outlined" fullWidth component={NavLink} to={`${client.id}`}>
+interface ClientItemProps extends CardProps {
+    client: ClientViewDTO;
+}
+
+export const ClientItem: React.FC<ClientItemProps> = ({ client, ...rest }) => (
+    <ListItem component={Card} key={client.id} raised {...rest}>
+        <Button variant="outlined" fullWidth component={NavLink} to={`/clients/${client.id}`}>
             <ListItemText primary={client.name} secondary={client.phone} />
         </Button>
     </ListItem>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Backdrop, Box, Button, Card, CardActions, CircularProgress, Stack } from '@mui/material';
+import { Backdrop, Box, Button, Card, CircularProgress } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 
 import { FormComponent } from '../components/Product/FormComponent';
@@ -21,9 +21,7 @@ export default function ProductPage() {
     };
 
     useEffect(() => {
-        console.log(Number(id));
         if (Number(id)) getProduct(Number(id));
-        // else navigate(`/products/`, { replace: true });
     }, []);
 
     return (
@@ -32,22 +30,19 @@ export default function ProductPage() {
                 <>
                     <ProductCard
                         product={product}
+                        isProductPage={true}
                         children={
-                            <CardActions sx={{ p: 2 }}>
-                                <Stack sx={{ width: '100%' }}>
-                                    <Button
-                                        size="small"
-                                        color="error"
-                                        fullWidth
-                                        onClick={() => {
-                                            setOpenDialog(true);
-                                        }}
-                                        variant="outlined"
-                                    >
-                                        Видалити
-                                    </Button>
-                                </Stack>
-                            </CardActions>
+                            <Button
+                                size="small"
+                                color="error"
+                                fullWidth
+                                onClick={() => {
+                                    setOpenDialog(true);
+                                }}
+                                variant="outlined"
+                            >
+                                Видалити
+                            </Button>
                         }
                     />
                     <Card raised sx={{ p: 2, mb: 2 }}>
@@ -62,7 +57,7 @@ export default function ProductPage() {
 
                     <ConfirmationDialog
                         isOpen={openDialog}
-                        title={'Видалити продукт?'}
+                        title={'Видалити продукт зі складу?'}
                         handleClose={() => setOpenDialog(false)}
                         handleConfirmClick={() => {
                             onDelete(product.id);

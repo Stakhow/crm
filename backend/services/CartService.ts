@@ -1,14 +1,12 @@
 import { AppError } from "../../utils/error";
 import { CartRepository } from "../repositories/cart/CartRepository";
 import type { ProductService } from "./ProductService";
-import type { CartViewDTO } from "../../dto/CartViewDTO";
-import type { ClientService } from "./ClientService";
+import type { CartDTO } from "../../dto/CartDTO";
 
 export class CartService {
   constructor(
     private cartReposirory: CartRepository,
     private productService: ProductService,
-    private clientService: ClientService,
   ) {}
 
   async getCart() {
@@ -37,42 +35,26 @@ export class CartService {
     } else cartItems.map((i) => this.addCartItem(i));
   }
 
-  async getCartToView(): Promise<CartViewDTO> {
+  async getCartToView(): Promise<CartDTO> {
     const cart = await this.getCart();
-    const cartItemsMap = cart.getItemsMap();
 
-    const products = await this.productService.getProductByIds(
-      Array.from(cartItemsMap.keys()),
-    );
-
-    const client = cart.clientId
-      ? await this.clientService.getById(cart.clientId)
-      : undefined;
-
-    return {
-      ...cart.toPersistent(),
-      client,
-      products: products.map((i) => {
-        const cartItem = cart.getItem(i.id);
-        const stock = i.getWeight();
-        if (cartItem) i.setQuantity(cartItem.quantity);
-
-        return { ...i.toView(), stock };
-      }),
-    };
+    return cart.toPersistent();
   }
 
   async addCartItem(data: {
     productId: number;
     quantity: number;
     clientId: number;
-  }): Promise<CartViewDTO> {
+  }): Promise<CartDTO> {
     const cart = await this.getCart();
 
     const product = await this.productService.getProductById(data.productId);
     product.setQuantity(data.quantity);
 
     const productData = product.toView();
+
+    if (!data.clientId || !data.clientId)
+      throw new AppError("DOMAIN", "Клієнта не вказано");
 
     cart.addItem({
       productId: data.productId,
@@ -89,7 +71,7 @@ export class CartService {
     return this.getCartToView();
   }
 
-  async deleteCartItem(productId: number): Promise<CartViewDTO> {
+  async deleteCartItem(productId: number): Promise<CartDTO> {
     const cart = await this.getCart();
 
     const cartItem = cart.getItem(productId);

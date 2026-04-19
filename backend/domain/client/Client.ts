@@ -1,28 +1,24 @@
-import type { ClientDTO } from "../../../dto/ClientDTO";
-
-interface IClient {
-  id?: number;
+export interface ClientProps {
+  id: number;
   name: string;
   phone: string;
-  createdAt?: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export class Client {
   id: number;
   protected name: string;
   protected phone: string;
-  protected createdAt?: number;
-  protected updatedAt?: number;
+  protected createdAt: number;
+  protected updatedAt: number;
 
-  constructor(props: IClient) {
-    this.id = props.id ?? 0;
+  constructor(props: ClientProps) {
+    this.id = props.id;
     this.name = props.name;
     this.phone = props.phone;
     this.createdAt = props.createdAt;
-  }
-
-  isValid(): boolean {
-    return !!this.name && !!this.phone;
+    this.updatedAt = props.updatedAt;
   }
 
   toView() {
@@ -31,17 +27,7 @@ export class Client {
       name: this.name,
       phone: this.phone,
       createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
     };
-  }
-  toPersistent() {
-    return {
-      id: this.id,
-      name: this.name,
-      phone: this.phone,
-    };
-  }
-  updateData(data: ClientDTO) {
-    this.name = data.name ?? this.name;
-    this.phone = data.phone ?? this.phone;
   }
 }

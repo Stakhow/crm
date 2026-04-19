@@ -103,7 +103,7 @@ export class ProductRepository implements IProductRepository {
     const category = this._getCategory(categoryName);
 
     if (!category) throw new AppError("SERVICE", "Категорію не знайдено");
-    
+
     const modifiers = await this.getAllModifiers(categoryName);
 
     return {
@@ -113,10 +113,7 @@ export class ProductRepository implements IProductRepository {
       price: 0,
       totalAmount: 0,
       name: "",
-      // length: 0,
-      // width: 0,
-      // thickness: 0,
-      // weight: 0,
+
       quantity: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -125,9 +122,7 @@ export class ProductRepository implements IProductRepository {
   }
 
   private async _getPropsById(id: number): Promise<BaseProductProps> {
-    
     const productDTO = await db.products.get(id);
-    
 
     if (!productDTO) throw new AppError("DOMAIN", "Продукту не існує");
 
@@ -245,7 +240,7 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: number): Promise<number> {
     return await db.transaction(
       "rw",
       db.products,
@@ -256,7 +251,9 @@ export class ProductRepository implements IProductRepository {
           .equals(id)
           .delete();
 
-        return await db.products.delete(id);
+        await db.products.delete(id);
+
+        return id;
       },
     );
   }

@@ -1,5 +1,4 @@
 import { Client } from "../domain/client/Client";
-import type { ClientDTO } from "../../dto/ClientDTO";
 import type { ClientViewDTO } from "../../dto/ClientViewDTO";
 import type { ClientRepository } from "../repositories/client/ClientRepository";
 
@@ -8,25 +7,32 @@ export class ClientService {
     this.clientRepository = clientRepository;
   }
 
-  async save(data: ClientDTO): Promise<number> {
-    const client = new Client(data);
+  async save(clientDTO: ClientViewDTO): Promise<ClientViewDTO> {
+    const client = await this.clientRepository.createClient(clientDTO);
 
-    return new Promise((resove, reject) => {
-      if (client.isValid()) resove(this.clientRepository.save(client));
-      else reject("Помилка збереження клієнта");
-    });
+    const id = await this.clientRepository.save(client);
+
+    const savedClient = await this.getById(id);
+
+    return savedClient.toView();
   }
 
-  async getById(id: number): Promise<ClientViewDTO> {
+  async getById(id: number): Promise<Client> {
     return this.clientRepository.getById(id);
+  }
+  async getByIdToView(id: number): Promise<ClientViewDTO> {
+    const client = await this.getById(id);
+
+    return client.toView();
   }
 
   async getAll(): Promise<ClientViewDTO[]> {
-    return await this.clientRepository.getAll();
+    const clients = await this.clientRepository.getAll();
+
+    return clients.map((i) => i.toView());
   }
 
   async delete(id: number): Promise<void> {
-    return await this.clientRepository.delete(id);
+    return this.clientRepository.delete(id);
   }
-
 }

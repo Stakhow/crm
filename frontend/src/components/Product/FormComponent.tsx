@@ -7,8 +7,6 @@ import {
     Box,
     TextField,
     Typography,
-    AppBar,
-    Toolbar,
     Button,
     Backdrop,
     CircularProgress,
@@ -20,6 +18,7 @@ import { useMemo, useRef } from 'react';
 import type { ProductToCreateDTO } from '../../../../dto/ProductToCreateDTO';
 import { priceFormat } from '../../../../utils/utils';
 import * as Yup from 'yup';
+import { BottomBar } from '../BottomBar';
 
 export const FormComponent = ({
     values,
@@ -93,8 +92,6 @@ export const FormComponent = ({
         <Formik
             validationSchema={schema}
             initialValues={values}
-            // validateOnMount={true}
-            // validateOnChange={true}
             enableReinitialize={true}
             onSubmit={(values: ProductToCreateDTO, { setSubmitting }: FormikHelpers<ProductToCreateDTO>) => {
                 onSubmit(values);
@@ -197,13 +194,12 @@ export const FormComponent = ({
                             )}
                         </Card>
 
-                        <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, pb: 1 }}>
-                            <Toolbar>
-                                <Button variant="outlined" fullWidth type={'submit'} color="inherit" disabled={!values}>
-                                    Підтвердити
-                                </Button>
-                            </Toolbar>
-                        </AppBar>
+                        <BottomBar>
+                            <Button variant="contained" fullWidth type={'submit'} color="primary" disabled={!values}>
+                                Підтвердити
+                            </Button>
+                        </BottomBar>
+
                         <Backdrop
                             sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
                             open={isSubmitting}

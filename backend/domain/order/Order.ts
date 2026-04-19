@@ -1,4 +1,4 @@
-import type { ClientDTO } from "../../../dto/ClientDTO";
+import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import type { ProductViewDTO } from "../../../dto/ProductViewDTO";
 
@@ -6,7 +6,7 @@ export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
 export class Order {
   public id: number;
-  public client: { id: number; name: string; phone: string };
+  public client: ClientViewDTO;
   public items: ProductViewDTO[];
   public totalAmount: number;
   public quantity: number;
@@ -18,7 +18,7 @@ export class Order {
 
   constructor(
     id: number,
-    client: ClientDTO,
+    client: ClientViewDTO,
     items: ProductViewDTO[],
     totalAmount: number,
     quantity: number,
@@ -52,6 +52,8 @@ export class Order {
         id: this.client.id,
         name: this.client.name,
         phone: this.client.phone,
+        createdAt: this.client.createdAt,
+        updatedAt: this.client.updatedAt,
       },
       items: this.items,
       totalAmount: this.totalAmount,

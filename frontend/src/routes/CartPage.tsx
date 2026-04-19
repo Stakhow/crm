@@ -1,144 +1,74 @@
-import { NavLink, useNavigate } from 'react-router';
-import { useState } from 'react';
-import { AppBar, Box, Button, CardActions, FormControl, Paper, Stack, Toolbar, Typography } from '@mui/material';
-import { orderService } from '../../../backend';
-import { priceFormat } from '../../../utils/utils';
-import { ProductCard } from '../components/Product/ProductCard';
-import { useNotification } from '../components/NotificationContext';
-import { cartStore } from '../../store';
-import { CalendarInput } from '../components/Calendar';
-import type { PickerValue } from '@mui/x-date-pickers/internals';
-import { ClientItem } from '../components/ClientItem';
+import { useNavigate } from 'react-router';
+import { Backdrop, Box, Card, CircularProgress, Stack } from '@mui/material';
+import { cartStore, calendarStore, orderStore } from '../../store';
+import { CalendarInputState } from '../components/Calendar';
+import { BottomBar } from '../components/BottomBar';
+import { ComponentNotFound } from '../components/ComponentNotFound';
+import { OrderTotalAmount } from '../components/OrderTotalAmount';
+import { CartDeleteButton, ToOrderProcessButton } from '../components/Cart/CartButtons';
+import { CreateOrderButton } from '../components/Order/OrderButtons';
+import { useEffect } from 'react';
+import { CartList } from '../components/Cart/CartList';
 
 export default function CartPage() {
-    const [deadline, setDeadline] = useState<PickerValue | null>(null);
-    const { cart, deleteCartItem, deleteCart, getCartToView } = cartStore((state) => state);
+    const { cart, isLoading } = cartStore((state) => state);
+    const { order } = orderStore((s) => s);
+    const { date } = calendarStore((s) => s);
 
     const navigate = useNavigate();
-    const { notify } = useNotification();
 
-    const createOrder = () => {
-        if (!!deadline)
-            orderService
-                .createOrder(deadline.valueOf())
-                .then((orderId) => {
-                    getCartToView();
-                    navigate(`/orders/${orderId}`);
-                    notify({ message: 'Замовлення успішно створено', severity: 'success' });
-                })
-                .catch((error) => {
-                    console.log(error);
-                    notify({ message: `Помилка створення замовлення: ${error.message}`, severity: 'error' });
-                });
-        else notify({ message: 'Помилка створення замовлення: Дата виконання не встановлена', severity: 'success' });
-    };
+    useEffect(() => {
+        if (!!order && !!order.id) navigate(`/orders/${order.id}`);
+    }, [order]);
 
     return (
         <Box>
-            {!!cart && cart.quantity > 0 ? (
-                <Box>
-                    {!!cart.client && (
-                        <ClientItem client={cart.client} />
-                        // <Paper sx={{ mt: 2, p: 2 }}>
-                        //     <Typography>{cart.client.name}</Typography>
-                        //     <Typography>{cart.client.phone}</Typography>
-                        // </Paper>
-                    )}
+            {!isLoading && (
+                <>
+                    {!!cart && cart.quantity > 0 ? (
+                        <Box>
+                            {/* {!!cart.client && <ClientItem client={cart.client} />} */}
 
-                    {cart.products.map((product, idx) => (
+                            <CartList />
+
+                            {/* {items.map((product, idx) => (
                         <ProductCard
                             key={idx}
                             isInCart={true}
                             product={product}
-                            children={
-                                <CardActions sx={{ p: 2 }}>
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        fullWidth
-                                        type={'submit'}
-                                        onClick={() => {
-                                            deleteCartItem(product.id);
-                                        }}
-                                    >
-                                        Видалити з корзини
-                                    </Button>
-                                </CardActions>
-                            }
+                            children={<CartItemDeleteButton cartItemId={product.id} />}
                         />
-                    ))}
+                    ))} */}
 
-                    <Paper sx={{ mt: 2, p: 2, mb: 14 }}>
-                        <Stack spacing={2}>
-                            <Button variant="outlined" color="info" fullWidth to={'/orders/new'} component={NavLink}>
-                                Додати товар
-                            </Button>
+                            <Card sx={{ mt: 2, p: 2, mb: 14 }} raised>
+                                <Stack spacing={2}>
+                                    <ToOrderProcessButton />
 
-                            <Button
-                                size={'large'}
-                                variant="outlined"
-                                color="error"
-                                fullWidth
-                                type={'submit'}
-                                onClick={() => {
-                                    deleteCart();
-                                }}
-                            >
-                                Видалити Корзину
-                            </Button>
+                                    <CartDeleteButton />
 
-                            <FormControl fullWidth margin="dense">
-                                <CalendarInput
-                                    value={deadline}
-                                    label="Виконати на"
-                                    onChange={(val: PickerValue) => {
-                                        if (val) setDeadline(val);
+                                    <CalendarInputState label="Виконати на" error={!date} disablePast />
+                                </Stack>
+                            </Card>
 
-                                        return val;
-                                    }}
-                                    error={!deadline}
-                                    disablePast
-                                />
-                            </FormControl>
-                            <FormControl fullWidth margin="dense">
-                                {/* <Test /> */}
-                            </FormControl>
-                        </Stack>
-                    </Paper>
+                            <BottomBar>
+                                <OrderTotalAmount totalAmount={cart.totalAmount} />
 
-                    <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0, py: 1 }}>
-                        <Toolbar>
-                            <Stack spacing={1} direction={'column'} sx={{ width: '100%' }}>
-                                <Typography textAlign={'center'} gutterBottom variant="h6">
-                                    Загальна вартість : <b>{priceFormat(cart.totalAmount)}</b>
-                                </Typography>
-
-                                <Button
-                                    size={'large'}
-                                    variant="contained"
-                                    fullWidth
-                                    disabled={!deadline}
-                                    onClick={() => {
-                                        createOrder();
-                                    }}
-                                >
-                                    Створити Замовлення
-                                </Button>
-                            </Stack>
-                        </Toolbar>
-                    </AppBar>
-                </Box>
-            ) : (
-                <Stack spacing={2} justifyContent={'center'}>
-                    <Typography variant="h5" textAlign={'center'}>
-                        Корзина порожня
-                    </Typography>
-
-                    <Button size={'large'} end to={'/orders/new'} component={NavLink} variant="outlined">
-                        Нове Замовлення
-                    </Button>
-                </Stack>
+                                <CreateOrderButton />
+                            </BottomBar>
+                        </Box>
+                    ) : (
+                        <ComponentNotFound
+                            title={'Корзина порожня'}
+                            buttonText={'Нове Замовлення'}
+                            link={'/orders/new'}
+                        />
+                    )}
+                </>
             )}
+
+            <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
+                <CircularProgress color="inherit" />
+            </Backdrop>
         </Box>
     );
 }

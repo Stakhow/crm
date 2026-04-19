@@ -1,6 +1,14 @@
 import type { CartDTO } from "../../../dto/CartDTO";
 import { AppError } from "../../../utils/error";
 
+export type CartItemProps = {
+  productId: number;
+  name: string;
+  price: number;
+  quantity: number;
+  total: number;
+};
+
 export class CartItem {
   constructor(
     public productId: number,
@@ -49,19 +57,15 @@ export class Cart {
   ) {
     items.forEach((i) => this.items.set(i.productId, i));
 
-    this.createdAt = createdAt ?? "";
+    this.createdAt = createdAt;
     this.clientId = clientId ?? 0;
     this.id = id;
   }
 
-  addItem(data: {
-    productId: number;
-    name: string;
-    price: number;
-    quantity: number;
-    total: number;
-  }) {
+  addItem(data: CartItemProps) {
     const existing = this.items.get(data.productId);
+
+    if (!data.productId) throw new AppError("DOMAIN", "Продукт не вказано");
 
     if (data.quantity <= 0)
       throw new AppError("DOMAIN", "Вага/Кількість повинна бути більше нуля");
@@ -91,7 +95,7 @@ export class Cart {
   }
 
   getProductsId() {
-    return this.getItems().map(i => i.productId);
+    return this.getItems().map((i) => i.productId);
   }
 
   getItemsMap() {

@@ -12,10 +12,11 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { NavLink, useLocation } from 'react-router';
 import { useEffect, useState } from 'react';
-import { Badge, Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import { Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
+
 import { useColorScheme } from '@mui/material/styles';
-import { cartStore } from '../store/';
+import { cartStore, orderStore } from '../store/';
+import { CartIconButton } from './components/Cart/CartButtons';
 
 interface Props {
     /**
@@ -28,15 +29,15 @@ interface Props {
 
 const drawerWidth = 240;
 const navItems = [
-    { title: 'Головна', to: '/' },
-    { title: 'Клієнти', to: '/clients' },
-    { title: 'Додати Клієнта', to: '/clients/new' },
-    { title: 'Продукти', to: '/products' },
-    { title: 'Додати Продукт', to: '/products/new' },
-    { title: 'Замовлення', to: '/orders' },
-    { title: 'Нове Замовлення', to: '/orders/new' },
-    { title: 'Корзина', to: '/cart' },
-    { title: 'Модифікатори', to: '/modifiers' },
+    { title: 'Головна', to: '/', end: true },
+    { title: 'Клієнти', to: '/clients', end: true },
+    { title: 'Додати Клієнта', to: '/clients/new', end: true },
+    { title: 'Продукти', to: '/products', end: false },
+    { title: 'Додати Продукт', to: '/products/new', end: true },
+    { title: 'Замовлення', to: '/orders', end: false },
+    { title: 'Нове Замовлення', to: '/orders/new', end: true },
+    { title: 'Корзина', to: '/cart', end: true },
+    { title: 'Модифікатори', to: '/modifiers', end: true },
 ];
 
 export default function App(props: Props) {
@@ -46,12 +47,12 @@ export default function App(props: Props) {
     const { mode, setMode } = useColorScheme();
     const { pathname } = useLocation();
 
-    const fetchData = cartStore((state) => state.getCartToView);
-    const cartData = cartStore((state) => state.cart);
+    const { getCartToView } = cartStore((state) => state);
+    const { order } = orderStore((s) => s);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        getCartToView();
+    }, [order]);
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
@@ -72,7 +73,7 @@ export default function App(props: Props) {
                 {navItems.map((item, idx) => (
                     <ListItem key={idx} disablePadding>
                         <Button
-                            end
+                            end={item.end}
                             to={item.to}
                             component={NavLink}
                             sx={{
@@ -147,19 +148,7 @@ export default function App(props: Props) {
                         ))}
                     </Box>
 
-                    {!!cartData && (
-                        <IconButton
-                            component={NavLink}
-                            to="/cart"
-                            size="large"
-                            aria-label="show 4 new mails"
-                            color="inherit"
-                        >
-                            <Badge badgeContent={cartData.quantity} color="error">
-                                <ShoppingCartIcon />
-                            </Badge>
-                        </IconButton>
-                    )}
+                    <CartIconButton />
                 </Toolbar>
             </AppBar>
             <nav>

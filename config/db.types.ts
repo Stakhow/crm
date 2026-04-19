@@ -2,10 +2,10 @@
 import { Optional } from "dexie";
 
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
-import type { ClientDTO } from "../dto/ClientDTO";
 import type { OrderStatus } from "../backend/domain/order/Order";
 import type { ProductViewDTO } from "../dto/ProductViewDTO";
 import type { ProductDataDTO } from "../dto/ProductDataDTO";
+import type { ClientViewDTO } from "../dto/ClientViewDTO";
 
 // ---------- PRODUCTS ----------
 export type ProductDB = ProductDataDTO;
@@ -27,7 +27,7 @@ export type ModifierValueDB = Optional<
     id: number;
     groupId: number;
     name: string;
-    price: number;  
+    price: number;
   },
   "id"
 >;
@@ -42,7 +42,7 @@ export type ProductModifierRelationDB = {
 export type OrderDB = Optional<
   {
     id: number;
-    client: ClientDTO;
+    client: ClientViewDTO;
     clientId: number;
     totalAmount: number;
     quantity: number;
@@ -70,7 +70,7 @@ export type ClientDB = Optional<
     name: string;
     phone: string;
     createdAt: number;
-    updatedAt?: number;
+    updatedAt: number;
   },
   "id"
 >;

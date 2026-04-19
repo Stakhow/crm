@@ -6,7 +6,7 @@ export interface IProductRepository {
   getById(id: number): Promise<BaseProduct>;
   getByIds(id: number[]): Promise<BaseProduct[]>;
   getAll(): Promise<BaseProduct[]>;
-  delete(id: number): Promise<void>;
+  delete(id: number): Promise<number>;
   getProductsByCategory(category: string): Promise<BaseProduct[]>;
   getAllModifiers(): Promise<ProductModifier[]>;
 }

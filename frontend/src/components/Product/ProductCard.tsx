@@ -4,17 +4,19 @@ import Typography from '@mui/material/Typography';
 import { dateToLocalString, priceFormat } from '../../../../utils/utils';
 import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
 import type { ReactNode } from 'react';
-import { Divider } from '@mui/material';
+import { Button, Divider, Stack } from '@mui/material';
+import { NavLink } from 'react-router';
 
-export function ProductCard({
-    product,
-    children,
-    isInCart,
-}: {
+type ProductCard = React.ComponentProps<'button'> & {
+    variant: 'primary' | 'secondary';
+};
+export type ProductCardProps = {
     product: ProductViewDTO;
     children?: ReactNode;
     isInCart?: boolean;
-}) {
+    isProductPage?: boolean;
+};
+export function ProductCard({ product, children, isInCart, isProductPage }: ProductCardProps) {
     const Details = ({ data }: { data: { title: string; value: string | number; price?: number }[] }) =>
         !!data &&
         data.map(({ title, value, price }, idx) => (
@@ -64,8 +66,29 @@ export function ProductCard({
                 <Typography gutterBottom>
                     Вартість: <b>{priceFormat(product.totalAmount)}</b>
                 </Typography>
+
+                {!product.quantity && (
+                    <Typography textAlign={'center'} color="error" gutterBottom={true}>
+                        Продукт Закінчився
+                    </Typography>
+                )}
             </CardContent>
-            {children}
+            <Stack direction={'column'} sx={{ p: 2 }} spacing={2}>
+                {!isProductPage && (
+                    <Button
+                        color="warning"
+                        size="large"
+                        fullWidth
+                        to={`/products/${product.id}`}
+                        component={NavLink}
+                        variant="outlined"
+                    >
+                        Переглянути
+                    </Button>
+                )}
+
+                {children}
+            </Stack>
         </Card>
     );
 }

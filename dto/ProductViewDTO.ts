@@ -18,4 +18,5 @@ export type ProductViewDTO = {
   totalAmount: number;
   fields: { title: string; value: number | string; name: string }[];
   productToCreate: ProductToCreateDTO;
+  isAvailable: boolean;
 };

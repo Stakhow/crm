@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { orderService } from '../../../backend';
 import { Box } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
-import { OrderItem } from '../components/OrderItem';
+import { OrderItem } from '../components/Order/OrderItem';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 
 export default function OrdersPage() {

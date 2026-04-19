@@ -1,10 +1,9 @@
-import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import type { Client } from "../../domain/client/Client";
 
 export interface IClientRepository {
   save(client: Client): Promise<number>;
-  getById(id: number): Promise<ClientViewDTO>;
-  getByPhone(phoneNumber: string): Promise<ClientViewDTO | undefined>;
-  getAll(): Promise<ClientViewDTO[]>;
+  getById(id: number): Promise<Client>;
+  getByPhone(phoneNumber: string): Promise<Client>;
+  getAll(): Promise<Client[]>;
   delete(id: number): Promise<void>;
 }

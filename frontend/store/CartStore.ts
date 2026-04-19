@@ -1,19 +1,23 @@
 import { create } from 'zustand';
 import { cartService } from '../../backend';
 import { AppError } from '../../utils/error';
-import type { CartViewDTO } from '../../dto/CartViewDTO';
-import type { OrderFormValues } from '../src/routes/OrderNewPage';
 import { notify } from './NotificationStore';
 import { devtools } from 'zustand/middleware';
+import type { CartDTO } from '../../dto/CartDTO';
+import type { CartItemProps } from '../../backend/domain/cart/Cart';
+
+type CartItemView = CartItemProps & {
+    unit: 'kilogram' | 'piece';
+};
 
 interface CartState {
-    cart: CartViewDTO | undefined;
+    cart: CartDTO | undefined;
     isLoading: boolean;
     error: string;
-    list: OrderFormValues['list'];
+    items: CartItemView[];
     productsInCart: number[];
-    getCartToView: () => void;
-    addCartItem: (data: { productId: number; quantity: number; clientId: number }) => void;
+    getCartToView: () => CartDTO;
+    addCartItem: (data: { productId: number; quantity: number; clientId: number }) => CartDTO;
     deleteCartItem: (id: number) => void;
     deleteCart: () => void;
 }
@@ -24,12 +28,12 @@ export const cartStore = create<CartState>()(
         (set, get) => ({
             cart: undefined,
             isLoading: false,
-            list: [],
+            items: [],
             productsInCart: [],
             error: '',
             getCartToView: async () => {
                 set(
-                    { cart: undefined, isLoading: true, list: [], productsInCart: [], error: '' },
+                    { cart: undefined, isLoading: true, items: [], productsInCart: [], error: '' },
                     false,
                     `${name}/getCartToView:start`,
                 );
@@ -37,19 +41,14 @@ export const cartStore = create<CartState>()(
                 try {
                     const cart = await cartService.getCartToView();
 
-                    const products = cart.products;
+                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
-                            list: products.map((i) => ({
-                                categoryName: i.categoryName,
-                                id: i.id,
-                                quantity: i.quantity,
-                                stock: i.stock,
-                            })),
-                            productsInCart: products.map(({ id }) => id),
+                            items,
+                            productsInCart: cart.items.map((i) => i.productId),
                         },
                         false,
                         `${name}/getCartToView:success`,
@@ -67,19 +66,14 @@ export const cartStore = create<CartState>()(
                 try {
                     const cart = await cartService.addCartItem(props);
 
-                    const products = cart.products;
+                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
-                            list: products.map((i) => ({
-                                categoryName: i.categoryName,
-                                id: i.id,
-                                quantity: i.quantity,
-                                stock: i.stock,
-                            })),
-                            productsInCart: products.map(({ id }) => id),
+                            items,
+                            productsInCart: cart.items.map((i) => i.productId),
                         },
                         false,
                         `${name}/addCartItem:success`,
@@ -98,20 +92,14 @@ export const cartStore = create<CartState>()(
 
                 try {
                     const cart = await cartService.deleteCartItem(id);
-
-                    const products = cart.products;
+                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
-                            list: products.map((i) => ({
-                                categoryName: i.categoryName,
-                                id: i.id,
-                                quantity: i.quantity,
-                                stock: i.stock,
-                            })),
-                            productsInCart: products.map(({ id }) => id),
+                            items,
+                            productsInCart: cart.items.map((i) => i.productId),
                         },
                         false,
                         `${name}/deleteCartItem:success`,
@@ -127,12 +115,15 @@ export const cartStore = create<CartState>()(
             },
             deleteCart: async () => {
                 set({ isLoading: true }, false, `${name}/deleteCart:start`);
+
                 try {
+                    await cartService.deleteCart();
+
                     set(
                         {
                             cart: undefined,
                             isLoading: false,
-                            list: undefined,
+                            items: undefined,
                             productsInCart: undefined,
                         },
                         false,

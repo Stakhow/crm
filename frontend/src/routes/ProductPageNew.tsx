@@ -24,8 +24,6 @@ export default function ProductPageNew() {
 
     useEffect(() => {
         if (!!categoryName) getProduct(0, categoryName);
-
-        console.log('categoryName', categoryName);
     }, [categoryName]);
 
     return (

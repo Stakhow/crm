@@ -13,10 +13,16 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { ukUA } from '@mui/x-date-pickers/locales';
 import dayjs from 'dayjs';
 import 'dayjs/locale/uk';
-
 import { useState } from 'react';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import type { PickerValue } from '@mui/x-date-pickers/internals';
+import { calendarStore } from '../../store/index';
+import updateLocale from 'dayjs/plugin/updateLocale';
+
+dayjs.extend(updateLocale);
+dayjs.updateLocale('en', {
+    weekStart: 1,
+});
 
 const withDateLocalization = (Component: React.ComponentType<any>) => {
     return (props: any) => (
@@ -28,6 +34,23 @@ const withDateLocalization = (Component: React.ComponentType<any>) => {
             <Component {...props} />
         </LocalizationProvider>
     );
+};
+
+const withCalendarState = (Component: React.ComponentType<any>) => {
+    return (props: any) => {
+        const { date, setDate } = calendarStore((s) => s);
+
+        return (
+            <Component
+                value={dayjs(date)}
+                onChange={(v: PickerValue) => {
+                    if (v) setDate(v);
+                    return v;
+                }}
+                {...props}
+            />
+        );
+    };
 };
 
 function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewDTO[]> }) {
@@ -97,8 +120,8 @@ type CalendarBaseProps = {
 const CalendarBase = ({ date, isLoading, monthOrders, ...props }: CalendarBaseProps) => {
     return (
         <DateCalendar
-            value={date}
-            defaultValue={date}
+            // value={date}
+            // defaultValue={dayjs()}
             loading={isLoading}
             dayOfWeekFormatter={(weekday) => `${weekday.format('dd')}.`}
             renderLoading={() => <DayCalendarSkeleton />}
@@ -130,4 +153,7 @@ const CalendarBase = ({ date, isLoading, monthOrders, ...props }: CalendarBasePr
     );
 };
 
-export const Calendar = withDateLocalization(CalendarBase);
+const Calendar = withDateLocalization(CalendarBase);
+
+export const CalendarInputState = withCalendarState(CalendarInput);
+export const CalendarWithState = withCalendarState(Calendar);

@@ -6,15 +6,13 @@ import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import { devtools } from 'zustand/middleware';
 
-type ProductCategoryNameInState = ProductCategory | undefined;
-
 interface CategoryState {
     categories: ProductCategoryDTO[];
-    categoryName: ProductCategoryNameInState;
+    categoryName: ProductCategory;
     isLoading: boolean;
     error: string;
     getCategories: () => void;
-    setCategory: (categoryName: ProductCategoryNameInState) => void;
+    setCategory: (categoryName: ProductCategory) => void;
 }
 
 const name = 'category';
