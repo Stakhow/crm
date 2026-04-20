@@ -5,6 +5,7 @@ import { orderService } from '../../backend';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import { Dayjs } from 'dayjs';
+import type { OrderStatus } from '../../backend/domain/order/Order';
 
 interface OrderState {
     isLoading: boolean;
@@ -19,6 +20,7 @@ interface OrderState {
     repeatOrder: (orderId: number) => void;
     getOrdersByMonth: (date: Dayjs) => void;
     getOrdersByTargetDate: (date: Dayjs) => void;
+    updateStatus: (orderId: number, status: OrderStatus) => void;
 }
 
 const name = 'order';
@@ -107,6 +109,38 @@ export const orderStore = create<OrderState>()(
                         set({ error: error.message }, false, `${name}/getOrdersByTargetDate:errosMessage`);
                     set({ isLoading: false }, false, `${name}/getOrdersByTargetDate:error`);
                     notify.error(`Помилка отримання списку замовлень дня: ${get().error}`);
+                }
+            },
+            getOrder: async (orderId) => {
+                set({ isLoading: true, error: '' }, false, `${name}/getOrder:start`);
+
+                try {
+                    const order = await orderService.getById(orderId);
+
+                    set({ isLoading: false, order }, false, `${name}/getOrder:success`);
+
+                    return order;
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/getOrder:errosMessage`);
+                    set({ isLoading: false }, false, `${name}/getOrder:error`);
+                    notify.error(`Помилка отримання замовлення: ${get().error}`);
+                }
+            },
+            updateStatus: async (orderId, status) => {
+                set({ error: '' }, false, `${name}/updateStatus:start`);
+
+                try {
+                    await orderService.updateStatus(orderId, status);
+
+                    set({ isLoading: false }, false, `${name}/updateStatus:success`);
+
+                    notify.success('Статус оновлено');
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/updateStatus:errosMessage`);
+                    set({ isLoading: false }, false, `${name}/updateStatus:error`);
+                    notify.error(`Помилка оновлення статусу: ${get().error}`);
                 }
             },
         }),

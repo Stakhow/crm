@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, type ButtonProps } from '@mui/material';
 import { cartStore, orderStore } from '../../../store';
 import { calendarStore } from '../../../store/CalendarStore';
 import { NavLink, useLocation } from 'react-router';
@@ -36,8 +36,8 @@ export const RepeatOrderButton = ({ orderId }: { orderId: number }) => {
     );
 };
 
-export const InitOrderButton = () => (
-    <Button size={'large'} variant="contained" fullWidth component={NavLink} to={'/orders/new'}>
+export const InitOrderButton = ({ ...props }: ButtonProps) => (
+    <Button size={'large'} variant="contained" fullWidth component={NavLink} to={'/orders/new'} {...props}>
         Створити Замовлення
     </Button>
 );

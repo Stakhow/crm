@@ -39,7 +39,7 @@ function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.F
                                     setAmount(0);
 
                                     const newAmount = await getProductAmount(values.id, Number(e.target.value));
-                                    
+
                                     setAmount(newAmount);
                                 }}
                                 helperText={errors['quantity']}

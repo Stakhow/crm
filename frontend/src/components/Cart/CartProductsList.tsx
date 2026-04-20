@@ -13,7 +13,7 @@ export const CartProductListSelect = () => {
         <>
             <ProductListSelect categoryName={categoryName} cartItemsId={cartItemsId} />
             {!!product && !cartItemsId.includes(product.id) && (
-                <CartProductCard clientId={clientId} product={product} />
+                <CartProductCard clientId={cart?.clientId ?? clientId} product={product} />
             )}
         </>
     ) : (

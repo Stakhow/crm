@@ -1,4 +1,4 @@
-import { useParams, NavLink } from 'react-router';
+import { useParams, NavLink, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -26,10 +26,12 @@ import { InitOrderButton } from '../components/Order/OrderButtons';
 
 export default function ClientPage() {
     const [open, setOpen] = useState(false);
-    const { isLoading, client, getClient, deleteClient } = clientStore((state) => state);
+    const { isLoading, client, getClient, deleteClient, setClient } = clientStore((state) => state);
     const { orders, getOrdersByClient } = orderStore((state) => state);
 
     const { id } = useParams();
+
+    const navigate = useNavigate();
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -37,6 +39,10 @@ export default function ClientPage() {
 
     const handleClose = () => {
         setOpen(false);
+    };
+    const handleDelete = () => {
+        handleClose();
+        deleteClient(client.id);
     };
 
     useEffect(() => {
@@ -144,7 +150,12 @@ export default function ClientPage() {
                     )}
 
                     <BottomBar>
-                        <InitOrderButton />
+                        <InitOrderButton
+                            onClick={() => {
+                                if (client.id) setClient(client.id);
+                                navigate('/orders/new');
+                            }}
+                        />
                     </BottomBar>
                 </Box>
             ) : (
@@ -160,7 +171,7 @@ export default function ClientPage() {
                 <DialogTitle id="alert-dialog-title">Видалити клієнта?</DialogTitle>
                 <DialogActions>
                     <Button onClick={handleClose}>Відміна</Button>
-                    <Button color={'error'} onClick={() => deleteClient(client.id)}>
+                    <Button color={'error'} onClick={handleDelete}>
                         Підтвердити
                     </Button>
                 </DialogActions>

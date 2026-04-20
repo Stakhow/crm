@@ -53,7 +53,7 @@ export const clientStore = create<ClientState>()(
                 }
             },
 
-            setClient: (clientId) => set({ clientId: clientId }),
+            setClient: (clientId) => set({ clientId }),
 
             getClients: async () => {
                 set({ isLoading: true, clients: undefined, error: '' }, false, `${name}/getClients:start`);
