@@ -4,23 +4,23 @@ import { ProductCard } from '../Product/ProductCard';
 import { useState, type ComponentType } from 'react';
 import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
 import type React from 'react';
-import { cartStore, productStore } from '../../../store';
+import { cartStore, clientStore, productStore } from '../../../store';
 import { useFormikContext } from 'formik';
 import type { OrderFormValues } from '../../routes/OrderNewPage';
 
 interface WithLoaderProps {
     children?: React.ReactNode;
     product: ProductViewDTO;
-    clientId: number;
 }
 
 function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.FC<P & WithLoaderProps> {
     return ({ ...props }: WithLoaderProps) => {
-        const { clientId, product } = props;
+        const { product } = props;
 
         const { getProductAmount } = productStore((s) => s);
         const { isLoading, addCartItem } = cartStore((s) => s);
         const { values, handleChange, errors } = useFormikContext<OrderFormValues>();
+        const { clientId } = clientStore((s) => s);
 
         const [amount, setAmount] = useState(0);
 

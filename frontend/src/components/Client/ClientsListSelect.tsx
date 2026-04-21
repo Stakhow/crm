@@ -8,11 +8,14 @@ export const ClientsListSelect = () => {
     const { cart } = cartStore((s) => s);
 
     const isCartExist = !!cart && !!cart.clientId;
-    const _clientId = isCartExist ? cart.clientId : clientId;
 
     useEffect(() => {
         getClients();
     }, []);
+
+    useEffect(() => {
+        if (!!cart && !!cart.clientId) setClient(cart.clientId);
+    }, [cart]);
 
     const List = () =>
         !!clients && !!clients.length ? (
@@ -25,7 +28,7 @@ export const ClientsListSelect = () => {
                         id={`clientList`}
                         label="Список клієнтів"
                         name="client"
-                        value={_clientId ?? ''}
+                        value={clientId ?? ''}
                         onChange={(e) => {
                             setClient(e.target.value);
                         }}

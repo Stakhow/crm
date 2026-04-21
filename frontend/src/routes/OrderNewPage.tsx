@@ -26,8 +26,6 @@ export default function OrderPageNew() {
     const { categoryName } = categoryStore((s) => s);
     const { product } = productStore((s) => s);
 
-    const _clientId = !!cart && !!cart.clientId ? cart.clientId : clientId;
-
     const initialValues: OrderFormValues = {
         client: !!cart ? cart.clientId : clientId,
         totalAmount: cart?.totalAmount ?? 0,
@@ -69,12 +67,12 @@ export default function OrderPageNew() {
 
                                 <CartList />
 
-                                {!!_clientId && (
-                                    <>
-                                        <CategoryWithState />
-                                        <CartProductListSelect />
-                                    </>
-                                )}
+                                {/* {!!_clientId && ( */}
+                                <>
+                                    <CategoryWithState />
+                                    <CartProductListSelect />
+                                </>
+                                {/* )} */}
 
                                 <BottomBar>
                                     <OrderTotalAmount totalAmount={values.totalAmount} />

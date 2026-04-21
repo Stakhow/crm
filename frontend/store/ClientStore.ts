@@ -67,7 +67,9 @@ export const clientStore = create<ClientState>()(
                 }
             },
 
-            setClient: (clientId) => set({ clientId }),
+            setClient: (clientId) => {
+                set({ clientId });
+            },
 
             getClients: async () => {
                 set({ isLoading: true, clients: undefined, error: '' }, false, `${name}/getClients:start`);
@@ -104,7 +106,6 @@ export const clientStore = create<ClientState>()(
                 }
             },
             saveClient: async (client) => {
-                console.log(client);
                 set(
                     {
                         isLoading: true,
@@ -162,7 +163,6 @@ export const clientStore = create<ClientState>()(
             handlePickContacts: async () => {
                 // 1. Check if the API is supporteds
                 const supported = 'contacts' in navigator && 'ContactsManager' in window;
-                console.log(supported);
                 if (supported) {
                     try {
                         // 2. Define which properties you want to retrieve
