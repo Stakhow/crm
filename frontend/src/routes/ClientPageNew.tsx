@@ -1,29 +1,28 @@
-import { Box, Backdrop, CircularProgress } from '@mui/material';
-import { useNavigate } from 'react-router';
+import { Box, Backdrop, CircularProgress, Button } from '@mui/material';
 import { useEffect } from 'react';
 import { clientStore } from '../../store';
 import { ClientForm } from '../components/Client/ClientForm';
-import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
+import { ClientsForm } from '../components/Client/ClientsForm';
 
 export default function ClientPageNew() {
-    const navigate = useNavigate();
-
-    const { isLoading, client, getClient, saveClient } = clientStore((state) => state);
+    const { isLoading, client, contacts, getClient, handlePickContacts } = clientStore((state) => state);
 
     useEffect(() => {
         getClient(0);
     }, []);
 
     return (
-        <Box>
-            {!isLoading && !!client && (
-                <ClientForm
-                    client={client}
-                    onSubmit={async (values: ClientViewDTO) => {
-                        const client = await saveClient(values);
-                        if (!!client && !!client.id) navigate(`/clients/${client.id}`, { replace: true });
-                    }}
-                />
+        <Box sx={{ pb: 10 }}>
+            {isLoading ? (
+                <></>
+            ) : (
+                <>
+                    {!!contacts && !!contacts.length ? <ClientsForm /> : <>{!!client && <ClientForm />}</>}
+
+                    <Button size={'large'} variant="outlined" color="primary" fullWidth onClick={handlePickContacts}>
+                        Вибрати зі списку контактів
+                    </Button>
+                </>
             )}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>

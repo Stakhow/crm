@@ -7,11 +7,11 @@ export interface ClientProps {
 }
 
 export class Client {
-  id: number;
-  protected name: string;
-  protected phone: string;
-  protected createdAt: number;
-  protected updatedAt: number;
+  public id: number;
+  public name: string;
+  public phone: string;
+  public createdAt: number;
+  public updatedAt: number;
 
   constructor(props: ClientProps) {
     this.id = props.id;
@@ -24,6 +24,14 @@ export class Client {
   toView() {
     return {
       id: this.id,
+      name: this.name,
+      phone: this.phone,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
+  }
+  toSaveDB() {
+    return {
       name: this.name,
       phone: this.phone,
       createdAt: this.createdAt,

@@ -7,6 +7,18 @@ export class ClientService {
     this.clientRepository = clientRepository;
   }
 
+  async saveBulk(clientsDTO: { name: string; phone: string }[]) {
+    const clientsRaw = await Promise.all(
+      clientsDTO.map((i) => this.clientRepository.createClient(i)),
+    );
+
+    const savedClientsIds = await this.clientRepository.saveBulk(clientsRaw);
+
+    const clients = await this.clientRepository.getByIds(savedClientsIds);
+
+    return clients.map((i) => i.toView());
+  }
+
   async save(clientDTO: ClientViewDTO): Promise<ClientViewDTO> {
     const client = await this.clientRepository.createClient(clientDTO);
 

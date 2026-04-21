@@ -1,27 +1,30 @@
-import List from '@mui/material/List';
 import { useEffect } from 'react';
-import { ComponentNotFound } from '../components/ComponentNotFound';
-import { ClientItem } from '../components/ClientItem';
 import { clientStore } from '../../store';
+import { NavLink } from 'react-router';
+import { BottomBar } from '../components/BottomBar';
+import { Backdrop, Box, Button, CircularProgress } from '@mui/material';
+import { ClientsList } from '../components/Client/ClientsLIst';
 
 export default function ClientsPage() {
-    const { clients, getClients } = clientStore((state) => state);
+    const { isLoading, clients, getClients } = clientStore((state) => state);
 
     useEffect(() => {
         getClients();
     }, []);
 
-    const ClientsList = () => (
-        <List>
-            {clients.map((i) => (
-                <ClientItem client={i} key={i.id} />
-            ))}
-        </List>
-    );
+    return (
+        <Box sx={{ pb: 10 }}>
+            <ClientsList clients={clients} />
 
-    return !!clients && !!clients.length ? (
-        <ClientsList />
-    ) : (
-        <ComponentNotFound title={'Клієнтів не знайдено'} buttonText={'Додати клієнта'} link={'/clients/new'} />
+            <BottomBar>
+                <Button size={'large'} variant="contained" fullWidth component={NavLink} to={'/clients/new'}>
+                    Додати клієнта
+                </Button>
+            </BottomBar>
+
+            <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
+                <CircularProgress color="inherit" />
+            </Backdrop>
+        </Box>
     );
 }

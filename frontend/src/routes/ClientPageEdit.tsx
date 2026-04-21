@@ -1,32 +1,21 @@
 import { Box, Backdrop, CircularProgress } from '@mui/material';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useEffect } from 'react';
 import { clientStore } from '../../store';
 import { ClientForm } from '../components/Client/ClientForm';
-import type { ClientViewDTO } from '../../../dto/ClientViewDTO';
 
 export default function ClientPageEdit() {
     const { id } = useParams();
 
-    const navigate = useNavigate();
-
-    const { isLoading, client, getClient, saveClient } = clientStore((state) => state);
+    const { isLoading, client, getClient } = clientStore((state) => state);
 
     useEffect(() => {
         getClient(Number(id));
     }, []);
 
     return (
-        <Box>
-            {!isLoading && !!client && (
-                <ClientForm
-                    client={client}
-                    onSubmit={async (values: ClientViewDTO) => {
-                        const client = await saveClient(values);
-                        if (!!client && !!client.id) navigate(`/clients/${client.id}`, { replace: true });
-                    }}
-                />
-            )}
+        <Box sx={{ pb: 10 }}>
+            {!isLoading && !!client && <ClientForm />}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
                 <CircularProgress color="inherit" />

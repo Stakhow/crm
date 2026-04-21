@@ -3,13 +3,14 @@ import { useEffect } from 'react';
 import { Backdrop, Box, Card, CircularProgress, Stack, Typography } from '@mui/material';
 import { dateToLocalString } from '../../../utils/utils';
 import { ProductCard } from '../components/Product/ProductCard';
-import { ClientItem } from '../components/ClientItem';
+
 import { OrderStatusSelect } from '../components/Order/OrderStatusSelect';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 import { OrderTotalAmount } from '../components/OrderTotalAmount';
 import { BottomBar } from '../components/BottomBar';
 import { RepeatOrderButton } from '../components/Order/OrderButtons';
 import { orderStore } from '../../store';
+import { ClientItem } from '../components/Client/ClientItem';
 
 export default function OrderPage() {
     let { id } = useParams();
@@ -19,9 +20,7 @@ export default function OrderPage() {
         console.log(order);
         getOrder(Number(id));
     }, []);
-    useEffect(() => {
-        
-    }, [order]);
+    useEffect(() => {}, [order]);
 
     return (
         <Box>
