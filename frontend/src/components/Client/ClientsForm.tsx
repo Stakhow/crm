@@ -1,5 +1,5 @@
 import { FieldArray, Formik, getIn } from 'formik';
-import { Button, Stack, TextField, Card } from '@mui/material';
+import { Button, Stack, TextField, Card, Box } from '@mui/material';
 import { BottomBar } from '../BottomBar';
 import { clientStore } from '../../../store';
 import { useNavigate } from 'react-router';
@@ -34,46 +34,44 @@ export const ClientsForm = () => {
                         >
                             <FieldArray
                                 name={'clients'}
-                                render={() => (
-                                    <>
-                                        {values.clients &&
-                                            values.clients.map((client) => {
-                                                const errorName = getIn(errors, client.name);
-                                                const errorPhone = getIn(errors, client.phone);
+                                render={() =>
+                                    values.clients &&
+                                    values.clients.map((client) => {
+                                        const errorName = getIn(errors, client.name);
+                                        const errorPhone = getIn(errors, client.phone);
 
-                                                return (
-                                                    <>
-                                                        <TextField
-                                                            fullWidth
-                                                            name="name"
-                                                            label="Ім'я"
-                                                            value={client.name}
-                                                            error={!!errorName}
-                                                            helperText={errorName}
-                                                            onChange={handleChange}
-                                                        />
+                                        return (
+                                            <Box sx={{ display: 'none!important' }}>
+                                                <TextField
+                                                    fullWidth
+                                                    name="name"
+                                                    label="Ім'я"
+                                                    value={client.name}
+                                                    error={!!errorName}
+                                                    helperText={errorName}
+                                                    onChange={handleChange}
+                                                />
 
-                                                        <TextField
-                                                            name="phone"
-                                                            label="Телефон"
-                                                            type="tel"
-                                                            value={client.phone}
-                                                            error={!!errorPhone}
-                                                            helperText={errorPhone}
-                                                            onChange={handleChange}
-                                                            variant="outlined"
-                                                            placeholder="+38 (0__) ___-__-__"
-                                                            slotProps={{
-                                                                input: {
-                                                                    inputComponent: UkraineMaskInput as any,
-                                                                },
-                                                            }}
-                                                        />
-                                                    </>
-                                                );
-                                            })}
-                                    </>
-                                )}
+                                                <TextField
+                                                    name="phone"
+                                                    label="Телефон"
+                                                    type="tel"
+                                                    value={client.phone}
+                                                    error={!!errorPhone}
+                                                    helperText={errorPhone}
+                                                    onChange={handleChange}
+                                                    variant="outlined"
+                                                    placeholder="+38 (0__) ___-__-__"
+                                                    slotProps={{
+                                                        input: {
+                                                            inputComponent: UkraineMaskInput as any,
+                                                        },
+                                                    }}
+                                                />
+                                            </Box>
+                                        );
+                                    })
+                                }
                             ></FieldArray>
 
                             <ClientsList clients={contacts} />
