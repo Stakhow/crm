@@ -122,7 +122,6 @@ export class ProductService {
       ? await this.getProductByCategory(categoryName)
       : await this.getProductById(productId);
 
-    console.log("product.toView()", product.toView());
 
     return product.toView();
   }
@@ -144,7 +143,6 @@ export class ProductService {
 
   public async getTotalAmount(id: number, value: number): Promise<number> {
     const product = await this.productRepository.getById(id);
-    console.log(product, value);
     return product.getTotalAmount(value);
   }
 

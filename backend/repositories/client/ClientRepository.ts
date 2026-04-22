@@ -37,7 +37,7 @@ export class ClientRepository implements IClientRepository {
     return this._create(clientDTO);
   }
 
-  async createClient(data: { id?: number; name: string; phone: string }) {
+  async createClient(data: { name: string; phone: string }) {
     const clientDTO = {
       id: 0,
       name: "",
@@ -46,7 +46,7 @@ export class ClientRepository implements IClientRepository {
       updatedAt: Date.now(),
     };
 
-    return this._create({ ...clientDTO, ...data });
+    return this._create({ ...clientDTO, name: data.name, phone: data.phone });
   }
 
   async getById(id: number): Promise<Client> {
@@ -71,8 +71,7 @@ export class ClientRepository implements IClientRepository {
     return clients;
   }
 
-  async getByPhone(phoneNumber: string) {
-    const phone = this._formatPhoneNumber(phoneNumber);
+  async getByPhone(phone: string) {
     const client = await db.clients.where({ phone }).first();
 
     return client;
@@ -117,10 +116,7 @@ export class ClientRepository implements IClientRepository {
   }
 
   async saveBulk(clients: Client[]) {
-    const clientsDTO = clients.map((i) => ({
-      ...i.toSaveDB(),
-      phone: this._formatPhoneNumber(i.phone),
-    }));
+    const clientsDTO = clients.map((i) => i.toSaveDB());
     const phones = clientsDTO.map((i) => i.phone);
 
     const existingClients = await db.clients
@@ -128,11 +124,12 @@ export class ClientRepository implements IClientRepository {
       .anyOf(phones)
       .toArray();
 
+
     if (!!existingClients.length) {
       const existingPhones = existingClients.map((i) => i.phone);
 
       throw new AppError("DATABASE", `Клієнти з такими номерами вже існують`, {
-        data: [existingPhones],
+        data: existingPhones,
       });
     }
 
