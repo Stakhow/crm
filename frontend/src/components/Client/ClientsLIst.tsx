@@ -1,6 +1,7 @@
 import { List, Stack } from '@mui/material';
 import type { ClientViewDTO } from '../../../../dto/ClientViewDTO';
 import { ClientItem } from './ClientItem';
+import { ComponentNotFound } from '../ComponentNotFound';
 
 export const ClientsList = ({ clients }: { clients: ClientViewDTO[] }) => {
     return !!clients && !!clients.length ? (
@@ -10,6 +11,6 @@ export const ClientsList = ({ clients }: { clients: ClientViewDTO[] }) => {
             ))}
         </List>
     ) : (
-        <></>
+        <ComponentNotFound title={'Клієнтів не знайдено'} buttonText={'Додати клієнта'} link={'/clients/new'} />
     );
 };

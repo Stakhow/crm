@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Backdrop, Box, CircularProgress } from '@mui/material';
 
 import { FormComponent } from '../components/Product/FormComponent';
-import { Categories } from '../components/Categories';
+import { CategoryWithState } from '../components/Categories';
 
 import { categoryStore, productStore } from '../../store/index';
 import { ComponentNotFound } from '../components/ComponentNotFound';
@@ -11,12 +11,11 @@ import { ComponentNotFound } from '../components/ComponentNotFound';
 export default function ProductPageNew() {
     const { initCreate, isLoading, saveProduct, getProduct, product } = productStore((state) => state);
 
-    const { categories, categoryName, setCategory, getCategories } = categoryStore((state) => state);
+    const { categoryName } = categoryStore((state) => state);
     const navigate = useNavigate();
 
     useEffect(() => {
         initCreate();
-        getCategories();
     }, []);
 
     useEffect(() => {
@@ -25,14 +24,7 @@ export default function ProductPageNew() {
 
     return (
         <Box>
-            <Categories
-                name={'categoryName'}
-                categories={categories}
-                value={categoryName}
-                onChange={(e) => {
-                    setCategory(e.target.value);
-                }}
-            />
+            <CategoryWithState />
 
             {!!categoryName && (
                 <>

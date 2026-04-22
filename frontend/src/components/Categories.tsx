@@ -77,7 +77,7 @@ export const CategoryWithState = () => {
     const { categories, categoryName, getCategories, isLoading, setCategory } = categoryStore((s) => s);
 
     useEffect(() => {
-        getCategories();
+        if (!categoryName) getCategories();
     }, []);
 
     return (

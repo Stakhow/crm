@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Categories } from '../components/Categories';
+import { CategoryWithState } from '../components/Categories';
 import { Backdrop, Box, Button, CircularProgress, Divider, Stack } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
@@ -20,12 +20,8 @@ export default function ProductsPage() {
     const [dialogConfig, setDialogConfig] = useState<Dialog | null>(null);
 
     const { products, isLoading, getProducts, updateProductQuantity } = productStore((state) => state);
-    const { categories, categoryName, getCategories, setCategory } = categoryStore((state) => state);
+    const { categoryName } = categoryStore((state) => state);
     const isCategoriesLoading = categoryStore((state) => state.isLoading);
-
-    useEffect(() => {
-        getCategories();
-    }, []);
 
     useEffect(() => {
         getProducts(categoryName);
@@ -89,14 +85,7 @@ export default function ProductsPage() {
 
     return (
         <Box>
-            <Categories
-                name={'categoryName'}
-                categories={categories}
-                value={categoryName}
-                onChange={(e: React.ChangeEvent<any>) => {
-                    setCategory(e.target.value);
-                }}
-            />
+            <CategoryWithState />
 
             {!isLoading && (!!products.length ? <ProductsList /> : !!categoryName && <ProductNotFound />)}
 
