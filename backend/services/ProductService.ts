@@ -68,18 +68,18 @@ export class ProductService {
   }
 
   public async saveProduct(values: ProductToCreateDTO, productId?: number) {
-    const product =
-      !!productId && productId !== 0
-        ? await this.productRepository.getById(productId)
-        : await this.productRepository.getByCategoryName(values.categoryName);
+    const isExistingProduct = !!productId && productId !== 0;
+    const product = isExistingProduct
+      ? await this.productRepository.getById(productId)
+      : await this.productRepository.getByCategoryName(values.categoryName);
 
     product.fillData(values);
 
-    const id = await this.productRepository.save(product);
+    const id = isExistingProduct
+      ? await this.productRepository.update(product)
+      : await this.productRepository.save(product);
 
-    const updatedProduct = this.getProductToView(id);
-
-    return updatedProduct;
+    return await this.getProductToView(id);
   }
 
   public async getAll() {
@@ -144,9 +144,10 @@ export class ProductService {
     }: { unitOperation: "add" | "subtract"; quantity: number },
   ) {
     const product = await this.productRepository.getById(productId);
+
     product.updateQuantity(Number(quantity), unitOperation);
 
-    await this.productRepository.update(productId, product);
+    await this.productRepository.update(product);
 
     return product.toView();
   }

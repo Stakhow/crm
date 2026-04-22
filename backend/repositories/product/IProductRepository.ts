@@ -3,6 +3,7 @@ import type { ProductModifier } from "../../domain/product/modifiers/ProductModi
 
 export interface IProductRepository {
   save(product: BaseProduct): Promise<number>;
+  update(product: BaseProduct): Promise<number>;
   getById(id: number): Promise<BaseProduct>;
   getByIds(id: number[]): Promise<BaseProduct[]>;
   getAll(): Promise<BaseProduct[]>;

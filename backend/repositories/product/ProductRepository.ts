@@ -76,7 +76,7 @@ export class ProductRepository implements IProductRepository {
     }
   }
 
-  async update(id: number, product: BaseProduct): Promise<number> {
+  async update(product: BaseProduct): Promise<number> {
     const persistedProduct = product.toPersistence();
     const { appliedModifiers } = product;
 
@@ -87,12 +87,12 @@ export class ProductRepository implements IProductRepository {
       async () => {
         await db.product_modifiers_relations
           .where("productId")
-          .equals(id)
+          .equals(product.id)
           .modify((row) => {
             row.itemId = appliedModifiers[row.groupId];
           });
 
-        return await db.products.update(id, persistedProduct);
+        return await db.products.update(product.id, persistedProduct);
       },
     );
   }
