@@ -1,11 +1,10 @@
-import type { OrderStatus } from "../backend/domain/order/Order";
+import type { OrderItem, OrderStatus } from "../backend/domain/order/Order";
 import type { ClientViewDTO } from "./ClientViewDTO";
-import type { ProductViewDTO } from "./ProductViewDTO";
 
 export interface OrderViewDTO {
   id: number;
   client: ClientViewDTO;
-  items: ProductViewDTO[];
+  items: OrderItem[];
   totalAmount: number;
   quantity: number;
   status: OrderStatus;

@@ -114,6 +114,17 @@ export class ProductService {
     return await this.productRepository.getByIds(productIds);
   }
 
+  public async getProductByIdsMap(productIds: number[]) {
+    const products = await this.productRepository.getByIds(productIds);
+
+    return new Map(products.map((p) => [p.id, p]));
+  }
+  public async getProductByIdsToViewMap(productIds: number[]) {
+    const products = await this.productRepository.getByIds(productIds);
+
+    return new Map(products.map((p) => [p.id, p.toView()]));
+  }
+
   public async getProductToView(
     productId: number,
     categoryName?: ProductCategory,
@@ -121,7 +132,6 @@ export class ProductService {
     const product = !!categoryName
       ? await this.getProductByCategory(categoryName)
       : await this.getProductById(productId);
-
 
     return product.toView();
   }
@@ -143,6 +153,7 @@ export class ProductService {
 
   public async getTotalAmount(id: number, value: number): Promise<number> {
     const product = await this.productRepository.getById(id);
+
     return product.getTotalAmount(value);
   }
 

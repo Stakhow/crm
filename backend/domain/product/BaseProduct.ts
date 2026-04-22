@@ -236,6 +236,16 @@ export abstract class BaseProduct {
     if (unitOperation === "subtract") result = this.quantity - Number(value);
 
     this.setQuantity(result);
+
+    return this;
+  }
+
+  increase(quantity: number) {
+    return this.updateQuantity(quantity, "add");
+  }
+
+  decrease(quantity: number) {
+    return this.updateQuantity(quantity, "subtract");
   }
 
   setQuantity(value: number) {
@@ -243,6 +253,10 @@ export abstract class BaseProduct {
       throw new AppError("DOMAIN", `Вага не може бути нижче нуля: ${value}`);
 
     this.quantity = value;
+
+    this.totalAmount = this.getTotalAmount(this.quantity);
+
+    return this;
   }
 
   isAvailable() {

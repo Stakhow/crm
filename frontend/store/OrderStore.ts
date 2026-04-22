@@ -6,6 +6,7 @@ import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import { Dayjs } from 'dayjs';
 import type { OrderStatus } from '../../backend/domain/order/Order';
+import type { CartDTO } from '../../dto/CartDTO';
 
 interface OrderState {
     isLoading: boolean;
@@ -17,7 +18,7 @@ interface OrderState {
     getOrders: (orderId: number) => OrderViewDTO[];
     getOrder: (orderId: number) => OrderViewDTO;
     createOrder: (date: Dayjs) => OrderViewDTO;
-    repeatOrder: (orderId: number) => void;
+    repeatOrder: (orderId: number) => CartDTO;
     getOrdersByMonth: (date: Dayjs) => void;
     getOrdersByTargetDate: (date: Dayjs) => void;
     updateStatus: (orderId: number, status: OrderStatus) => void;
@@ -69,10 +70,12 @@ export const orderStore = create<OrderState>()(
                 set({ isLoading: true, error: '' }, false, `${name}/repeatOrder:start`);
 
                 try {
-                    await orderService.repeatOrder(orderId);
+                    const cart = await orderService.repeatOrder(orderId);
 
-                    set({ isLoading: false }, false, `${name}/repeatOrder:success`);
+                    set({ isLoading: false, order: undefined }, false, `${name}/repeatOrder:success`);
                     notify.success('Створено корзину із замовлення');
+
+                    return cart;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/repeatOrder:errosMessage`);
@@ -116,7 +119,6 @@ export const orderStore = create<OrderState>()(
 
                 try {
                     const order = await orderService.getById(orderId);
-
                     set({ isLoading: false, order }, false, `${name}/getOrder:success`);
 
                     return order;

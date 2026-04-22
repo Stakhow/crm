@@ -57,10 +57,19 @@ export class OrderRepository implements IOrderRepository {
       db.order_items,
       async () => {
         await db.products.bulkUpdate(
-          products.map((p) => ({
-            key: p.id,
-            changes: p.toPersistence(),
-          })),
+          products.map((p) => {
+            const orderItem = order.getOrderItem(p.id);
+
+            if (!orderItem)
+              throw new AppError("DOMAIN", "Не знайдено відповідного продукту");
+
+            p.decrease(orderItem.quantity);
+
+            return {
+              key: p.id,
+              changes: { quantity: p.getQuantity },
+            };
+          }),
         );
 
         const orderId = await db.orders.add(this.toOrderDB(order));
@@ -89,7 +98,6 @@ export class OrderRepository implements IOrderRepository {
     if (!orderDTO) throw new AppError("SERVICE", "Замовлення не знайдено");
 
     const items = await db.order_items.where("orderId").equals(id).toArray();
-
     return this.toDomain(orderDTO, items);
   }
 

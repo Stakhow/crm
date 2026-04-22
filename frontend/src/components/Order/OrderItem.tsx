@@ -1,23 +1,27 @@
 import { NavLink } from 'react-router';
 import { dateToLocalString } from './../../../../utils/utils';
-import { Button, Card, CardActions, CardContent, Paper, Typography } from '@mui/material';
+import { Button, Card, CardActions, CardContent, Chip, Paper, Stack, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
 import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
 import { OrderTotalAmount } from '../OrderTotalAmount';
 
 export function OrderItem({ order }: { order: OrderViewDTO }) {
     const color = {
-        InProgress: red[100],
-        Done: green[100],
+        InProgress: red[400],
+        Done: green[500],
         Cancelled: grey[400],
     };
 
     return (
-        <Card raised component={Paper} sx={{ my: 1.5, background: color[order.status] }}>
+        <Card raised component={Paper} sx={{ my: 1.5 }}>
             <CardContent>
-                <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-                    Номер замовлення: {order.id}
-                </Typography>
+                <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+                    <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+                        Номер замовлення: {order.id}
+                    </Typography>
+                    <Chip component={'span'} label={order.statusTitle} sx={{ bgcolor: color[order.status] }} />
+                </Stack>
+
                 <Typography gutterBottom variant="h5" component="div">
                     {order.client.name}
                 </Typography>

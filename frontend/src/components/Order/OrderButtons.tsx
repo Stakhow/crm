@@ -1,7 +1,7 @@
 import { Button, type ButtonProps } from '@mui/material';
 import { cartStore, orderStore } from '../../../store';
 import { calendarStore } from '../../../store/CalendarStore';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
 
 export const CreateOrderButton = () => {
     const { isLoading, createOrder } = orderStore((s) => s);
@@ -28,9 +28,19 @@ export const CreateOrderButton = () => {
 
 export const RepeatOrderButton = ({ orderId }: { orderId: number }) => {
     const { repeatOrder, isLoading } = orderStore((s) => s);
+    const navigate = useNavigate();
 
     return (
-        <Button size={'large'} fullWidth disabled={isLoading} variant="contained" onClick={() => repeatOrder(orderId)}>
+        <Button
+            size={'large'}
+            fullWidth
+            disabled={isLoading}
+            variant="contained"
+            onClick={async () => {
+                const cart = await repeatOrder(orderId);
+                if (!!cart) navigate('/cart');
+            }}
+        >
             Повторити замовлення
         </Button>
     );

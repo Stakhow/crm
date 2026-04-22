@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { cartService } from '../../backend';
+import { cartService, productService } from '../../backend';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import { devtools } from 'zustand/middleware';
@@ -12,6 +12,7 @@ type CartItemView = CartItemProps & {
 
 interface CartState {
     cart: CartDTO | undefined;
+    clientId: number;
     isLoading: boolean;
     error: string;
     items: CartItemView[];
@@ -40,15 +41,15 @@ export const cartStore = create<CartState>()(
 
                 try {
                     const cart = await cartService.getCartToView();
-
-                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
+                    const items = await cartItemsMap(cart);
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
                             items,
-                            productsInCart: cart.items.map((i) => i.productId),
+                            productsInCart: cart.productsIds,
+                            clientId: cart.clientId,
                         },
                         false,
                         `${name}/getCartToView:success`,
@@ -65,15 +66,14 @@ export const cartStore = create<CartState>()(
 
                 try {
                     const cart = await cartService.addCartItem(props);
-
-                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
+                    const items = await cartItemsMap(cart);
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
                             items,
-                            productsInCart: cart.items.map((i) => i.productId),
+                            productsInCart: cart.productsIds,
                         },
                         false,
                         `${name}/addCartItem:success`,
@@ -92,14 +92,14 @@ export const cartStore = create<CartState>()(
 
                 try {
                     const cart = await cartService.deleteCartItem(id);
-                    const items = cart.items.map((i): CartItemView => ({ ...i, unit: 'piece' }));
+                    const items = await cartItemsMap(cart);
 
                     set(
                         {
                             cart: cart,
                             isLoading: false,
                             items,
-                            productsInCart: cart.items.map((i) => i.productId),
+                            productsInCart: cart.productsIds,
                         },
                         false,
                         `${name}/deleteCartItem:success`,
@@ -125,6 +125,7 @@ export const cartStore = create<CartState>()(
                             isLoading: false,
                             items: undefined,
                             productsInCart: undefined,
+                            clientId: undefined,
                         },
                         false,
                         `${name}/deleteCart:success`,
@@ -141,3 +142,16 @@ export const cartStore = create<CartState>()(
         { name, enabled: false },
     ),
 );
+
+async function cartItemsMap(cart: CartDTO) {
+    const products = await productService.getProductByIdsToViewMap(cart.productsIds);
+
+    const items = cart.items.map((i): CartItemView => {
+        const product = products.get(i.productId);
+        const unit = !!product && product.categoryName === 'bag' ? 'piece' : 'kilogram';
+
+        return { ...i, unit };
+    });
+
+    return items;
+}

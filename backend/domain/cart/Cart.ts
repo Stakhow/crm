@@ -123,13 +123,23 @@ export class Cart {
   }
 
   toPersistent(): CartDTO {
+    const productsIds: number[] = [];
+
+    const items = this.getItems().map((i) => {
+      
+      productsIds.push(i.productId);
+
+      return i.toPersistence();
+    })
+
     return {
       id: this.id,
-      items: this.getItems().map((i) => i.toPersistence()),
+      items,
       quantity: this.quantity,
       createdAt: this.createdAt,
       clientId: this.clientId,
       totalAmount: this.totalAmount,
+      productsIds,
     };
   }
 

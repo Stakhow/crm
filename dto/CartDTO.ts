@@ -7,4 +7,5 @@ export interface CartDTO {
   totalAmount: number;
   createdAt: number;
   clientId: number;
+  productsIds: number[];
 }

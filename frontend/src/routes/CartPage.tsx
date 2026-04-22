@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
-import { Backdrop, Box, Card, CircularProgress, Stack } from '@mui/material';
-import { cartStore, calendarStore, orderStore } from '../../store';
+import { Backdrop, Box, Card, CircularProgress, Skeleton, Stack } from '@mui/material';
+import { cartStore, calendarStore, orderStore, clientStore } from '../../store';
 import { CalendarInputState } from '../components/Calendar';
 import { BottomBar } from '../components/BottomBar';
 import { ComponentNotFound } from '../components/ComponentNotFound';
@@ -9,13 +9,23 @@ import { CartDeleteButton, ToOrderProcessButton } from '../components/Cart/CartB
 import { CreateOrderButton } from '../components/Order/OrderButtons';
 import { useEffect } from 'react';
 import { CartList } from '../components/Cart/CartList';
+import { ClientItem } from '../components/Client/ClientItem';
 
 export default function CartPage() {
-    const { cart, isLoading } = cartStore((state) => state);
+    const { cart, isLoading, clientId, getCartToView } = cartStore((state) => state);
     const { order } = orderStore((s) => s);
     const { date } = calendarStore((s) => s);
+    const { client, getClient } = clientStore((s) => s);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        getCartToView();
+    }, []);
+
+    useEffect(() => {
+        if (!!clientId) getClient(clientId);
+    }, [clientId]);
 
     useEffect(() => {
         if (!!order && !!order.id) navigate(`/orders/${order.id}`);
@@ -27,18 +37,9 @@ export default function CartPage() {
                 <>
                     {!!cart && cart.quantity > 0 ? (
                         <Box>
-                            {/* {!!cart.client && <ClientItem client={cart.client} />} */}
+                            {!!client ? <ClientItem client={client} /> : <Skeleton height={86} />}
 
                             <CartList />
-
-                            {/* {items.map((product, idx) => (
-                        <ProductCard
-                            key={idx}
-                            isInCart={true}
-                            product={product}
-                            children={<CartItemDeleteButton cartItemId={product.id} />}
-                        />
-                    ))} */}
 
                             <Card sx={{ mt: 2, p: 2, mb: 14 }} raised>
                                 <Stack spacing={2}>

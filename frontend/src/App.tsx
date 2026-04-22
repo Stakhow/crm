@@ -30,11 +30,11 @@ interface Props {
 const drawerWidth = 240;
 const navItems = [
     { title: 'Головна', to: '/', end: true },
-    { title: 'Клієнти', to: '/clients', end: true },
+    { title: 'Список клієнтів', to: '/clients', end: true },
     { title: 'Додати Клієнта', to: '/clients/new', end: true },
-    { title: 'Продукти', to: '/products', end: false },
+    { title: 'Список продуктів', to: '/products', end: false },
     { title: 'Додати Продукт', to: '/products/new', end: true },
-    { title: 'Замовлення', to: '/orders', end: false },
+    { title: 'Список замовлень', to: '/orders', end: false },
     { title: 'Нове Замовлення', to: '/orders/new', end: true },
     { title: 'Корзина', to: '/cart', end: true },
     { title: 'Модифікатори', to: '/modifiers', end: true },

@@ -33,6 +33,8 @@ export class CartService {
 
       throw new AppError("DOMAIN", `не доступні ${producNames}`);
     } else cartItems.map((i) => this.addCartItem(i));
+
+    return await this.getCartToView();
   }
 
   async getCartToView(): Promise<CartDTO> {
@@ -49,8 +51,6 @@ export class CartService {
     const cart = await this.getCart();
 
     const product = await this.productService.getProductById(data.productId);
-    product.setQuantity(data.quantity);
-
     const productData = product.toView();
 
     if (!data.clientId || !data.clientId)
@@ -61,7 +61,7 @@ export class CartService {
       name: productData.name,
       price: productData.price,
       quantity: data.quantity,
-      total: productData.totalAmount,
+      total: product.getTotalAmount(data.quantity),
     });
 
     cart.setClientId = data.clientId;

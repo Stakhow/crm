@@ -26,44 +26,48 @@ export default function ProductPage() {
 
     return (
         <Box>
-            {!!product ? (
+            {!isLoading && (
                 <>
-                    <ProductCard
-                        product={product}
-                        isProductPage={true}
-                        children={
-                            <Button
-                                size="small"
-                                color="error"
-                                fullWidth
-                                onClick={() => {
-                                    setOpenDialog(true);
+                    {!!product ? (
+                        <>
+                            <ProductCard
+                                product={product}
+                                showProductButton={false}
+                                children={
+                                    <Button
+                                        size="small"
+                                        color="error"
+                                        fullWidth
+                                        onClick={() => {
+                                            setOpenDialog(true);
+                                        }}
+                                        variant="outlined"
+                                    >
+                                        Видалити
+                                    </Button>
+                                }
+                            />
+                            <FormComponent
+                                id={product.id}
+                                values={product.productToCreate}
+                                onSubmit={(values) => {
+                                    saveProduct(values, product.id);
                                 }}
-                                variant="outlined"
-                            >
-                                Видалити
-                            </Button>
-                        }
-                    />
-                    <FormComponent
-                        id={product.id}
-                        values={product.productToCreate}
-                        onSubmit={(values) => {
-                            saveProduct(values, product.id);
-                        }}
-                    />
+                            />
 
-                    <ConfirmationDialog
-                        isOpen={openDialog}
-                        title={'Видалити продукт зі складу?'}
-                        handleClose={() => setOpenDialog(false)}
-                        handleConfirmClick={() => {
-                            onDelete(product.id);
-                        }}
-                    />
+                            <ConfirmationDialog
+                                isOpen={openDialog}
+                                title={'Видалити продукт зі складу?'}
+                                handleClose={() => setOpenDialog(false)}
+                                handleConfirmClick={() => {
+                                    onDelete(product.id);
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <ProductNotFound />
+                    )}
                 </>
-            ) : (
-                <ProductNotFound />
             )}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>

@@ -165,7 +165,7 @@ export class Bag extends BaseProduct {
     ];
   }
 
-  override setQuantity(value: number): number {
+  override setQuantity(value: number) {
     if (!Number.isInteger(value))
       throw new AppError("DOMAIN", "Кількість має бути цілим числом");
     if (value < 0)
@@ -173,6 +173,8 @@ export class Bag extends BaseProduct {
 
     this.quantity = value;
 
-    return this.quantity;
+    this.totalAmount = this.getTotalAmount(this.quantity);
+
+    return this;
   }
 }

@@ -14,9 +14,14 @@ export type ProductCardProps = {
     product: ProductViewDTO;
     children?: ReactNode;
     isInCart?: boolean;
-    isProductPage?: boolean;
+    showProductButton?: boolean;
 };
-export function ProductCard({ product, children, isInCart, isProductPage }: ProductCardProps) {
+export function ProductCard({
+    product,
+    children,
+    isInCart,
+    showProductButton: showProductButton = true,
+}: ProductCardProps) {
     const Details = ({ data }: { data: { title: string; value: string | number; price?: number }[] }) =>
         !!data &&
         data.map(({ title, value, price }, idx) => (
@@ -74,7 +79,7 @@ export function ProductCard({ product, children, isInCart, isProductPage }: Prod
                 )}
             </CardContent>
             <Stack direction={'column'} sx={{ p: 2 }} spacing={2}>
-                {!isProductPage && (
+                {showProductButton && (
                     <Button
                         color="warning"
                         size="large"

@@ -4,7 +4,6 @@ import type { CartService } from "./CartService";
 import { Order, type OrderStatus } from "../domain/order/Order";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
 import type { ProductService } from "./ProductService";
-import dayjs from "dayjs";
 import type { ClientService } from "./ClientService";
 
 export class OrderService {
@@ -19,51 +18,45 @@ export class OrderService {
 
   async createOrder(date: number) {
     const cart = await this.cartService.getCart();
-
-    if (!dayjs.unix(date).isValid()) {
-      throw new AppError("SERVICE", "Кінце дата замовлення не вказана");
-    }
-
-    if (!cart || !cart.isValid())
-      throw new AppError("SERVICE", "Помилка корзини");
-
     const cartToView = await this.cartService.getCartToView();
+
     const clientId = cartToView.clientId;
+    const client = await this.clientService.getById(clientId);
 
-    if (!clientId) throw new AppError("SERVICE", "В корзині відсутній клієнт");
+    const {productsIds, totalAmount, quantity} = cartToView;
 
-    const _client = await this.clientService.getById(clientId);
-    const client = _client.toView();
+    const stockProducts = await this.productService.getProductByIds(productsIds);
 
-    const productsId = cart.getProductsId();
-    const stockProducts = await this.productService.getProductByIds(productsId);
-    stockProducts.map((product) => {
-      const cartItem = cart.getItem(product.id);
+    const orderItems = stockProducts.map((i) => {
+      const cartItem = cart.getItem(i.id);
 
-      if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
+      if (!cartItem)
+        throw new AppError(
+          "SERVICE",
+          "Товар доданий в корзину відсутній на складі!",
+        );
 
-      try {
-        product.updateQuantity(cartItem.quantity, "subtract");
-      } catch (error) {
-        throw new AppError("DOMAIN", "Товару не вистачає");
-      }
+      const product = i.toView();
 
-      return product;
+      return {
+        id: product.id,
+        name: product.name,
+        category: product.category.title,
+        quantity: cartItem.quantity,
+        modifiers: product.modifiers,
+        price: product.price,
+        totalAmount: cartItem.total,
+        params: product.fields.map(({ title, value }) => ({ title, value })),
+      };
     });
 
     const orderId = await this.orderRepository.save(
       new Order(
         0,
-        {
-          id: client.id,
-          name: client.name,
-          phone: client.phone,
-          createdAt: client.createdAt,
-          updatedAt: client.updatedAt,
-        },
-        [],
-        cartToView.totalAmount,
-        cartToView.quantity,
+        client.toView(),
+        orderItems,
+        totalAmount,
+        quantity,
         this.status,
         date,
         Date.now(),
@@ -71,14 +64,7 @@ export class OrderService {
       stockProducts,
     );
 
-    try {
-      await this.cartService.resetCart();
-    } catch (error) {
-      throw new AppError(
-        "SERVICE",
-        `Помилка при видаленні корзини ${error instanceof AppError && error.message}`,
-      );
-    }
+    await this.cartService.resetCart();
 
     return await this.getById(orderId);
   }
@@ -93,6 +79,7 @@ export class OrderService {
 
   async repeatOrder(id: number) {
     const order = await this.orderRepository.getById(id);
+
     return this.cartService.createFromOrder(
       order.items.map((i) => ({
         productId: i.id,

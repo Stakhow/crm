@@ -49,6 +49,7 @@ function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.F
 
                         <FormControl margin="dense" fullWidth>
                             <Button
+                                size="large"
                                 variant="outlined"
                                 fullWidth
                                 color="success"

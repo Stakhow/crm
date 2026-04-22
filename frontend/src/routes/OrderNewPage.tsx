@@ -7,7 +7,7 @@ import { cartStore, categoryStore, clientStore, productStore } from '../../store
 import { BottomBar } from '../components/BottomBar';
 import { OrderTotalAmount } from '../components/OrderTotalAmount';
 import { ClientsListSelect } from '../components/Client/ClientsListSelect';
-import { CartList } from '../components/Cart/CartList';
+// import { CartList } from '../components/Cart/CartList';
 import { GoToCartButton } from '../components/Cart/CartButtons';
 import { CartProductListSelect } from '../components/Cart/CartProductsList';
 
@@ -65,14 +65,10 @@ export default function OrderPageNew() {
                             <Stack mb={14} spacing={2}>
                                 <ClientsListSelect />
 
-                                <CartList />
+                                {/* <CartList /> */}
 
-                                {/* {!!_clientId && ( */}
-                                <>
-                                    <CategoryWithState />
-                                    <CartProductListSelect />
-                                </>
-                                {/* )} */}
+                                <CategoryWithState />
+                                <CartProductListSelect />
 
                                 <BottomBar>
                                     <OrderTotalAmount totalAmount={values.totalAmount} />
