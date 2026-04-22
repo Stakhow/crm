@@ -1,49 +1,48 @@
-import { NavLink } from 'react-router';
-import { dateToLocalString } from './../../../../utils/utils';
-import { Button, Card, CardActions, CardContent, Chip, Paper, Stack, Typography } from '@mui/material';
-import { grey, red, green } from '@mui/material/colors';
-import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
-import { OrderTotalAmount } from '../OrderTotalAmount';
+import { Card, CardContent, Divider, Typography } from '@mui/material';
 
-export function OrderItem({ order }: { order: OrderViewDTO }) {
-    const color = {
-        InProgress: red[400],
-        Done: green[500],
-        Cancelled: grey[400],
-    };
+import type { OrderItem } from '../../../../backend/domain/order/Order';
+import { priceFormat } from '../../../../utils/utils';
 
+export function OrderItem({ item }: { item: OrderItem }) {
     return (
-        <Card raised component={Paper} sx={{ my: 1.5 }}>
+        <Card raised>
             <CardContent>
-                <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
-                    <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-                        Номер замовлення: {order.id}
-                    </Typography>
-                    <Chip component={'span'} label={order.statusTitle} sx={{ bgcolor: color[order.status] }} />
-                </Stack>
-
                 <Typography gutterBottom variant="h5" component="div">
-                    {order.client.name}
+                    {item.name}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Дата замовлення: <b>{dateToLocalString(order.createdAt)}</b>
+
+                <Divider sx={{ my: 1 }} />
+
+                <small>ID: {item.id}</small>
+
+                {item.modifiers.map(({ title, value, price }, idx) => (
+                    <Typography key={idx} sx={{ color: 'text.secondary' }}>
+                        {title}: <b>{value}</b> {priceFormat(price)}
+                    </Typography>
+                ))}
+
+                {item.params.map(({ title, value }, idx) => (
+                    <Typography key={idx} sx={{ color: 'text.secondary' }}>
+                        {title}: <b>{value}</b>
+                    </Typography>
+                ))}
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography>
+                    Кількість
+                    {item.category === 'bag' ? ' (шт.): ' : ' (кг): '}
+                    <b>{item.quantity}</b>
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Статус: <b>{order.statusTitle}</b>
+
+                <Typography>
+                    Ціна за кг: <b>{priceFormat(item.price)}</b>
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Товари: <b>{order.items.map((i) => `${i.name}`).join(' | ')}</b>
+
+                <Typography gutterBottom>
+                    Вартість: <b>{priceFormat(item.totalAmount)}</b>
                 </Typography>
             </CardContent>
-            <CardActions
-                sx={{ textAlign: 'center', p: 2, pt: 0, justifyContent: 'space-between', flexDirection: 'column' }}
-            >
-                <OrderTotalAmount totalAmount={order.totalAmount} />
-
-                <Button size="large" variant="outlined" component={NavLink} to={`/orders/${order.id}`} fullWidth>
-                    Переглянути
-                </Button>
-            </CardActions>
         </Card>
     );
 }

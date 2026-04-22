@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Dayjs } from 'dayjs';
 import { Backdrop, Box, Card, CircularProgress, Divider } from '@mui/material';
-import { OrderItem } from '../components/Order/OrderItem';
+import { OrderSummary } from '../components/Order/OrderSummary';
 import { CalendarWithState } from '../components/Calendar';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 import { BottomBar } from '../components/BottomBar';
@@ -42,7 +42,7 @@ export default function HomePage() {
             {!!orders && !!orders.length ? (
                 <Box mt={2} mb={8}>
                     {orders.map((i) => (
-                        <OrderItem key={i.id} order={i} />
+                        <OrderSummary key={i.id} order={i} />
                     ))}
                 </Box>
             ) : (

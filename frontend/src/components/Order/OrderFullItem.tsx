@@ -7,6 +7,7 @@ import { RepeatOrderButton } from './OrderButtons';
 import { OrderStatusSelect } from './OrderStatusSelect';
 import { orderStore } from '../../../store';
 import { OrdersNotFound } from './OrdersNotFound';
+import { OrderItem } from './OrderItem';
 
 export const OrderFullItem = () => {
     const { order, updateStatus } = orderStore((s) => s);
@@ -48,10 +49,9 @@ export const OrderFullItem = () => {
                 Товари в замовленні:
             </Typography>
 
-            {order.items.map(
-                (product) => JSON.stringify(product, null, 2),
-                // <ProductCard key={idx} product={product} isInCart={true} />
-            )}
+            {order.items.map((item, idx) => (
+                <OrderItem key={idx} item={item} />
+            ))}
 
             <BottomBar>
                 <RepeatOrderButton orderId={order.id} />

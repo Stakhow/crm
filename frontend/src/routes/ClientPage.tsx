@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { dateToLocalString } from '../../../utils/utils';
-import { OrderItem } from '../components/Order/OrderItem';
+import { OrderSummary } from '../components/Order/OrderSummary';
 import { ComponentNotFound } from '../components/ComponentNotFound';
 import { clientStore, orderStore } from '../../store';
 import { BottomBar } from '../components/BottomBar';
@@ -139,7 +139,7 @@ export default function ClientPage() {
                                     </Typography>
                                     <Stack spacing={1}>
                                         {orders.map((i) => (
-                                            <OrderItem key={i.id} order={i} />
+                                            <OrderSummary key={i.id} order={i} />
                                         ))}
                                     </Stack>
                                 </>

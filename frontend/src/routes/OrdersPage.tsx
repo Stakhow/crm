@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { orderService } from '../../../backend';
 import { Box } from '@mui/material';
 import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
-import { OrderItem } from '../components/Order/OrderItem';
+import { OrderSummary } from '../components/Order/OrderSummary';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 
 export default function OrdersPage() {
@@ -14,7 +14,11 @@ export default function OrdersPage() {
 
     return (
         <Box>
-            {!!orders && !!orders.length ? orders.map((i) => <OrderItem key={i.id} order={i} />) : <OrdersNotFound />}
+            {!!orders && !!orders.length ? (
+                orders.map((i) => <OrderSummary key={i.id} order={i} />)
+            ) : (
+                <OrdersNotFound />
+            )}
         </Box>
     );
 }
