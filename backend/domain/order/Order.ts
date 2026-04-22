@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import { AppError } from "../../../utils/error";
+import type { OrderDB } from "../../../config/db.types";
 
 export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
@@ -69,15 +70,14 @@ export class Order {
     this.localedStatuses.set("InProgress", "В роботі");
     this.localedStatuses.set("Done", "Виконано");
     this.localedStatuses.set("Cancelled", "Відмінений");
-  
 
-    this.itemsMap = new Map(items.map(i => [i.id, i]));
+    this.itemsMap = new Map(items.map((i) => [i.id, i]));
   }
 
   getOrderItem(id: number) {
     return this.itemsMap.get(id);
   }
- 
+
   updateStatus(status: OrderStatus) {
     this.status = status;
   }
@@ -101,6 +101,17 @@ export class Order {
         value: key,
         title: value,
       })),
+      deadline: this.deadline,
+      createdAt: this.createdAt,
+    };
+  }
+  toOrderDB(): OrderDB {
+    return {
+      client: this.client,
+      clientId: this.client.id,
+      totalAmount: this.totalAmount,
+      quantity: this.quantity,
+      status: this.status,
       deadline: this.deadline,
       createdAt: this.createdAt,
     };

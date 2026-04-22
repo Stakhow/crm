@@ -23,18 +23,16 @@ export class OrderService {
     const clientId = cartToView.clientId;
     const client = await this.clientService.getById(clientId);
 
-    const {productsIds, totalAmount, quantity} = cartToView;
+    const { productsIds, totalAmount, quantity } = cartToView;
 
-    const stockProducts = await this.productService.getProductByIds(productsIds);
+    const stockProducts =
+      await this.productService.getProductByIds(productsIds);
 
     const orderItems = stockProducts.map((i) => {
       const cartItem = cart.getItem(i.id);
 
       if (!cartItem)
-        throw new AppError(
-          "SERVICE",
-          "Товар доданий в корзину відсутній на складі!",
-        );
+        throw new AppError("SERVICE", "Товар в корзині відсутній на складі!");
 
       const product = i.toView();
 
@@ -46,7 +44,9 @@ export class OrderService {
         modifiers: product.modifiers,
         price: product.price,
         totalAmount: cartItem.total,
-        params: product.fields.map(({ title, value }) => ({ title, value })),
+        params: product.fields
+          .filter((i) => i.name !== "weight")
+          .map(({ title, value }) => ({ title, value })),
       };
     });
 

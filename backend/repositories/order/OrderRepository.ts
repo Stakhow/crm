@@ -72,7 +72,7 @@ export class OrderRepository implements IOrderRepository {
           }),
         );
 
-        const orderId = await db.orders.add(this.toOrderDB(order));
+        const orderId = await db.orders.add(order.toOrderDB());
 
         await db.order_items.bulkAdd(
           order.items.map((i) => ({
@@ -166,17 +166,5 @@ export class OrderRepository implements IOrderRepository {
       order.deadline,
       order.createdAt,
     );
-  }
-
-  private toOrderDB(order: Order): OrderDB {
-    return {
-      client: order.client,
-      clientId: order.client.id,
-      totalAmount: order.totalAmount,
-      quantity: order.quantity,
-      status: order.status,
-      deadline: order.deadline,
-      createdAt: order.createdAt,
-    };
   }
 }
