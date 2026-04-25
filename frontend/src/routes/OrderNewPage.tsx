@@ -5,7 +5,7 @@ import type { ProductCategory } from '../../../backend/domain/product/ProductCat
 import * as Yup from 'yup';
 import { cartStore, categoryStore, clientStore, productStore } from '../../store';
 import { BottomBar } from '../components/BottomBar';
-import { OrderTotalAmount } from '../components/OrderTotalAmount';
+import { OrderTotalAmount } from '../components/Order/OrderTotalAmount';
 import { ClientsListSelect } from '../components/Client/ClientsListSelect';
 // import { CartList } from '../components/Cart/CartList';
 import { GoToCartButton } from '../components/Cart/CartButtons';

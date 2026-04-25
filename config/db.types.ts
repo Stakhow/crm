@@ -49,6 +49,7 @@ export type OrderDB = Optional<
     status: OrderStatus;
     deadline: number;
     createdAt: number;
+    amountPaid: number;
   },
   "id"
 >;

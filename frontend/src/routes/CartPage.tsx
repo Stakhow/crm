@@ -4,7 +4,7 @@ import { cartStore, calendarStore, orderStore, clientStore } from '../../store';
 import { CalendarInputState } from '../components/Calendar';
 import { BottomBar } from '../components/BottomBar';
 import { ComponentNotFound } from '../components/ComponentNotFound';
-import { OrderTotalAmount } from '../components/OrderTotalAmount';
+import { OrderTotalAmount } from '../components/Order/OrderTotalAmount';
 import { CartDeleteButton, ToOrderProcessButton } from '../components/Cart/CartButtons';
 import { CreateOrderButton } from '../components/Order/OrderButtons';
 import { useEffect } from 'react';

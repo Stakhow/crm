@@ -72,7 +72,7 @@ export class OrderRepository implements IOrderRepository {
           }),
         );
 
-        const orderId = await db.orders.add(order.toOrderDB());
+        const orderId = await db.orders.add(order.toSaveDB());
 
         await db.order_items.bulkAdd(
           order.items.map((i) => ({
@@ -88,9 +88,7 @@ export class OrderRepository implements IOrderRepository {
   }
 
   async update(order: Order): Promise<number> {
-    return db.orders.update(order.id, {
-      status: order.status,
-    });
+    return db.orders.update(order.id, order.toSaveDB());
   }
 
   async getById(id: number): Promise<Order> {
@@ -165,6 +163,7 @@ export class OrderRepository implements IOrderRepository {
       order.status,
       order.deadline,
       order.createdAt,
+      order.amountPaid,
     );
   }
 }

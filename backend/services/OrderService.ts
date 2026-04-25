@@ -16,7 +16,7 @@ export class OrderService {
     private clientService: ClientService,
   ) {}
 
-  async createOrder(date: number) {
+  async createOrder(date: number, amountPaid: number) {
     const cart = await this.cartService.getCart();
     const cartToView = await this.cartService.getCartToView();
 
@@ -60,6 +60,7 @@ export class OrderService {
         this.status,
         date,
         Date.now(),
+        amountPaid,
       ),
       stockProducts,
     );
@@ -72,9 +73,19 @@ export class OrderService {
   async updateStatus(id: number, status: OrderStatus): Promise<number> {
     const order = await this.orderRepository.getById(id);
 
-    if (status) order.updateStatus(status);
+    order.updateStatus(status);
 
     return await this.orderRepository.update(order);
+  }
+
+  async updateAmountPaid(id: number, amount: number): Promise<OrderViewDTO> {
+    const order = await this.orderRepository.getById(id);
+
+    order.updateAmount(amount);
+
+    const orderId = await this.orderRepository.update(order);
+
+    return this.getById(orderId);
   }
 
   async repeatOrder(id: number) {

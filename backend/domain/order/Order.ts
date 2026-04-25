@@ -27,6 +27,7 @@ export class Order {
   public status: OrderStatus;
   public deadline: number;
   public createdAt: number;
+  public amountPaid: number;
 
   private localedStatuses: Map<OrderStatus, string>;
 
@@ -39,6 +40,7 @@ export class Order {
     status: OrderStatus,
     deadline: number,
     createdAt: number,
+    amountPaid: number,
   ) {
     this.id = id;
 
@@ -66,6 +68,8 @@ export class Order {
     if (!createdAt) throw new AppError("DOMAIN", "Дата замовлення не вказана");
     this.createdAt = createdAt;
 
+    this.amountPaid = amountPaid ?? 0;
+
     this.localedStatuses = new Map();
     this.localedStatuses.set("InProgress", "В роботі");
     this.localedStatuses.set("Done", "Виконано");
@@ -79,7 +83,16 @@ export class Order {
   }
 
   updateStatus(status: OrderStatus) {
+    if (!status)
+      throw new AppError("DOMAIN", "Помилка встановлення статусу замовлення");
+
     this.status = status;
+  }
+
+  updateAmount(amount: number) {
+    if (Number.isNaN(amount) && amount <= 0)
+      throw new AppError("DOMAIN", "Помилка ставновлення оплати замовлення");
+    this.amountPaid = amount;
   }
 
   toView(): OrderViewDTO {
@@ -103,9 +116,11 @@ export class Order {
       })),
       deadline: this.deadline,
       createdAt: this.createdAt,
+      amountPaid: this.amountPaid,
+      isPaid: this.totalAmount - this.amountPaid <= 0,
     };
   }
-  toOrderDB(): OrderDB {
+  toSaveDB(): OrderDB {
     return {
       client: this.client,
       clientId: this.client.id,
@@ -114,6 +129,7 @@ export class Order {
       status: this.status,
       deadline: this.deadline,
       createdAt: this.createdAt,
+      amountPaid: this.amountPaid,
     };
   }
 }

@@ -14,6 +14,7 @@ interface OrderState {
     orders: OrderViewDTO[];
     order: OrderViewDTO;
     monthOrders: Map<number, OrderViewDTO[]>;
+    amountPaid: number;
     getOrdersByClient: (clientId: number) => void;
     getOrders: (orderId: number) => OrderViewDTO[];
     getOrder: (orderId: number) => OrderViewDTO;
@@ -22,6 +23,8 @@ interface OrderState {
     getOrdersByMonth: (date: Dayjs) => void;
     getOrdersByTargetDate: (date: Dayjs) => void;
     updateStatus: (orderId: number, status: OrderStatus) => void;
+    setAmountPaid: (value: number) => number;
+    updateAmountPaid: () => OrderViewDTO;
 }
 
 const name = 'order';
@@ -34,6 +37,8 @@ export const orderStore = create<OrderState>()(
             orders: undefined,
             order: undefined,
             monthOrders: undefined,
+            amountPaid: 0,
+
             getOrdersByClient: async (clientId) => {
                 set({ isLoading: true, orders: undefined, error: '' }, false, `${name}/getOrdersByClient:start`);
 
@@ -52,7 +57,7 @@ export const orderStore = create<OrderState>()(
                 set({ isLoading: true, error: '' }, false, `${name}/createOrder:start`);
 
                 try {
-                    const order = await orderService.createOrder(date.valueOf());
+                    const order = await orderService.createOrder(date.valueOf(), get().amountPaid);
 
                     set({ isLoading: false, order }, false, `${name}/createOrder:success`);
 
@@ -119,7 +124,7 @@ export const orderStore = create<OrderState>()(
 
                 try {
                     const order = await orderService.getById(orderId);
-                    set({ isLoading: false, order }, false, `${name}/getOrder:success`);
+                    set({ isLoading: false, order, amountPaid: order.amountPaid }, false, `${name}/getOrder:success`);
 
                     return order;
                 } catch (error: unknown) {
@@ -143,6 +148,27 @@ export const orderStore = create<OrderState>()(
                         set({ error: error.message }, false, `${name}/updateStatus:errosMessage`);
                     set({ isLoading: false }, false, `${name}/updateStatus:error`);
                     notify.error(`Помилка оновлення статусу: ${get().error}`);
+                }
+            },
+            setAmountPaid: (value) => set({ amountPaid: value }),
+
+            updateAmountPaid: async () => {
+                set({ error: '', isLoading: true }, false, `${name}/updateAmountPaid:init`);
+
+                try {
+                    console.log('updateAmountPaid', get().order.id, get().amountPaid);
+                    const order = await orderService.updateAmountPaid(get().order.id, get().amountPaid);
+
+                    set({ isLoading: false, order }, false, `${name}/updateAmountPaid:success`);
+
+                    notify.success('Суму оплати оновлено');
+
+                    return order;
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/updateAmountPaid:errosMessage`);
+                    set({ isLoading: false }, false, `${name}/updateAmountPaid:error`);
+                    notify.error(`Помилка оновлення суми оплати: ${get().error}`);
                 }
             },
         }),

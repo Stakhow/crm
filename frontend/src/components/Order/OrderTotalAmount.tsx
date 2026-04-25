@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { priceFormat } from '../../../utils/utils';
+import { priceFormat } from '../../../../utils/utils';
 
 export const OrderTotalAmount = ({ totalAmount }: { totalAmount: number }) => {
     return (

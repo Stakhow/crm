@@ -3,7 +3,7 @@ import { dateToLocalString } from '../../../../utils/utils';
 import { Button, Card, CardActions, CardContent, Chip, Paper, Stack, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
 import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
-import { OrderTotalAmount } from '../OrderTotalAmount';
+import { OrderTotalAmount } from './OrderTotalAmount';
 
 export function OrderSummary({ order }: { order: OrderViewDTO }) {
     const color = {
@@ -19,6 +19,7 @@ export function OrderSummary({ order }: { order: OrderViewDTO }) {
                     <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
                         Номер замовлення: {order.id}
                     </Typography>
+                    {order.isPaid && <Chip label="Cплачено" color="success" />}
                     <Chip component={'span'} label={order.statusTitle} sx={{ bgcolor: color[order.status] }} />
                 </Stack>
 

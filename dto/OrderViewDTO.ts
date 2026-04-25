@@ -12,4 +12,6 @@ export interface OrderViewDTO {
   statuses: { title: string; value: OrderStatus }[];
   deadline: number;
   createdAt: number;
+  amountPaid: number;
+  isPaid: boolean;
 }

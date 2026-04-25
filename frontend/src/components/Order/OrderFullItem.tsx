@@ -2,12 +2,13 @@ import { Box, Card, Stack, Typography } from '@mui/material';
 import { dateToLocalString } from '../../../../utils/utils';
 import { BottomBar } from '../BottomBar';
 import { ClientItem } from '../Client/ClientItem';
-import { OrderTotalAmount } from '../OrderTotalAmount';
+import { OrderTotalAmount } from './OrderTotalAmount';
 import { RepeatOrderButton } from './OrderButtons';
 import { OrderStatusSelect } from './OrderStatusSelect';
 import { orderStore } from '../../../store';
 import { OrdersNotFound } from './OrdersNotFound';
 import { OrderItem } from './OrderItem';
+import { OrderAmountPaid } from './OrderAmountPaid';
 
 export const OrderFullItem = () => {
     const { order, updateStatus } = orderStore((s) => s);
@@ -40,6 +41,8 @@ export const OrderFullItem = () => {
                             await updateStatus(order.id, value);
                         }}
                     />
+
+                    <OrderAmountPaid />
 
                     <OrderTotalAmount totalAmount={order.totalAmount} />
                 </Stack>
