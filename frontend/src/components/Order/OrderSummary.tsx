@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
 import { dateToLocalString } from '../../../../utils/utils';
-import { Button, Card, CardActions, CardContent, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Button, Card, CardActions, CardContent, Chip, Paper, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
 import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
 import { OrderTotalAmount } from './OrderTotalAmount';
@@ -15,15 +15,21 @@ export function OrderSummary({ order }: { order: OrderViewDTO }) {
     return (
         <Card raised component={Paper} sx={{ my: 1.5 }}>
             <CardContent>
-                <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
-                    <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-                        Номер замовлення: {order.id}
-                    </Typography>
-                    {order.isPaid && <Chip label="Cплачено" color="success" />}
-                    <Chip component={'span'} label={order.statusTitle} sx={{ bgcolor: color[order.status] }} />
-                </Stack>
+                <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+                    Номер замовлення: {order.id}
+                </Typography>
 
-                <Typography gutterBottom variant="h5" component="div">
+                <Typography variant="body2" sx={{ color: 'text.secondary', my: 2 }} gutterBottom>
+                    Статус:{' '}
+                    <Chip
+                        size="small"
+                        component={'span'}
+                        label={order.statusTitle}
+                        sx={{ mx: 0.2, bgcolor: color[order.status] }}
+                    />
+                    {order.isPaid && <Chip size="small" label="Cплачено" color="success" sx={{ mx: 0.2 }} />}
+                </Typography>
+                <Typography gutterBottom variant="h5">
                     {order.client.name}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
