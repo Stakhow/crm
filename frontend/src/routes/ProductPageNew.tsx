@@ -42,7 +42,7 @@ export default function ProductPageNew() {
                         <ComponentNotFound
                             title={'На даної категорії товарів не задано модифікаторів'}
                             buttonText={'Додати модифікатор'}
-                            link={'/modifiers'}
+                            link={'/modifiers/new'}
                         />
                     )}
                 </>

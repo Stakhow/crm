@@ -1,7 +1,7 @@
 export class AppError extends Error {
   protected type: string;
   public message: string;
-  protected details: object | null;
+  public details: any | null;
   protected timestamp: number;
 
   constructor(type: string, message: string, details: object | null = null) {

@@ -1,9 +1,11 @@
-import { ProductModifier } from "../domain/product/modifiers/ProductModifier";
+import {
+  ProductModifier,
+  type ProductModifierProps,
+} from "../domain/product/modifiers/ProductModifier";
 import { type ProductCategory } from "./../domain/product/ProductCategory";
 import { AppError } from "../../utils/error";
 import type { ProductRepository } from "../repositories/product/ProductRepository";
 import type { ProductViewDTO } from "../../dto/ProductViewDTO";
-import type { ProductModifierItemDTO } from "../../dto/ProductModifierItemDTO";
 import type { ProductToCreateDTO } from "../../dto/ProductToCreateDTO";
 
 export class ProductService {
@@ -18,17 +20,23 @@ export class ProductService {
   }
 
   public async getModifier(id: number) {
-    return this.productRepository.getModifier(Number(id));
+    return this.productRepository.getModifier(id);
+  }
+  public async getModifierToView(id: number) {
+    return (await this.getModifier(id)).showFullData();
   }
 
-  public async saveModifier(data: {
-    name: string;
-    categories: ProductCategory[];
-    list: ProductModifierItemDTO[];
-  }) {
-    const mod = new ProductModifier(0, data.name, data.categories, data.list);
+  public async saveModifier(data: Omit<ProductModifierProps, "id">) {
+    const modifier = new ProductModifier(
+      0,
+      data.name,
+      data.categories,
+      data.list,
+    );
 
-    return await this.productRepository.saveModifier(mod);
+    const id = await this.productRepository.saveModifier(modifier);
+
+    return await this.getModifierToView(id);
   }
 
   public async deleteModifier(id: number) {
@@ -36,31 +44,22 @@ export class ProductService {
       Number(id),
     );
     if (productsId.length)
-      throw new AppError(
-        "DOMAIN",
-        "Помилка видалення: модифікатор використовується в продуктах",
-        {
-          data: productsId,
-        },
-      );
+      throw new AppError("DOMAIN", "Модифікатор використовується в продуктах", {
+        data: productsId,
+      });
 
     return await this.productRepository.deleteModifier(id);
   }
 
-  public async updateModifier(data: {
-    id: number;
-    name: string;
-    categories: ProductCategory[];
-    list: ProductModifierItemDTO[];
-  }) {
-    const mod = new ProductModifier(
-      data.id,
-      data.name,
-      data.categories,
-      data.list,
-    );
+  public async updateModifier(values: ProductModifierProps) {
+    const modifier = await this.productRepository.getModifier(values.id);
+    modifier.updateName(values.name);
+    modifier.updateCatergories(values.categories);
+    modifier.updateList(values.list);
 
-    return await this.productRepository.updateModifier(mod);
+    const id = await this.productRepository.updateModifier(modifier);
+
+    return await this.getModifierToView(id);
   }
 
   public async getCategories() {
@@ -112,6 +111,11 @@ export class ProductService {
 
   public async getProductByIds(productIds: number[]) {
     return await this.productRepository.getByIds(productIds);
+  }
+  public async getProductByIdsToView(productIds: number[]) {
+    const products = await this.getProductByIds(productIds);
+
+    return products.map((i) => i.toView());
   }
 
   public async getProductByIdsMap(productIds: number[]) {

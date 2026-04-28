@@ -266,7 +266,7 @@ export class ProductRepository implements IProductRepository {
       async () => {
         const modId: number = await db.modifiers_groups.add({
           name: mod.name,
-          category: mod.category,
+          category: mod.categories,
           createdAt: Date.now(),
         });
 
@@ -291,7 +291,7 @@ export class ProductRepository implements IProductRepository {
       async () => {
         await db.modifiers_groups.update(mod.id, {
           name: mod.name,
-          category: mod.category,
+          category: mod.categories,
           updatedAt: Date.now(),
         });
 
@@ -310,6 +310,10 @@ export class ProductRepository implements IProductRepository {
   }
 
   async getModifier(id: number): Promise<ProductModifier> {
+    if (!id || id === 0) {
+      return new ProductModifier(0, "", ["bag"], []);
+    }
+
     const modDTO = await db.modifiers_groups.get(id);
 
     const listDTO = await db.modifiers_values

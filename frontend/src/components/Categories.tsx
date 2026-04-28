@@ -16,18 +16,11 @@ import { useEffect } from 'react';
 
 type CategoriesProps = {
     categories: { name: ProductCategory; title: string }[];
-    // Use a looser type that only requires target name and value
     onChange: (event: any) => void;
-    value: any;
+    value: ProductCategory | ProductCategory[];
     name: string;
     error?: any;
 } & Omit<SelectProps, 'onChange' | 'value' | 'error' | 'color' | 'size'>;
-
-export const Categories = (props: CategoriesProps) => (
-    <Card sx={{ p: 2 }} raised>
-        <CategoriesField {...props} />
-    </Card>
-);
 
 export function CategoriesField({
     categories,
@@ -50,6 +43,8 @@ export function CategoriesField({
           }
         : {};
 
+    const _value = multiple ? (value ?? []) : (value ?? '');
+
     return (
         <FormControl fullWidth margin="dense">
             <InputLabel id={`categorySelectLabel-${name}`}>Категорії</InputLabel>
@@ -60,7 +55,7 @@ export function CategoriesField({
                 id={`category-select-${name}`}
                 name={name}
                 label="Категорії"
-                value={value ?? ''}
+                value={_value}
                 error={!!error}
                 {...multipleSelect}
                 {...rest}
@@ -73,7 +68,7 @@ export function CategoriesField({
     );
 }
 
-export const CategoryWithState = () => {
+export const CategoryWithState = ({ ...rest }) => {
     const { categories, categoryName, getCategories, isLoading, setCategory } = categoryStore((s) => s);
 
     useEffect(() => {
@@ -85,14 +80,17 @@ export const CategoryWithState = () => {
             {isLoading ? (
                 <Skeleton animation="wave" height={56} />
             ) : (
-                <Categories
-                    categories={categories}
-                    name="categoryName"
-                    onChange={(e) => {
-                        setCategory(e.target.value);
-                    }}
-                    value={categoryName}
-                />
+                <Card sx={{ p: 2 }} raised>
+                    <CategoriesField
+                        categories={categories}
+                        name="categoryName"
+                        onChange={(e) => {
+                            setCategory(e.target.value);
+                        }}
+                        value={categoryName}
+                        {...rest}
+                    />
+                </Card>
             )}
         </Box>
     );

@@ -19,6 +19,7 @@
         "@mui/x-date-pickers": "^9.0.0",
         "@react-input/mask": "^2.0.4",
         "dayjs": "^1.11.20",
+        "dexie-export-import": "^4.4.0",
         "formik": "^2.4.9",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",

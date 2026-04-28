@@ -18,6 +18,7 @@ interface ProductState {
     initCreate: () => void;
     selectProduct: (id: number) => void;
     getProducts: (categoryName?: ProductCategory) => ProductViewDTO[];
+    getProductsByIds: (ids: number[]) => ProductViewDTO[];
     getProduct: (id: number, categoryName?: ProductCategory) => ProductViewDTO;
     getProductAmount: (id: number, quantity: number) => number;
     deleteProduct: (id: number) => number;
@@ -77,6 +78,39 @@ export const productStore = create<ProductState>()(
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getProducts:errorMessage`);
                     set({ isLoading: false }, false, `${name}/getProducts:error`);
+                    notify.error(`Помилка отримання продуктів: ${get().error}`);
+                }
+            },
+            getProductsByIds: async (ids) => {
+                set(
+                    {
+                        isLoading: true,
+                        productId: undefined,
+                        product: undefined,
+                        products: [],
+                        error: '',
+                        success: false,
+                    },
+                    false,
+                    `${name}/getProductsByIds:start`,
+                );
+
+                try {
+                    const products = await productService.getProductByIdsToView(ids);
+                    set(
+                        {
+                            products,
+                            isLoading: false,
+                            product: undefined,
+                            success: true,
+                        },
+                        false,
+                        `${name}/getProductsByIds:success`,
+                    );
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/getProductsByIds:errorMessage`);
+                    set({ isLoading: false }, false, `${name}/getProductsByIds:error`);
                     notify.error(`Помилка отримання продуктів: ${get().error}`);
                 }
             },
@@ -145,7 +179,6 @@ export const productStore = create<ProductState>()(
                         `${name}/getProduct:success`,
                     );
                 } catch (error: unknown) {
-                    console.log('error', error);
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getProduct:errorMessage`);
                     set({ isLoading: false }, false, `${name}/getProduct:error`);

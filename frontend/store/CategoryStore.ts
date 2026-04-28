@@ -9,10 +9,12 @@ import { devtools } from 'zustand/middleware';
 interface CategoryState {
     categories: ProductCategoryDTO[];
     categoryName: ProductCategory;
+    categoryNames: ProductCategory[];
     isLoading: boolean;
     error: string;
     getCategories: () => void;
     setCategory: (categoryName: ProductCategory) => void;
+    setCategories: (categoryNames: ProductCategory[]) => void;
 }
 
 const name = 'category';
@@ -47,6 +49,7 @@ export const categoryStore = create<CategoryState>()(
                 }
             },
             setCategory: (categoryName) => set({ categoryName }, false, 'category/setCategory'),
+            setCategories: (categoryNames) => set({ categoryNames }, false, 'category/setCategories'),
         }),
         { name, enabled: false },
     ),
