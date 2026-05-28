@@ -42,6 +42,7 @@ interface ProductState {
 
     createProduct: (values: CreateProductUIDTO) => ProductViewUIDTO;
     updateProduct: (id: string, values: CreateProductUIDTO) => ProductViewUIDTO;
+    getProductsToOrder: (categoryName: ProductCategory) => ProductViewUIDTO[];
 }
 
 const name = 'productStore';
