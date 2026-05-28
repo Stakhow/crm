@@ -2,13 +2,11 @@ import { Button, Chip, FormControl, TextField } from '@mui/material';
 import { orderStore } from '../../../store';
 
 import * as yup from 'yup';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export const OrderAmountPaid = () => {
     const { amountPaid, setAmountPaid, order, updateAmountPaid } = orderStore((s) => s);
     const [error, setError] = useState<string>();
-
-    console.log(order);
 
     const userSchema = yup.object({
         amount: yup
@@ -18,10 +16,6 @@ export const OrderAmountPaid = () => {
             .positive('Тільки позитивне число')
             .max(order.amountPaid, `Максимальне значення: ${order.amountPaid}`),
     });
-
-    useEffect(() => {
-        console.log('amountPaid', amountPaid);
-    }, [amountPaid]);
 
     const updateAmount = async (amount: string) => {
         setError('');

@@ -6,10 +6,9 @@ import { FormComponent } from '../components/Product/FormComponent';
 import { CategoryWithState } from '../components/Categories';
 
 import { categoryStore, productStore } from '../../store/index';
-import { ComponentNotFound } from '../components/ComponentNotFound';
 
 export default function ProductPageNew() {
-    const { initCreate, isLoading, saveProduct, getProduct, product } = productStore((state) => state);
+    const { initCreate, isLoading, createProduct, getProductProps, propsToCreate } = productStore((state) => state);
 
     const { categoryName } = categoryStore((state) => state);
     const navigate = useNavigate();
@@ -19,33 +18,25 @@ export default function ProductPageNew() {
     }, []);
 
     useEffect(() => {
-        if (!!categoryName) getProduct(0, categoryName);
+        if (!!categoryName) {
+            getProductProps(categoryName);
+        }
     }, [categoryName]);
 
     return (
         <Box>
             <CategoryWithState />
 
-            {!!categoryName && (
-                <>
-                    {!!product ? (
-                        <FormComponent
-                            id={product.id}
-                            values={product.productToCreate}
-                            onSubmit={async (values) => {
-                                const product = await saveProduct(values);
-
-                                if (!!product && !!product.id) navigate(`/products/${product.id}`);
-                            }}
-                        />
-                    ) : (
-                        <ComponentNotFound
-                            title={'На даної категорії товарів не задано модифікаторів'}
-                            buttonText={'Додати модифікатор'}
-                            link={'/modifiers/new'}
-                        />
-                    )}
-                </>
+            {!!categoryName && !!propsToCreate && (
+                <FormComponent
+                    
+                    props={propsToCreate}
+                    onSubmit={async (values) => {
+                        const product = await createProduct(values);
+                        console.log('product created', product);
+                        if (!!product && !!product.id) navigate(`/products/${product.id}`);
+                    }}
+                />
             )}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>

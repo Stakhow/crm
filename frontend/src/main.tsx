@@ -14,13 +14,13 @@ import ProductsPage from './routes/ProductsPage.tsx';
 import { createTheme, ThemeProvider } from '@mui/material';
 import ProductPage from './routes/ProductPage.tsx';
 import ProductPageNew from './routes/ProductPageNew.tsx';
-import OrderPageNew from './routes/OrderNewPage.tsx';
+import OrderPageNew from './routes/OrderProcessPage.tsx';
 import OrdersPage from './routes/OrdersPage.tsx';
 import CartPage from './routes/CartPage.tsx';
-import ModifiersPage from './routes/modifiers/ModifiersPage.tsx';
 import ClientPageNew from './routes/ClientPageNew.tsx';
-import ModifierPage from './routes/modifiers/ModifierPage.tsx';
-import ModifierNewPage from './routes/modifiers/ModifierNewPage.tsx';
+// import ModifiersPage from './routes/modifiers/ModifiersPage.tsx';
+// import ModifierPage from './routes/modifiers/ModifierPage.tsx';
+// import ModifierNewPage from './routes/modifiers/ModifierNewPage.tsx';
 
 const customTheme = createTheme({
     typography: {
@@ -86,11 +86,11 @@ createRoot(document.getElementById('root')!).render(
 
                             <Route path="cart" element={<CartPage />} />
 
-                            <Route path="modifiers">
+                            {/* <Route path="modifiers">
                                 <Route index element={<ModifiersPage />} />
                                 <Route path=":id" element={<ModifierPage />} />
                                 <Route path="new" element={<ModifierNewPage />} />
-                            </Route>
+                            </Route> */}
 
                             <Route path="*" element={<Page404 />} />
                         </Routes>

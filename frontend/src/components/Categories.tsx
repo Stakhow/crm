@@ -80,7 +80,7 @@ export const CategoryWithState = ({ ...rest }) => {
             {isLoading ? (
                 <Skeleton animation="wave" height={56} />
             ) : (
-                <Card sx={{ p: 2 }} raised>
+                <Card sx={{ p: 2, mb: 2 }} raised>
                     <CategoriesField
                         categories={categories}
                         name="categoryName"

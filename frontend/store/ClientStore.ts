@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import { devtools } from 'zustand/middleware';
-import type { ClientViewDTO } from '../../dto/ClientViewDTO';
+import type { ClientCreateDTO, ClientViewDTO } from '../../dto/ClientViewDTO';
 import { clientService } from '../../backend';
+import { generateId } from '../../utils/utils';
 
 interface ContactInfo {
     address?: any[];
@@ -16,16 +17,16 @@ interface ContactInfo {
 interface ClientState {
     isLoading: boolean;
     error: string;
+    clientFields: ClientCreateDTO;
     client: ClientViewDTO;
-    clientId: number;
+    clientId: string;
     clients: ClientViewDTO[];
     contacts: ClientViewDTO[];
-    getClient: (clientId: number) => ClientViewDTO;
-    setClient: (clientId: number) => void;
-
+    getClient: (clientId: string) => ClientViewDTO;
+    setClient: (clientId: string) => void;
     getClients: () => ClientViewDTO[];
-    deleteClient: (clientId: number) => void;
-    saveClient: (client: ClientViewDTO) => ClientViewDTO;
+    deleteClient: (clientId: string) => void;
+    saveClient: (client: ClientCreateDTO) => ClientViewDTO;
     saveClients: () => ClientViewDTO[];
     handlePickContacts: () => void;
 }
@@ -36,6 +37,10 @@ export const clientStore = create<ClientState>()(
         (set, get) => ({
             isLoading: false,
             error: '',
+            clientFields: {
+                name: '',
+                phone: '',
+            },
             client: undefined,
             clients: undefined,
             contacts: [],
@@ -116,7 +121,7 @@ export const clientStore = create<ClientState>()(
                 );
 
                 try {
-                    const saveClient = await clientService.save(client);
+                    const saveClient = await clientService.create(client);
                     set(
                         { client: saveClient, contacts: [], isLoading: false, error: '' },
                         false,
@@ -222,7 +227,7 @@ function fromContactToClientMapper(client: ContactInfo): ClientViewDTO {
     const phone = !!client.tel && client.tel.length === 1 ? client.tel[0] : '';
 
     return {
-        id: 0,
+        id: generateId(),
         name: name,
         phone: formatPhoneForUI(phone),
         createdAt: 0,

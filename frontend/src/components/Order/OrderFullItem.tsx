@@ -9,6 +9,7 @@ import { orderStore } from '../../../store';
 import { OrdersNotFound } from './OrdersNotFound';
 import { OrderItem } from './OrderItem';
 import { OrderAmountPaid } from './OrderAmountPaid';
+import { ListItemDots } from '../ListItemDots';
 
 export const OrderFullItem = () => {
     const { order, updateStatus } = orderStore((s) => s);
@@ -16,19 +17,15 @@ export const OrderFullItem = () => {
     if (!order) return <OrdersNotFound title={`Такого замовлення не існує`} />;
 
     return (
-        <Box mb={8}>
+        <Box mb={10}>
             <Card sx={{ p: 2 }} raised>
                 <Stack direction={'column'} spacing={2}>
                     <Typography variant={'h5'} component={'h1'}>
                         Замовлення #: {order.id}
                     </Typography>
 
-                    <Typography>
-                        Від: <b> {dateToLocalString(order.createdAt)}</b>
-                    </Typography>
-                    <Typography>
-                        Виконати на: <b> {dateToLocalString(order.deadline)}</b>
-                    </Typography>
+                    <ListItemDots title={'Від'} value={dateToLocalString(order.createdAt)} />
+                    <ListItemDots title={'Виконати на'} value={dateToLocalString(order.deadline)} />
 
                     <ClientItem client={order.client} raised={false} />
 

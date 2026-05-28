@@ -5,19 +5,21 @@ import { productService } from '../../backend/';
 import { AppError } from '../../utils/error.ts';
 import { notify } from './NotificationStore';
 import type { ProductModifierProps } from '../../backend/domain/product/modifiers/ProductModifier.ts';
+import type { ProductCategory } from '../../backend/domain/product/ProductCategory.ts';
 
 interface ModifiersState {
     isLoading: boolean;
     error: string;
     modifiers: ProductModifierDTO[];
+    modifiersMap: Map<string, ProductModifierDTO>;
     modifier: ProductModifierDTO;
-    usedInProducts: number[];
-    getAll: () => ProductModifierDTO[];
-    getModifier: (id: number) => ProductModifierDTO;
+    usedInProducts: string[];
+    getAll: (categoryName?: ProductCategory) => ProductModifierDTO[];
+    getModifier: (id: string) => ProductModifierDTO;
     createModifier: (values: Omit<ProductModifierProps, 'id'>) => ProductModifierDTO;
-    deleteModifier: (id: number) => number;
+    deleteModifier: (id: string) => string;
     updateModifier: (values: ProductModifierProps) => ProductModifierDTO;
-    setModifier: (id: number) => void;
+    setModifier: (id: string) => void;
 }
 
 const name = 'modifier';
@@ -28,17 +30,21 @@ export const modifierStore = create<ModifiersState>()(
             modifiers: [],
             modifier: undefined,
             usedInProducts: undefined,
-            getAll: async () => {
+            getAll: async (categoryName = undefined) => {
                 set(
-                    { modifiers: [], error: '', isLoading: true, usedInProducts: undefined },
+                    { modifiers: [], error: '', isLoading: true, usedInProducts: undefined, modifiersMap: undefined },
                     false,
                     `${name}/getAll:start`,
                 );
 
                 try {
-                    const modifiers = await productService.getAllModifiers();
+                    const modifiers = await productService.getAllModifiers(categoryName);
 
-                    set({ isLoading: false, modifiers }, false, `${name}/getAll:success`);
+                    set(
+                        { isLoading: false, modifiers, modifiersMap: new Map(modifiers.map((m) => [m.id, m])) },
+                        false,
+                        `${name}/getAll:success`,
+                    );
 
                     return modifiers;
                 } catch (error: unknown) {
@@ -68,7 +74,7 @@ export const modifierStore = create<ModifiersState>()(
                     notify.error(`Помилка створення модифікатора: ${get().error}`);
                 }
             },
-            setModifier: (id: number) => set({ modifier: get().modifiers.find((i) => i.id === id) }),
+            setModifier: (id) => set({ modifier: get().modifiers.find((i) => i.id === id) }),
             updateModifier: async (values) => {
                 set({ isLoading: true, error: '' }, false, `${name}/update:start`);
 
@@ -89,7 +95,7 @@ export const modifierStore = create<ModifiersState>()(
                 }
             },
 
-            getModifier: async (id: number) => {
+            getModifier: async (id) => {
                 set(
                     { isLoading: true, error: '', modifier: undefined, usedInProducts: undefined },
                     false,
@@ -111,7 +117,7 @@ export const modifierStore = create<ModifiersState>()(
                     notify.error(`Модифікатора не знайдено: ${get().error}`);
                 }
             },
-            deleteModifier: async (id: number) => {
+            deleteModifier: async (id) => {
                 set({ isLoading: true, error: '' }, false, `${name}/delete:start`);
 
                 try {

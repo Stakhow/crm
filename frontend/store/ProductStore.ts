@@ -3,37 +3,45 @@ import { productService } from '../../backend';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import type { ProductCategory } from '../../backend/domain/product/ProductCategory';
-import type { ProductToCreateDTO } from '../../dto/ProductToCreateDTO';
-import type { ProductViewDTO } from '../../dto/ProductViewDTO';
+import type { CreateProductDTO } from '../../dto/ProductToCreateDTO';
+import type { ProductViewDTO, ProductViewUIDTO } from '../../dto/ProductViewDTO';
 import { devtools } from 'zustand/middleware';
+import { priceFormat, quantityFormat } from '../../utils/utils';
+
+export type CreateProductUIDTO = {
+    fields: ProductFieldType[];
+    categoryName: ProductCategory;
+};
+
+type ProductFieldType = {
+    name: string;
+    title: string;
+    fieldType: string;
+    value: string | number;
+    placeholder: string;
+};
 
 interface ProductState {
-    products: ProductViewDTO[];
-    productId: number;
-    product: ProductViewDTO | undefined;
+    products: ProductViewUIDTO[];
+    productId: string;
+    product: ProductViewUIDTO | undefined;
     isLoading: boolean;
     error: string;
     success: boolean;
     productAmount: number;
+    propsToCreate: CreateProductUIDTO;
     initCreate: () => void;
-    selectProduct: (id: number) => void;
-    getProducts: (categoryName?: ProductCategory) => ProductViewDTO[];
-    getProductsByIds: (ids: number[]) => ProductViewDTO[];
-    getProduct: (id: number, categoryName?: ProductCategory) => ProductViewDTO;
-    getProductAmount: (id: number, quantity: number) => number;
-    deleteProduct: (id: number) => number;
-    updateProductQuantity: (
-        productId: number,
-        {
-            unitOperation,
-            quantity,
-        }: {
-            unitOperation: 'add' | 'subtract';
-            quantity: number;
-        },
-    ) => void;
+    selectProduct: (id: string) => void;
+    getProducts: (categoryName?: ProductCategory) => ProductViewUIDTO[];
+    getProductsByIds: (ids: string[]) => ProductViewUIDTO[];
+    getProduct: (id: string, categoryName?: ProductCategory) => ProductViewUIDTO;
+    getProductProps: (categoryName: ProductCategory) => CreateProductDTO;
+    getProductAmount: (id: string, quantity: number) => number;
+    deleteProduct: (id: string) => number;
+    updateProductQuantity: (productId: string, unitOperation: 'add' | 'subtract', quantity: number) => void;
 
-    saveProduct: (values: ProductToCreateDTO, id?: number) => ProductViewDTO;
+    createProduct: (values: CreateProductUIDTO) => ProductViewUIDTO;
+    updateProduct: (id: string, values: CreateProductUIDTO) => ProductViewUIDTO;
 }
 
 const name = 'productStore';
@@ -66,7 +74,7 @@ export const productStore = create<ProductState>()(
                     const products = await productService.getProductsToView(categoryName);
                     set(
                         {
-                            products,
+                            products: products.map((i) => productMapper(i)),
                             isLoading: false,
                             product: undefined,
                             success: true,
@@ -99,7 +107,7 @@ export const productStore = create<ProductState>()(
                     const products = await productService.getProductByIdsToView(ids);
                     set(
                         {
-                            products,
+                            products: products.map((i) => productMapper(i)),
                             isLoading: false,
                             product: undefined,
                             success: true,
@@ -160,25 +168,38 @@ export const productStore = create<ProductState>()(
                     notify.error(`Помилка вибору продукта: ${get().error}`);
                 }
             },
-            getProduct: async (id, categoryName) => {
+            getProduct: async (id) => {
                 set(
-                    { isLoading: true, product: undefined, products: [], error: '', success: false },
+                    {
+                        isLoading: true,
+                        product: undefined,
+                        products: [],
+                        error: '',
+                        success: false,
+                        propsToCreate: undefined,
+                    },
                     false,
                     `${name}/getProduct:start`,
                 );
 
                 try {
-                    const product = await productService.getProductToView(id, categoryName);
+                    const product = await productService.getProductToView(id);
+
                     set(
                         {
                             isLoading: false,
-                            product: product,
+                            product: productMapper(product),
                             success: true,
+                            propsToCreate: fieldsForEdit({
+                                categoryName: product.categoryName,
+                                fields: product.fields,
+                            }),
                         },
                         false,
                         `${name}/getProduct:success`,
                     );
                 } catch (error: unknown) {
+                    console.log(error);
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getProduct:errorMessage`);
                     set({ isLoading: false }, false, `${name}/getProduct:error`);
@@ -218,16 +239,16 @@ export const productStore = create<ProductState>()(
                     notify.error(`Помилка видалення продукту: ${get().error}`);
                 }
             },
-            updateProductQuantity: async (id, ...arg) => {
+            updateProductQuantity: async (...arg) => {
                 set({ isLoading: true, error: '', success: false }, false, `${name}/updateProductQuantity:start`);
 
                 try {
-                    const product = await productService.updateProductQuantity(id, ...arg);
+                    const product = await productService.updateProductQuantity(...arg);
                     const products = get().products;
                     set(
                         {
                             isLoading: false,
-                            products: products.map((i) => (i = i.id === product.id ? product : i)),
+                            products: products.map((i) => (i.id === product.id ? productMapper(product) : i)),
                             success: true,
                         },
                         false,
@@ -242,38 +263,230 @@ export const productStore = create<ProductState>()(
                     notify.error(`Помилка оновлення кількості: ${get().error}`);
                 }
             },
+            getProductProps: async (categoryName) => {
+                set({ propsToCreate: undefined });
 
-            saveProduct: async (values, id) => {
+                try {
+                    const propsToCreate = await productService.getProductProps(categoryName);
+                    console.log(propsToCreate);
+                    set({
+                        propsToCreate: fieldsForCreate(propsToCreate),
+                    });
+                } catch (error) {}
+            },
+            createProduct: async (values) => {
                 set(
                     { isLoading: true, product: undefined, products: [], error: '', success: false },
                     false,
-                    `${name}/saveProduct:start`,
+                    `${name}/createProduct:start`,
                 );
 
                 try {
-                    const product = await productService.saveProduct(values, id);
+                    const product = await productService.createProduct({
+                        categoryName: values.categoryName,
+                        fields: fieldsToMap(values.fields),
+                    });
 
                     set(
                         {
                             isLoading: false,
-                            product: product,
+                            product: productMapper(product),
                             success: true,
                         },
                         false,
-                        `${name}/saveProduct:success`,
+                        `${name}/createProduct:success`,
                     );
 
-                    notify.success(`Продукт ${!!id ? 'оновлено' : 'створено'} `);
+                    notify.success(`Продукт створено`);
 
                     return product;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/saveProduct:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/saveProduct:error`);
-                    notify.error(`Помилка ${!!id ? 'оновлення' : 'створення'}: ${get().error}`);
+                        set({ error: error.message }, false, `${name}/createProduct:errorMessage`);
+                    set({ isLoading: false }, false, `${name}/createProduct:error`);
+                    notify.error(`Помилка створення: ${get().error}`);
+
+                    console.log(error);
+                }
+            },
+            updateProduct: async (id, values) => {
+                set(
+                    {
+                        isLoading: true,
+                        product: undefined,
+                        products: [],
+                        error: '',
+                        success: false,
+                        propsToCreate: undefined,
+                    },
+                    false,
+                    `${name}/updateProduct:start`,
+                );
+
+                try {
+                    const product = await productService.updateProduct(id, {
+                        categoryName: values.categoryName,
+
+                        fields: fieldsToMap(values.fields),
+                    });
+
+                    set(
+                        {
+                            isLoading: false,
+                            product: productMapper(product),
+                            success: true,
+                            propsToCreate: fieldsForEdit({
+                                categoryName: product.categoryName,
+                                fields: product.fields,
+                            }),
+                        },
+                        false,
+                        `${name}/updateProduct:success`,
+                    );
+
+                    notify.success(`Продукт оновлено`);
+
+                    return product;
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/updateProduct:errorMessage`);
+                    set({ isLoading: false }, false, `${name}/updateProduct:error`);
+                    notify.error(`Помилка оновлення: ${get().error}`);
+
+                    console.log(error);
                 }
             },
         }),
         { name, enabled: false },
     ),
 );
+
+function fieldsToMap(fields: ProductFieldType[]) {
+    const fieldsMap = new Map(fields.map((i) => [i.name, i.value]));
+
+    return Object.fromEntries(fieldsMap);
+}
+
+function productMapper(product: ProductViewDTO): ProductViewUIDTO {
+    const fields = [
+        {
+            name: 'length',
+            title: 'Довжина',
+            value: (v: string | number) => `${v} см`,
+        },
+        {
+            name: 'width',
+            title: 'Ширина',
+            value: (v: string | number) => `${v} см`,
+        },
+        {
+            name: 'thickness',
+            title: 'Товщина',
+            value: (v: string | number) => `${v} мкм`,
+        },
+        ...(product.categoryName === 'bag'
+            ? [
+                  {
+                      name: 'weightPerUnit',
+                      title: 'Вага',
+                      value: (v: string | number) => `${quantityFormat(v, 'kilogram')}/шт.`,
+                  },
+                  {
+                      name: 'pricePerUnit',
+                      title: 'Ціна',
+                      value: (v: string | number) => `${priceFormat(v)}/шт.`,
+                  },
+              ]
+            : []),
+    ]
+        .filter((i) => product.fields.hasOwnProperty(i.name))
+        .map((i) => ({ title: i.title, value: i.value(product.fields[i.name]) }));
+
+    return {
+        ...product,
+        fields,
+    };
+}
+
+function fieldsForCreate(data: CreateProductDTO): CreateProductUIDTO {
+    return {
+        categoryName: data.categoryName,
+        fields: [
+            {
+                name: 'name',
+                title: 'Назва продукту',
+                fieldType: 'text',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'width',
+                title: 'Ширина (см)',
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'length',
+                title: 'Довжина (см)',
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'thickness',
+                title: 'Товщина (мкм)',
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'quantity',
+                title: `Кількість (${data.categoryName === 'bag' ? 'шт.' : 'кг'})`,
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'price',
+                title: 'Ціна',
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+        ].filter((i) => data['fields'].hasOwnProperty(i.name)),
+    };
+}
+function fieldsForEdit(data: CreateProductDTO): CreateProductUIDTO {
+    return {
+        categoryName: data.categoryName,
+        fields: [
+            {
+                name: 'name',
+                title: 'Назва продукту',
+                fieldType: 'text',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'quantity',
+                title: `Кількість (${data.categoryName === 'bag' ? 'шт.' : 'кг'})`,
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+            {
+                name: 'price',
+                title: 'Ціна',
+                fieldType: 'number',
+                value: '',
+                placeholder: '',
+            },
+        ]
+            .filter((i) => data['fields'].hasOwnProperty(i.name))
+            .map((i) => ({
+                ...i,
+                value: data['fields'][i.name as keyof CreateProductDTO['fields']],
+            })),
+    };
+}

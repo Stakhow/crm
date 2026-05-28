@@ -2,15 +2,15 @@ import { FormControl, Button, TextField } from '@mui/material';
 import { priceFormat } from '../../../../utils/utils';
 import { ProductCard } from '../Product/ProductCard';
 import { useState, type ComponentType } from 'react';
-import type { ProductViewDTO } from '../../../../dto/ProductViewDTO';
+import type { ProductViewUIDTO } from '../../../../dto/ProductViewDTO';
 import type React from 'react';
-import { cartStore, clientStore, productStore } from '../../../store';
+import { cartStore, productStore } from '../../../store';
 import { useFormikContext } from 'formik';
-import type { OrderFormValues } from '../../routes/OrderNewPage';
+import type { OrderFormValues } from '../../routes/OrderProcessPage';
 
 interface WithLoaderProps {
     children?: React.ReactNode;
-    product: ProductViewDTO;
+    product: ProductViewUIDTO;
 }
 
 function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.FC<P & WithLoaderProps> {
@@ -20,7 +20,6 @@ function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.F
         const { getProductAmount } = productStore((s) => s);
         const { isLoading, addCartItem } = cartStore((s) => s);
         const { values, handleChange, errors } = useFormikContext<OrderFormValues>();
-        const { clientId } = clientStore((s) => s);
 
         const [amount, setAmount] = useState(0);
 
@@ -54,7 +53,7 @@ function withCart<P extends object>(WrappedComponent: ComponentType<P>): React.F
                                 fullWidth
                                 color="success"
                                 onClick={async () => {
-                                    addCartItem({ productId: product.id, quantity: values.quantity, clientId });
+                                    addCartItem({ productId: product.id, quantity: values.quantity });
                                 }}
                                 disabled={isLoading || !!errors['quantity']}
                             >

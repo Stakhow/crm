@@ -33,14 +33,14 @@ export const CartDeleteButton = () => {
     const { deleteCart } = cartStore((s) => s);
 
     return (
-        <Button size={'large'} variant="outlined" color="error" fullWidth type={'submit'} onClick={deleteCart}>
+        <Button size={'large'} variant="outlined" color="error" fullWidth type={'submit'} onClick={() => deleteCart()}>
             Видалити Корзину
         </Button>
     );
 };
 
 type CartItemDeleteButtonType = ButtonProps & {
-    cartItemId: number;
+    cartItemId: string;
 };
 export const CartItemDeleteButton = ({ cartItemId, ...props }: CartItemDeleteButtonType) => {
     const { deleteCartItem } = cartStore((s) => s);

@@ -32,12 +32,12 @@ const navItems = [
     { title: 'Головна', to: '/', end: true },
     { title: 'Список клієнтів', to: '/clients', end: true },
     { title: 'Додати Клієнта', to: '/clients/new', end: true },
-    { title: 'Список продуктів', to: '/products', end: false },
+    { title: 'Склад', to: '/products', end: false },
     { title: 'Додати Продукт', to: '/products/new', end: true },
     { title: 'Список замовлень', to: '/orders', end: false },
     { title: 'Нове Замовлення', to: '/orders/new', end: true },
     { title: 'Корзина', to: '/cart', end: true },
-    { title: 'Модифікатори', to: '/modifiers', end: true },
+    // { title: 'Модифікатори', to: '/modifiers', end: true },
 ];
 
 export default function App(props: Props) {
@@ -76,14 +76,14 @@ export default function App(props: Props) {
                             end={item.end}
                             to={item.to}
                             component={NavLink}
-                            sx={{
-                                textAlign: 'center',
+                            // sx={{
+                            //     textAlign: 'center',
 
-                                '&.active': {
-                                    border: '1px solid',
-                                    fontWeight: 700,
-                                },
-                            }}
+                            //     '&.active': {
+                            //         border: '1px solid',
+                            //         fontWeight: 700,
+                            //     },
+                            // }}
                         >
                             <ListItemButton sx={{ textAlign: 'center' }}>{item.title}</ListItemButton>
                         </Button>
@@ -104,7 +104,7 @@ export default function App(props: Props) {
                     value={mode}
                     onChange={(event) => setMode(event.target.value as 'light' | 'dark')}
                 >
-                    <FormControlLabel value="system" control={<Radio />} label="Системна" />
+                    {/* <FormControlLabel value="system" control={<Radio />} label="Системна" /> */}
                     <FormControlLabel value="light" control={<Radio />} label="Світла" />
                     <FormControlLabel value="dark" control={<Radio />} label="Темна" />
                 </RadioGroup>

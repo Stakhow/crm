@@ -12,19 +12,23 @@ interface OrderState {
     isLoading: boolean;
     error: string;
     orders: OrderViewDTO[];
+
+    dueDate: Dayjs;
+    setDueDate: (date: Dayjs) => void;
+
     order: OrderViewDTO;
     monthOrders: Map<number, OrderViewDTO[]>;
     amountPaid: number;
-    getOrdersByClient: (clientId: number) => void;
-    getOrders: (orderId: number) => OrderViewDTO[];
-    getOrder: (orderId: number) => OrderViewDTO;
-    createOrder: (date: Dayjs) => OrderViewDTO;
-    repeatOrder: (orderId: number) => CartDTO;
+    getOrdersByClient: (clientId: string) => void;
+    getOrders: (orderId: string) => OrderViewDTO[];
+    getOrder: (orderId: string) => OrderViewDTO;
+    createOrder: (cartId: string, clientId: string) => OrderViewDTO;
     getOrdersByMonth: (date: Dayjs) => void;
     getOrdersByTargetDate: (date: Dayjs) => void;
-    updateStatus: (orderId: number, status: OrderStatus) => void;
+    updateStatus: (orderId: string, status: OrderStatus) => void;
     setAmountPaid: (value: number) => number;
     updateAmountPaid: () => OrderViewDTO;
+    repeatOrder: (orderId: string) => CartDTO;
 }
 
 const name = 'order';
@@ -33,11 +37,13 @@ export const orderStore = create<OrderState>()(
         (set, get) => ({
             isLoading: false,
             error: '',
-            date: null,
+            dueDate: null,
             orders: undefined,
             order: undefined,
             monthOrders: undefined,
             amountPaid: 0,
+
+            setDueDate: (date: Dayjs) => set({ dueDate: date }),
 
             getOrdersByClient: async (clientId) => {
                 set({ isLoading: true, orders: undefined, error: '' }, false, `${name}/getOrdersByClient:start`);
@@ -53,15 +59,22 @@ export const orderStore = create<OrderState>()(
                     notify.error(`Помилка отримання списку замовлень клієнта: ${get().error}`);
                 }
             },
-            createOrder: async (date) => {
-                set({ isLoading: true, error: '' }, false, `${name}/createOrder:start`);
+            createOrder: async (cartId, clientId) => {
+                set({ order: undefined, isLoading: true, error: '' }, false, `${name}/createOrder:start`);
 
                 try {
-                    const order = await orderService.createOrder(date.valueOf(), get().amountPaid);
+                    const order = await orderService.createOrder(
+                        cartId,
+                        get().dueDate.valueOf(),
+                        get().amountPaid,
+                        clientId,
+                    );
 
                     set({ isLoading: false, order }, false, `${name}/createOrder:success`);
 
                     notify.success('Замовлення успішно створено');
+
+                    return order;
                 } catch (error: unknown) {
                     console.log(error);
                     if (error instanceof AppError)
@@ -71,23 +84,7 @@ export const orderStore = create<OrderState>()(
                     notify.error(`Помилка створення замовлення: ${get().error}`);
                 }
             },
-            repeatOrder: async (orderId) => {
-                set({ isLoading: true, error: '' }, false, `${name}/repeatOrder:start`);
 
-                try {
-                    const cart = await orderService.repeatOrder(orderId);
-
-                    set({ isLoading: false, order: undefined }, false, `${name}/repeatOrder:success`);
-                    notify.success('Створено корзину із замовлення');
-
-                    return cart;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/repeatOrder:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/repeatOrder:error`);
-                    notify.error(`Помилка при повторенні замовлення: ${get().error}`);
-                }
-            },
             getOrdersByMonth: async (date) => {
                 set({ isLoading: true, error: '', monthOrders: undefined }, false, `${name}/getOrdersByMonth:start`);
 
@@ -120,10 +117,11 @@ export const orderStore = create<OrderState>()(
                 }
             },
             getOrder: async (orderId) => {
-                set({ isLoading: true, error: '' }, false, `${name}/getOrder:start`);
+                set({ order: undefined, isLoading: true, error: '' }, false, `${name}/getOrder:start`);
 
                 try {
                     const order = await orderService.getById(orderId);
+
                     set({ isLoading: false, order, amountPaid: order.amountPaid }, false, `${name}/getOrder:success`);
 
                     return order;
@@ -169,6 +167,26 @@ export const orderStore = create<OrderState>()(
                         set({ error: error.message }, false, `${name}/updateAmountPaid:errosMessage`);
                     set({ isLoading: false }, false, `${name}/updateAmountPaid:error`);
                     notify.error(`Помилка оновлення суми оплати: ${get().error}`);
+                }
+            },
+
+            repeatOrder: async (orderId) => {
+                set({ isLoading: true, error: '' }, false, `${name}/repeatOrder:start`);
+
+                try {
+                    const cart = await orderService.repeatOrder(orderId);
+
+                    set({ isLoading: false }, false, `${name}/repeatOrder:success`);
+
+                    notify.success('Створено корзину із замовлення');
+
+                    return cart;
+                } catch (error: unknown) {
+                    console.log(error);
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/repeatOrder:errosMessage`);
+                    set({ isLoading: false }, false, `${name}/repeatOrder:error`);
+                    notify.error(`Помилка при повторенні замовлення: ${get().error}`);
                 }
             },
         }),

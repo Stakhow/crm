@@ -7,15 +7,15 @@ import { ClientForm } from '../components/Client/ClientForm';
 export default function ClientPageEdit() {
     const { id } = useParams();
 
-    const { isLoading, client, getClient } = clientStore((state) => state);
+    const { isLoading, client, getClient, saveClient } = clientStore((state) => state);
 
     useEffect(() => {
-        getClient(Number(id));
+        if (!!id) getClient(id);
     }, []);
 
     return (
         <Box sx={{ pb: 10 }}>
-            {!isLoading && !!client && <ClientForm />}
+            {!isLoading && !!client && <ClientForm onSubmit={saveClient} />}
 
             <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
                 <CircularProgress color="inherit" />

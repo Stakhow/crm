@@ -22,7 +22,7 @@ export const ClientsForm = () => {
                     onSubmit={async () => {
                         const clients = await saveClients();
                         if (!!clients && !!clients.length) navigate(`/clients`);
-                    }}
+                        }}
                 >
                     {({ errors, handleSubmit, values, handleChange }) => (
                         <Stack

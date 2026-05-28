@@ -3,7 +3,7 @@ import { NavLink } from 'react-router';
 
 interface ClientItemProps extends CardProps {
     client: {
-        id?: number;
+        id?: string;
         name: string;
         phone: string;
     };

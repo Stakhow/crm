@@ -25,9 +25,11 @@ export function OrderSummary({ order }: { order: OrderViewDTO }) {
                         size="small"
                         component={'span'}
                         label={order.statusTitle}
-                        sx={{ mx: 0.2, bgcolor: color[order.status] }}
+                        sx={{ mx: 0.2, bgcolor: color[order.status], color: 'white' }}
                     />
-                    {order.isPaid && <Chip size="small" label="Cплачено" color="success" sx={{ mx: 0.2 }} />}
+                    {order.isPaid && (
+                        <Chip size="small" component={'span'} label="Cплачено" color="success" sx={{ mx: 0.2 }} />
+                    )}
                 </Typography>
                 <Typography gutterBottom variant="h5">
                     {order.client.name}

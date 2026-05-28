@@ -3,39 +3,33 @@ import { CircularProgress, Stack, Box, Backdrop } from '@mui/material';
 import { CategoryWithState } from '../components/Categories';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
 import * as Yup from 'yup';
-import { cartStore, categoryStore, clientStore, productStore } from '../../store';
+import { cartStore, categoryStore, productStore } from '../../store';
 import { BottomBar } from '../components/BottomBar';
 import { OrderTotalAmount } from '../components/Order/OrderTotalAmount';
-import { ClientsListSelect } from '../components/Client/ClientsListSelect';
-// import { CartList } from '../components/Cart/CartList';
 import { GoToCartButton } from '../components/Cart/CartButtons';
 import { CartProductListSelect } from '../components/Cart/CartProductsList';
 
 export interface OrderFormValues {
-    client: number;
     totalAmount: number;
     categoryName: ProductCategory;
-    id: number;
+    id: string;
     quantity: number;
     stock: number;
 }
 
 export default function OrderPageNew() {
     const { cart, isLoading } = cartStore((s) => s);
-    const { clientId } = clientStore((s) => s);
     const { categoryName } = categoryStore((s) => s);
     const { product } = productStore((s) => s);
 
     const initialValues: OrderFormValues = {
-        client: !!cart ? cart.clientId : clientId,
         totalAmount: cart?.totalAmount ?? 0,
         categoryName: categoryName,
-        id: product?.id ?? 0,
+        id: product?.id ?? '',
         stock: product?.quantity ?? 0,
         quantity: 0,
     };
     const validationSchema = Yup.object().shape({
-        client: Yup.string().required("Поле обов'язкове"),
         totalAmount: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
         categoryName: Yup.string().required("Поле обов'язкове"),
         id: Yup.number().required("Поле обов'язкове"),
@@ -63,10 +57,6 @@ export default function OrderPageNew() {
                     return (
                         <Form>
                             <Stack mb={14} spacing={2}>
-                                <ClientsListSelect />
-
-                                {/* <CartList /> */}
-
                                 <CategoryWithState />
                                 <CartProductListSelect />
 

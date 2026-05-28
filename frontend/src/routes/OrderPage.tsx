@@ -9,7 +9,7 @@ export default function OrderPage() {
     const { getOrder, isLoading } = orderStore((s) => s);
 
     useEffect(() => {
-        getOrder(Number(id));
+        if (!!id) getOrder(id);
     }, []);
 
     return (

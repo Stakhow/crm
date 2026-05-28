@@ -9,7 +9,7 @@ export const ProductListSelect = ({
     cartItemsId = [],
 }: {
     categoryName: ProductCategory;
-    cartItemsId?: number[];
+    cartItemsId?: string[];
 }) => {
     const { products, isLoading, getProducts, productId, selectProduct } = productStore((s) => s);
 
@@ -22,8 +22,8 @@ export const ProductListSelect = ({
 
         return (
             <MenuItem key={itemIdx} value={product.id} disabled={inСart}>
-                {product.name} ID:
-                {product.id}
+                {product.name}
+
                 {inСart && <Chip sx={{ ml: 1 }} label="Уже в корзині" />}
                 {!product.isAvailable && <Chip color="error" sx={{ ml: 1 }} label="Закінчився" />}
             </MenuItem>
@@ -40,7 +40,7 @@ export const ProductListSelect = ({
                         value={productId ?? ''}
                         id={'id'}
                         onChange={(e) => {
-                            selectProduct(Number(e.target.value));
+                            selectProduct(e.target.value);
                         }}
                     >
                         {options}

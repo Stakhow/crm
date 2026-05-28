@@ -46,7 +46,7 @@ export default function ClientPage() {
     };
 
     useEffect(() => {
-        getClient(Number(id));
+        if (!!id) getClient(id);
     }, []);
 
     useEffect(() => {
@@ -62,7 +62,7 @@ export default function ClientPage() {
                     <Card raised>
                         <CardContent>
                             <Typography gutterBottom variant="h5" component="div" align={'center'}>
-                                {client.name} #:{client.id}
+                                {client.name}
                             </Typography>
 
                             <Divider sx={{ my: 2 }} />

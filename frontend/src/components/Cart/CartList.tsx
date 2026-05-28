@@ -1,7 +1,10 @@
 import { cartStore } from '../../../store';
-import { Card, Typography } from '@mui/material';
+import { Card, Divider, Typography } from '@mui/material';
 import { priceFormat, quantityFormat } from '../../../../utils/utils';
 import { CartItemDeleteButton } from './CartButtons';
+import { ListItemDots } from '../ListItemDots';
+
+
 
 export const CartList = () => {
     const { items } = cartStore((s) => s);
@@ -16,17 +19,15 @@ export const CartList = () => {
 
                     {items.map((cartItem) => (
                         <Card variant="outlined" key={cartItem.productId} sx={{ p: 2, mb: 3 }}>
-                            <Typography>
-                                <b>{cartItem.name}</b>
+                            <Typography variant="h6" textAlign={'center'} fontWeight={'bold'}>
+                                {cartItem.name}
                             </Typography>
 
-                            <Typography>Ціна:{priceFormat(cartItem.price)}/кг</Typography>
-                            <Typography>
-                                Кількість: <b>{quantityFormat(cartItem.quantity, cartItem.unit)}</b>
-                            </Typography>
-                            <Typography>
-                                Вартість: <b>{priceFormat(cartItem.total)}</b>
-                            </Typography>
+                            <Divider sx={{ mb: 1 }} />
+
+                            <ListItemDots title="Ціна" value={`${priceFormat(cartItem.price)}./кг`} />
+                            <ListItemDots title="Кількість" value={quantityFormat(cartItem.quantity, cartItem.unit)} />
+                            <ListItemDots title="Вартість" value={priceFormat(cartItem.total)} />
 
                             <CartItemDeleteButton cartItemId={cartItem.productId} size={'small'} sx={{ mt: 1 }} />
                         </Card>

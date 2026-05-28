@@ -9,19 +9,21 @@ import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { ProductNotFound } from '../components/Product/ProductNotFound';
 
 export default function ProductPage() {
-    const { getProduct, product, isLoading, saveProduct, deleteProduct, error } = productStore((state) => state);
+    const { getProduct, product, isLoading, updateProduct, deleteProduct, error, propsToCreate } = productStore(
+        (state) => state,
+    );
     const [openDialog, setOpenDialog] = useState(false);
 
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const onDelete = async (id: number) => {
+    const onDelete = async (id: string) => {
         await deleteProduct(id);
         if (!error) navigate(`/products/`, { replace: true });
     };
 
     useEffect(() => {
-        if (Number(id)) getProduct(Number(id));
+        if (!!id) getProduct(id);
     }, []);
 
     return (
@@ -48,10 +50,9 @@ export default function ProductPage() {
                                 }
                             />
                             <FormComponent
-                                id={product.id}
-                                values={product.productToCreate}
+                                props={propsToCreate}
                                 onSubmit={(values) => {
-                                    saveProduct(values, product.id);
+                                    updateProduct(product.id, values);
                                 }}
                             />
 
@@ -70,7 +71,14 @@ export default function ProductPage() {
                 </>
             )}
 
-            <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
+            <Backdrop
+                sx={(theme: any) => ({
+                    color: '#fff',
+                    zIndex: theme.zIndex.drawer + 1,
+                    backdropFilter: 'blur(3px)',
+                })}
+                open={isLoading}
+            >
                 <CircularProgress color="inherit" />
             </Backdrop>
         </Box>

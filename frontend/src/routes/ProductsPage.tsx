@@ -3,7 +3,7 @@ import { CategoryWithState } from '../components/Categories';
 import { Backdrop, Box, Button, CircularProgress, Divider, Stack } from '@mui/material';
 import { ProductCard } from '../components/Product/ProductCard';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
-import type { ProductViewDTO } from '../../../dto/ProductViewDTO';
+import type { ProductViewUIDTO } from '../../../dto/ProductViewDTO';
 import { ProductUpdateQuantity } from '../components/Product/ProductUpdateQuantity';
 import { productStore, categoryStore } from '../../store';
 import { ProductNotFound } from '../components/Product/ProductNotFound';
@@ -27,7 +27,7 @@ export default function ProductsPage() {
         getProducts(categoryName);
     }, [categoryName]);
 
-    const updateQuantityModal = (product: ProductViewDTO, unitOperation: 'add' | 'subtract') => {
+    const updateQuantityModal = (product: ProductViewUIDTO, unitOperation: 'add' | 'subtract') => {
         setOpenDialog(true);
 
         setDialogConfig({
@@ -35,7 +35,7 @@ export default function ProductsPage() {
                 <ProductUpdateQuantity
                     unitOperation={unitOperation}
                     onSubmit={(data) => {
-                        updateProductQuantity(product.id, data);
+                        updateProductQuantity(product.id, data.unitOperation, data.quantity);
                         setOpenDialog(false);
                     }}
                     handleClose={() => {

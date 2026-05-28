@@ -76,7 +76,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
                 open={notification.open}
                 autoHideDuration={notification.duration}
                 onClose={handleClose}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
                 <Alert onClose={handleClose} severity={notification.severity} variant="filled" sx={{ width: '100%' }}>
                     {notification.message}
