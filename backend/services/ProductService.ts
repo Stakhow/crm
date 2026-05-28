@@ -15,6 +15,7 @@ import type {
 } from "../../dto/ProductToCreateDTO";
 import type { ProductManager } from "../domain/product/ProductManager";
 import { generateId } from "../../utils/utils";
+import { globalEventBus } from "../shared/EventBus";
 
 export class ProductService {
   constructor(
@@ -104,6 +105,12 @@ export class ProductService {
 
     const id = await this.productRepository.update(product);
 
+    const events = product.pullDomainEvents();
+
+    for (const event of events) {
+      await globalEventBus.publish(event.type, event.payload);
+    }
+
     return await this.getProductToView(id);
   }
 
@@ -186,8 +193,6 @@ export class ProductService {
   public async getByCategory(categoryName: ProductCategory) {
     return await this.productRepository.getProductsByCategory(categoryName);
   }
-
-  
 
   private generateName(values: CreateProductValues) {
     const name = !!values.fields.name ? values.fields.name.trim() : "";

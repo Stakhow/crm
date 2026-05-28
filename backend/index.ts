@@ -10,6 +10,7 @@ import { ProductService } from "./services/ProductService";
 import { OrderService } from "./services/OrderService";
 import { CartService } from "./services/CartService";
 import { CartRepository } from "./repositories/cart/CartRepository";
+import { Subscriber } from "./subscribers";
 
 const productFactory = new ProductFactory();
 
@@ -35,3 +36,6 @@ export const orderService = new OrderService(
   productService,
   clientService,
 );
+
+const subscriber = new Subscriber();
+subscriber.init();

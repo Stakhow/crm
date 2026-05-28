@@ -76,6 +76,15 @@ export abstract class BaseProduct<C extends ProductCategory> {
       throw new AppError("DOMAIN", `Ціна має бути більше нуля`);
     }
 
+    const oldPrice = this._price;
+
+    if (oldPrice !== 0 && oldPrice !== value) {
+      this.addDomainEvent({
+        type: "PRODUCT_PRICE_CHANGED",
+        payload: { productId: this.id, price: value },
+      });
+    }
+
     this._price = value;
   }
 
@@ -161,5 +170,17 @@ export abstract class BaseProduct<C extends ProductCategory> {
 
   isAvailable() {
     return this.quantity > 0;
+  }
+
+  private domainEvents: any[] = [];
+
+  protected addDomainEvent(event: any): void {
+    this.domainEvents.push(event);
+  }
+
+  public pullDomainEvents(): any[] {
+    const events = [...this.domainEvents];
+    this.domainEvents = [];
+    return events;
   }
 }
