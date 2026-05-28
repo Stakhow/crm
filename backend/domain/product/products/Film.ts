@@ -1,87 +1,95 @@
-import type { ProductToCreateFieldDTO } from "../../../../dto/ProductToCreateDTO";
+import type {
+  FilmTypes,
+  ProductDataFilmDTO,
+} from "../../../../dto/ProductDataDTO";
+import type { CreateFilmFieldsDTO } from "../../../../dto/ProductToCreateDTO";
+import { AppError } from "../../../../utils/error";
 import { BaseProduct, type BaseProductProps } from "../BaseProduct";
+import type { ProductCategory } from "../ProductCategory";
 
 export interface FilmProps extends BaseProductProps {
   width: number;
   thickness: number;
 }
 
-export class Film extends BaseProduct {
-  protected width: number;
-  protected thickness: number;
+export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
+  readonly categoryName: T = "film" as unknown as T;
+
+  protected readonly WIDTH_MIN: number = 30;
+  protected readonly WIDTH_MAX: number = 100;
+
+  protected readonly THICKNESS_MIN: number = 25;
+  protected readonly THICKNESS_MAX: number = 100;
+
+  // private readonly filmTypes: FilmTypes[] = [
+  //   "fabric",
+  //   "half sleeve",
+  //   "pocket",
+  //   "sleeve",
+  // ];
+  private readonly filmType: FilmTypes = "sleeve";
+
+  protected readonly width: number;
+  protected readonly thickness: number;
 
   constructor(props: FilmProps) {
     super(props);
-    this.category = props.category;
-    this.width = props.width;
-    this.thickness = props.thickness;
 
-    this.price = this.getPrice();
-    this.totalAmount = this.getTotalAmount(this.quantity);
-  }
-
-  set setWidth(v: number) {
-    this.width = v;
-  }
-
-  set setThickness(v: number) {
-    this.thickness = v;
-  }
-
-  override autofillName(): void {
-    if (!this.name) {
-      this.name = [this.category.title, this.width, this.thickness].join("/");
+    if (props.width < this.WIDTH_MIN || props.width > this.WIDTH_MAX) {
+      throw new AppError(
+        "DOMAIN",
+        `Ширина має бути не менше ${this.WIDTH_MIN}см і не більше ${this.WIDTH_MAX}см`,
+      );
     }
+    this.width = props.width;
+
+    if (
+      props.thickness < this.THICKNESS_MIN ||
+      props.thickness > this.THICKNESS_MAX
+    ) {
+      throw new AppError(
+        "DOMAIN",
+        `Товщина має бути не менше ${this.THICKNESS_MIN}мкм і не більше ${this.THICKNESS_MAX}мкм`,
+      );
+    }
+    this.thickness = props.thickness;
   }
 
-  private readonly WIDTH_MIN: number = 30;
-  private readonly WIDTH_MAX: number = 100;
-
-  private readonly THICKNESS_MIN: number = 25;
-  private readonly THICKNESS_MAX: number = 100;
-
-  override isValid(): boolean {
-    return (
-      this.quantity >= 0 &&
-      this.width >= this.WIDTH_MIN &&
-      this.width <= this.WIDTH_MAX &&
-      this.thickness >= this.THICKNESS_MIN &&
-      this.thickness <= this.THICKNESS_MAX &&
-      this.price > 0
-    );
+  static override get fieldsToCreate(): CreateFilmFieldsDTO {
+    return {
+      ...super.fieldsToCreate,
+      width: 0,
+      thickness: 0,
+      filmTypes: ["fabric", "half sleeve", "pocket", "sleeve"],
+    };
   }
 
-  override getFields(): ProductToCreateFieldDTO[] {
-    return [
-      {
-        name: "quantity",
-        title: "Вага (кг)",
-        fieldType: "number",
-        value: this.quantity,
-        placeholder: "",
-      },
-      {
-        name: "name",
-        title: "Назва продукту",
-        fieldType: "text",
-        value: this.name,
-        placeholder: "",
-      },
-      {
-        name: "width",
-        title: "Ширина (см)",
-        fieldType: "number",
-        value: this.width,
-        placeholder: `${this.WIDTH_MIN} - ${this.WIDTH_MAX}`,
-      },
+  override getFields() {
+    return {
+      ...super.getFields(),
+      width: this.width,
+      thickness: this.thickness,
+      filmType: this.filmType,
+    };
+  }
 
-      {
-        name: "thickness",
-        title: "Товщина (мкм)",
-        fieldType: "number",
-        value: this.thickness,
-        placeholder: `${this.THICKNESS_MIN} - ${this.THICKNESS_MAX}`,
-      },
-    ];
+  toPersistence(): ProductDataFilmDTO {
+    return {
+      id: this.id,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      categoryName: this.categoryName,
+      totalAmount: this.totalAmount,
+      quantity: this.quantity,
+      name: this.name,
+      price: this.price,
+      width: this.width,
+      thickness: this.thickness,
+    };
   }
 }
+
+// рукав
+// полурукав
+// полотно
+// карман

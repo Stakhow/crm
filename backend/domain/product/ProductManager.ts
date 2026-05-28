@@ -1,17 +1,13 @@
 import { type ProductCategory } from "./ProductCategory";
 import { ProductByCategory } from "./ProductByCategory";
 import { type IProductFactory } from "../../shared/factory/IProductFactory";
+import type { CreateProductDTO } from "../../../dto/ProductToCreateDTO";
 
-type ProductCtor<C extends ProductCategory> = (typeof ProductByCategory)[C];
-
-export type ProductCtorArgs<C extends ProductCategory> = ConstructorParameters<
-  ProductCtor<C>
+type ProductCreateProps<C extends ProductCategory> = ConstructorParameters<
+  (typeof ProductByCategory)[C]
 >;
 
-export type ProductCreateProps<C extends ProductCategory> =
-  ConstructorParameters<(typeof ProductByCategory)[C]>;
-
-export type ProductInstance<C extends ProductCategory> = InstanceType<
+type ProductInstance<C extends ProductCategory> = InstanceType<
   (typeof ProductByCategory)[C]
 >;
 
@@ -26,9 +22,12 @@ export class ProductManager {
     return this.factory.create(Ctor, props);
   }
 
-  getClassByCategory<C extends ProductCategory>(
+  getPropsToCreate<C extends ProductCategory>(
     categoryName: C,
-  ): ProductCtor<C> {
-    return ProductByCategory[categoryName];
+  ): CreateProductDTO {
+    return {
+      fields: ProductByCategory[categoryName].fieldsToCreate,
+      categoryName,
+    };
   }
 }

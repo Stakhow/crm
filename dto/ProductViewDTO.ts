@@ -1,22 +1,25 @@
 import type { ProductCategory } from "./../backend/domain/product/ProductCategory";
-import type { ProductToCreateDTO } from "./ProductToCreateDTO";
 
-export type ProductViewDTO = {
-  id: number;
+export type UnitType = "piece" | "kilogram";
+
+type Base = {
+  id: string;
   createdAt: number;
   updatedAt: number;
   name: string;
-  category: {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  };
   categoryName: ProductCategory;
   quantity: number;
-  modifiers: { title: string; value: string | number; price: number }[];
+  weight: number;
   price: number;
   totalAmount: number;
-  fields: { title: string; value: number | string; name: string }[];
-  productToCreate: ProductToCreateDTO;
   isAvailable: boolean;
+  unit: UnitType;
+};
+
+export type ProductViewDTO = Base & {
+  fields: { [key: string]: string | number };
+};
+
+export type ProductViewUIDTO = Base & {
+  fields: { title: string; value: number | string }[];
 };

@@ -5,6 +5,8 @@ import { Order, type OrderStatus } from "../domain/order/Order";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
 import type { ProductService } from "./ProductService";
 import type { ClientService } from "./ClientService";
+import { generateId } from "../../utils/utils";
+import { Category } from "../domain/product/ProductCategory";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -16,61 +18,60 @@ export class OrderService {
     private clientService: ClientService,
   ) {}
 
-  async createOrder(date: number, amountPaid: number) {
-    const cart = await this.cartService.getCart();
-    const cartToView = await this.cartService.getCartToView();
-
-    const clientId = cartToView.clientId;
+  async createOrder(
+    cartId: string,
+    dueDate: number,
+    amountPaid: number,
+    clientId: string,
+  ) {
+    const cart = await this.cartService.getCartToView(cartId);
     const client = await this.clientService.getById(clientId);
 
-    const { productsIds, totalAmount, quantity } = cartToView;
+    const { totalAmount, quantity, productsIds } = cart;
 
-    const stockProducts =
-      await this.productService.getProductByIds(productsIds);
+    const stockProductsMap =
+      await this.productService.getProductByIdsMap(productsIds);
 
-    const orderItems = stockProducts.map((i) => {
-      const cartItem = cart.getItem(i.id);
+    const orderItems = cart.items.map((i) => {
+      const product = stockProductsMap.get(i.productId);
+      if (!product)
+        throw new AppError("DOMAIN", "Товар в коризні відсутній на складі");
 
-      if (!cartItem)
-        throw new AppError("SERVICE", "Товар в корзині відсутній на складі!");
-
-      const product = i.toView();
+      product.quantity = i.quantity;
 
       return {
-        id: product.id,
+        id: generateId(),
+        productId: product.id,
         name: product.name,
-        category: product.category.title,
-        quantity: cartItem.quantity,
-        modifiers: product.modifiers,
+        category: new Category().getTitle(product.categoryName),
+        quantity: product.quantity,
         price: product.price,
-        totalAmount: cartItem.total,
-        params: product.fields
-          .filter((i) => i.name !== "weight")
-          .map(({ title, value }) => ({ title, value })),
+        totalAmount: product.totalAmount,
+        unit: product,
       };
     });
 
     const orderId = await this.orderRepository.save(
       new Order(
-        0,
+        generateId(),
         client.toView(),
         orderItems,
         totalAmount,
         quantity,
         this.status,
-        date,
+        dueDate,
         Date.now(),
         amountPaid,
       ),
-      stockProducts,
+      [...stockProductsMap.values()],
     );
 
-    await this.cartService.resetCart();
+    await this.cartService.resetCart(cart.id);
 
     return await this.getById(orderId);
   }
 
-  async updateStatus(id: number, status: OrderStatus): Promise<number> {
+  async updateStatus(id: string, status: OrderStatus): Promise<string> {
     const order = await this.orderRepository.getById(id);
 
     order.updateStatus(status);
@@ -78,7 +79,7 @@ export class OrderService {
     return await this.orderRepository.update(order);
   }
 
-  async updateAmountPaid(id: number, amount: number): Promise<OrderViewDTO> {
+  async updateAmountPaid(id: string, amount: number): Promise<OrderViewDTO> {
     const order = await this.orderRepository.getById(id);
 
     order.updateAmount(amount);
@@ -88,19 +89,21 @@ export class OrderService {
     return this.getById(orderId);
   }
 
-  async repeatOrder(id: number) {
+  async repeatOrder(id: string) {
     const order = await this.orderRepository.getById(id);
+
+    
 
     return this.cartService.createFromOrder(
       order.items.map((i) => ({
-        productId: i.id,
+        cartId: "",
+        productId: i.productId,
         quantity: i.quantity,
-        clientId: order.client.id,
       })),
     );
   }
 
-  async getById(id: number): Promise<OrderViewDTO> {
+  async getById(id: string): Promise<OrderViewDTO> {
     const order = await this.orderRepository.getById(id);
 
     return order.toView();
@@ -111,7 +114,7 @@ export class OrderService {
     return orders.map((i) => i.toView());
   }
 
-  async getByClient(clientId: number): Promise<OrderViewDTO[]> {
+  async getByClient(clientId: string): Promise<OrderViewDTO[]> {
     const orders = await this.orderRepository.getByClient(clientId);
 
     return orders.map((i) => i.toView());

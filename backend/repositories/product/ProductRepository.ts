@@ -6,241 +6,106 @@ import {
 } from "../../domain/product/BaseProduct";
 import { AppError } from "../../../utils/error";
 import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
-import type { ProductCategory } from "../../domain/product/ProductCategory";
+import {
+  Category,
+  type ProductCategory,
+} from "../../domain/product/ProductCategory";
 import type { ProductManager } from "../../domain/product/ProductManager";
 import { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
 import type { ProductByCategory } from "../../domain/product/ProductByCategory";
 
 type ModListDTO = {
-  id: number;
+  id: string;
   name: string;
-  price: number;
-  groupId: number;
+  price: string;
+  groupId: string;
 };
 
 export class ProductRepository implements IProductRepository {
   constructor(private productManager: ProductManager) {}
 
-  async save(product: BaseProduct): Promise<number> {
+  async save(product: BaseProduct<ProductCategory>) {
     const productId = await db.products.put(product.toPersistence());
-
-    await db.product_modifiers_relations.bulkAdd(
-      product.modifiersPersistence.map((i) => ({
-        productId,
-        groupId: i.id,
-        itemId: i.itemId,
-      })),
-    );
 
     return productId;
   }
 
-  private _getCategories(): {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  }[] {
-    const categories: ProductCategory[] = ["film", "bag", "stretch", "granule"];
-
-    return categories.map((category, id) => {
-      let title = "";
-      switch (category) {
-        case "film":
-          title = "Плівка";
-          break;
-        case "bag":
-          title = "Пакет";
-          break;
-        case "stretch":
-          title = "Стрейч";
-          break;
-        case "granule":
-          title = "Гранула";
-          break;
-      }
-      return { id, name: category, title };
-    });
+  public async getCategories() {
+    return new Category().getAll();
   }
 
-  public async getCategories(): Promise<
-    { id: number; name: ProductCategory; title: string }[]
-  > {
-    return this._getCategories();
-  }
-
-  private _getCategory(categoryName: ProductCategory | string | number) {
-    try {
-      return this._getCategories().find((i) => i.name === categoryName);
-    } catch (error) {
-      throw new AppError("SERVICE", `Категорія відсутня ${categoryName}`);
-    }
-  }
-
-  async update(product: BaseProduct): Promise<number> {
+  async update(product: BaseProduct<ProductCategory>): Promise<string> {
     const persistedProduct = product.toPersistence();
-    const { appliedModifiers } = product;
+    // const { appliedModifiers } = product;
 
-    return db.transaction(
+    return await db.transaction(
       "rw",
       db.products,
-      db.product_modifiers_relations,
+      // db.product_modifiers_relations,
       async () => {
-        await db.product_modifiers_relations
-          .where("productId")
-          .equals(product.id)
-          .modify((row) => {
-            row.itemId = appliedModifiers[row.groupId];
-          });
+        // await db.product_modifiers_relations
+        //   .where("productId")
+        //   .equals(product.id)
+        //   .modify((row) => {
+        //     row.itemId = appliedModifiers[row.groupId];
+        //   });
 
-        return await db.products.update(product.id, persistedProduct);
+        await db.products.update(product.id, {
+          ...persistedProduct,
+          updatedAt: Date.now(),
+        });
+
+        return product.id;
       },
     );
   }
 
-  private async __getPropsByCategoryName(
-    categoryName: ProductCategory,
-  ): Promise<BaseProductProps> {
-    const category = this._getCategory(categoryName);
-
-    if (!category) throw new AppError("SERVICE", "Категорію не знайдено");
-
-    const modifiers = await this.getAllModifiers(categoryName);
-
-    return {
-      id: 0,
-      category,
-      modifiers,
-      price: 0,
-      totalAmount: 0,
-      name: "",
-
-      quantity: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      appliedModifiers: [],
-    };
-  }
-
-  private async _getPropsById(id: number): Promise<BaseProductProps> {
-    const productDTO = await db.products.get(id);
-
-    if (!productDTO) throw new AppError("DOMAIN", "Продукту не існує");
-
-    const modifiersMap = await this._getProductModifiers([productDTO.id]);
-
-    const modifiers = modifiersMap.get(id);
-    if (!modifiers)
-      throw new AppError("DOMAIN", "Не знайдено модифікаторів продукту");
-
-    const appliedModifiers = await this._getProductsModifiersRelations([id]);
-    if (!appliedModifiers.size || !appliedModifiers.get(id))
-      throw new AppError(
-        "DOMAIN",
-        "Не знайдено збережених модифікаторів продукту",
-      );
-
-    return {
-      modifiers,
-      ...productDTO,
-      appliedModifiers: appliedModifiers.get(id) ?? [],
-    };
-  }
-
-  private async _getProduct(
+  private _createProduct(
     props: BaseProductProps,
-  ): Promise<InstanceType<(typeof ProductByCategory)[ProductCategory]>> {
+  ): InstanceType<(typeof ProductByCategory)[ProductCategory]> {
     const product = this.productManager.createByCategory(
-      props.category.name,
+      props.categoryName,
       props,
     );
 
     return product;
   }
 
-  public async getByCategoryName(categoryName: ProductCategory) {
-    const props = await this.__getPropsByCategoryName(categoryName);
+  public async getById(id: string): Promise<BaseProduct<ProductCategory>> {
+    const productDTO = await db.products.get(id);
 
-    return await this._getProduct(props);
+    if (!productDTO) throw new AppError("SERVICE", "Продукту не існує");
+
+    return await this._createProduct(productDTO);
   }
 
-  public async getById(id: number): Promise<BaseProduct> {
-    const props = await this._getPropsById(id);
-
-    return await this._getProduct(props);
-  }
-
-  async getByIds(ids: number[]): Promise<BaseProduct[]> {
+  async getByIds(ids: string[]) {
     const productsDTO = await db.products.bulkGet(ids);
 
     return this._getProducts(productsDTO.filter((i) => !!i));
   }
 
-  private async _getProducts(
-    productsDTO: ProductDataDTO[],
-  ): Promise<BaseProduct[]> {
-    const productIds = productsDTO.map((i) => i.id);
-    const modifiersMap = await this._getProductModifiers(productIds);
-
-    const appliedModifiersMap =
-      await this._getProductsModifiersRelations(productIds);
-
-    return productsDTO.map((dto) => {
-      const appliedModifiers = appliedModifiersMap.get(dto.id);
-      if (!appliedModifiers)
-        throw new AppError(
-          "DOMAIN",
-          "Не знайдено збережених даних модифікаторів продукту",
-        );
-
-      const modifiers = modifiersMap.get(dto.id);
-      if (!modifiers)
-        throw new AppError("DOMAIN", "Не знайдено модифікаторів продукту");
-
-      return this.productManager.createByCategory(dto.categoryName, {
-        ...dto,
-        modifiers,
-        appliedModifiers,
-      });
-    });
+  private _getProducts(productsDTO: ProductDataDTO[]) {
+    return productsDTO.map((dto) => this._createProduct(dto));
   }
 
-  async getAll(): Promise<BaseProduct[]> {
+  async getAll(): Promise<BaseProduct<ProductCategory>[]> {
     const productsDTO: ProductDataDTO[] = await db.products.reverse().toArray();
 
-    return this._getProducts(productsDTO);
+    return await this._getProducts(productsDTO);
   }
 
   async getProductsByCategory(
     categoryName: ProductCategory,
-  ): Promise<BaseProduct[]> {
+  ): Promise<BaseProduct<ProductCategory>[]> {
     const productsDTO = await db.products
       .where({ categoryName })
       .reverse()
       .toArray();
-    return this._getProducts(productsDTO);
+    return await this._getProducts(productsDTO);
   }
 
-  async getProductsByModifier(modifierId: number): Promise<number[]> {
-    const productsRelationsWithMode = await db.product_modifiers_relations
-      .where("groupId")
-      .equals(modifierId)
-      .toArray();
-    return productsRelationsWithMode.map((i) => i.productId);
-  }
-
-  async deleteModifier(id: number): Promise<void> {
-    return await db.transaction(
-      "rw",
-      db.modifiers_groups,
-      db.modifiers_values,
-      async () => {
-        await db.modifiers_values.where("groupId").equals(id).delete();
-        await db.modifiers_groups.delete(id);
-      },
-    );
-  }
-
-  async delete(id: number): Promise<number> {
+  async delete(id: string): Promise<string> {
     return await db.transaction(
       "rw",
       db.products,
@@ -258,13 +123,49 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async saveModifier(mod: ProductModifier): Promise<number> {
+  async decreaseStock(mapItems: Map<string, number>) {
+    const products = await this.getByIds([...mapItems.keys()]);
+
+    try {
+      products.forEach((p) => {
+        const quantityToDecrease = mapItems.get(p.id) || 0;
+        
+        p.decreaseQuantity(quantityToDecrease);
+      });
+    } catch (error) {
+      
+      // throw new AppError("DOMAIN", `Недостатньо запасів продуктів: ${p.name}`);
+    }
+  }
+
+  // ========= MODIFIERS ==========
+
+  async getProductsByModifier(modifierId: string): Promise<string[]> {
+    const productsRelationsWithMode = await db.product_modifiers_relations
+      .where("groupId")
+      .equals(modifierId)
+      .toArray();
+    return productsRelationsWithMode.map((i) => i.productId);
+  }
+
+  async deleteModifier(id: string): Promise<void> {
     return await db.transaction(
       "rw",
       db.modifiers_groups,
       db.modifiers_values,
       async () => {
-        const modId: number = await db.modifiers_groups.add({
+        await db.modifiers_values.where("groupId").equals(id).delete();
+        await db.modifiers_groups.delete(id);
+      },
+    );
+  }
+  async saveModifier(mod: ProductModifier): Promise<string> {
+    return await db.transaction(
+      "rw",
+      db.modifiers_groups,
+      db.modifiers_values,
+      async () => {
+        const modId = await db.modifiers_groups.add({
           name: mod.name,
           category: mod.categories,
           createdAt: Date.now(),
@@ -283,7 +184,7 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async updateModifier(mod: ProductModifier): Promise<number> {
+  async updateModifier(mod: ProductModifier): Promise<string> {
     return await db.transaction(
       "rw",
       db.modifiers_groups,
@@ -309,11 +210,7 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async getModifier(id: number): Promise<ProductModifier> {
-    if (!id || id === 0) {
-      return new ProductModifier(0, "", ["bag"], []);
-    }
-
+  async getModifier(id: string): Promise<ProductModifier> {
     const modDTO = await db.modifiers_groups.get(id);
 
     const listDTO = await db.modifiers_values
@@ -362,73 +259,70 @@ export class ProductRepository implements IProductRepository {
     return mods;
   }
 
-  private async _getProductsModifiersRelations(productsId: number[]) {
-    const relations = await db.product_modifiers_relations
-      .where("productId")
-      .anyOf(productsId)
-      .toArray();
+  // private async _getProductsModifiersRelations(productsId: string[]) {
+  //   const relations = await db.product_modifiers_relations
+  //     .where("productId")
+  //     .anyOf(productsId)
+  //     .toArray();
 
-    const relationMap = relations.reduce((acc, current) => {
-      const row = acc.get(current.productId);
-      if (row) row[current.groupId] = current.itemId;
-      else
-        acc.set(current.productId, {
-          [current.groupId]: current.itemId,
-        });
+  //   const relationMap = relations.reduce((acc, current) => {
+  //     const row = acc.get(current.productId);
+  //     if (row) row[current.groupId] = current.itemId;
+  //     else
+  //       acc.set(current.productId, {
+  //         [current.groupId]: current.itemId,
+  //       });
 
-      return acc;
-    }, new Map<number, Record<number, number>>());
+  //     return acc;
+  //   }, new Map<string, Record<string, string>>());
 
-    return relationMap;
-  }
+  //   return relationMap;
+  // }
 
-  private async _getProductModifiers(
-    productIds: number[],
-  ): Promise<Map<number, ProductModifier[]>> {
-    const relations = await db.product_modifiers_relations
-      .where("productId")
-      .anyOf(productIds)
-      .toArray();
+  // private async _getProductModifiers(
+  //   productIds: string[],
+  // ): Promise<Map<string, ProductModifier[]>> {
+  //   const relations = await db.product_modifiers_relations
+  //     .where("productId")
+  //     .anyOf(productIds)
+  //     .toArray();
 
-    const groupIds = new Set<number>();
-    const valueIds = new Set<number>();
+  //   const groupIds = new Set<string>();
+  //   const valueIds = new Set<string>();
 
-    for (const r of relations) {
-      groupIds.add(r.groupId);
-      valueIds.add(r.itemId);
-    }
+  //   for (const r of relations) {
+  //     groupIds.add(r.groupId);
+  //     valueIds.add(r.itemId);
+  //   }
 
-    const [groups, values] = await Promise.all([
-      db.modifiers_groups
-        .where("id")
-        .anyOf([...groupIds])
-        .toArray(),
-      db.modifiers_values
-        .where("groupId")
-        .anyOf([...groupIds])
-        .toArray(),
-    ]);
+  //   const [groups, values] = await Promise.all([
+  //     db.modifiers_groups
+  //       .where("id")
+  //       .anyOf([...groupIds])
+  //       .toArray(),
+  //     db.modifiers_values
+  //       .where("groupId")
+  //       .anyOf([...groupIds])
+  //       .toArray(),
+  //   ]);
 
-    const modifiersMap = new Map<number, ProductModifier[]>();
+  //   const modifiersMap = new Map<string, ProductModifier[]>();
 
-    productIds.map((id) => {
-      const r = relations
-        .filter((i) => i.productId === id)
-        .map((i) => {
-          return {
-            ...groups.find((g) => g.id === i.groupId),
-            list: values.filter(
-              (v) => v.groupId === i.groupId,
-              // (v) => v.groupId === i.groupId && v.id === i.itemId, // ONLY ONE ITEM LIST(OPTION) in Modifier
-            ),
-          };
-        })
-        .map((i) => new ProductModifier(i.id, i.name, i.category, i.list));
+  //   productIds.map((id) => {
+  //     const r = relations
+  //       .filter((i) => i.productId === id)
+  //       .map((i) => {
+  //         return {
+  //           ...groups.find((g) => g.id === i.groupId),
+  //           list: values.filter((v) => v.groupId === i.groupId),
+  //         };
+  //       })
+  //       .map((i) => new ProductModifier(i.id, i.name, i.category, i.list));
 
-      modifiersMap.set(id, r);
-      return r;
-    });
+  //     modifiersMap.set(id, r);
+  //     return r;
+  //   });
 
-    return modifiersMap;
-  }
+  //   return modifiersMap;
+  // }
 }

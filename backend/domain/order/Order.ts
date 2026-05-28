@@ -2,26 +2,25 @@ import dayjs from "dayjs";
 import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import { AppError } from "../../../utils/error";
-import type { OrderDB } from "../../../config/db.types";
+import type { OrderDB, OrderItemDB } from "../../../config/db.types";
 
 export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
 export type OrderItem = {
-  id: number;
+  id: string;
+  productId: string;
   name: string;
   category: string;
   quantity: number;
-  modifiers: { title: string; value: string | number; price: number }[];
   price: number;
   totalAmount: number;
-  params: { title: string; value: number | string }[];
 };
 
 export class Order {
-  public id: number;
+  public id: string;
   public client: ClientViewDTO;
   public items: OrderItem[];
-  public itemsMap: Map<number, OrderItem>;
+  public itemsMap: Map<string, OrderItem>;
   public totalAmount: number;
   public quantity: number;
   public status: OrderStatus;
@@ -32,7 +31,7 @@ export class Order {
   private localedStatuses: Map<OrderStatus, string>;
 
   constructor(
-    id: number,
+    id: string,
     client: ClientViewDTO,
     items: OrderItem[],
     totalAmount: number,
@@ -78,7 +77,7 @@ export class Order {
     this.itemsMap = new Map(items.map((i) => [i.id, i]));
   }
 
-  getOrderItem(id: number) {
+  getOrderItem(id: string) {
     return this.itemsMap.get(id);
   }
 
@@ -122,8 +121,8 @@ export class Order {
   }
   toSaveDB(): OrderDB {
     return {
+      id: this.id,
       client: this.client,
-      clientId: this.client.id,
       totalAmount: this.totalAmount,
       quantity: this.quantity,
       status: this.status,
@@ -131,5 +130,13 @@ export class Order {
       createdAt: this.createdAt,
       amountPaid: this.amountPaid,
     };
+  }
+  toSaveItemsDB(): OrderItemDB[] {
+    return this.items.map((i) => ({
+      id: i.id,
+      orderId: this.id,
+      productId: i.id,
+      data: i,
+    }));
   }
 }

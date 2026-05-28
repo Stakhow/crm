@@ -4,9 +4,9 @@ import { type ProductModifierItemDTO } from "./../../../../dto/ProductModifierIt
 
 export interface IProductModifier {
   apply(price: number): number;
-  select(value: string | number): void;
-  toDTO(): { id: number; itemId: number };
-  toView(): { title: string; value: string | number; price: number };
+  select(valueId: string): void;
+  toDTO(): { id: string; itemId: string };
+  toView(): { title: string; valueId: string; price: number };
   showFullData(): ProductModifierDTO;
   updateName(name: string): void;
   updateList: (list: ProductModifierItemDTO[]) => void;

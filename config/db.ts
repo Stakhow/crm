@@ -14,32 +14,32 @@ import type {
 } from "./db.types";
 
 export class DexieDb extends Dexie {
-  products!: Table<ProductDB, number>;
-  modifiers_groups!: Table<ModifierGroupDB, number>;
-  modifiers_values!: Table<ModifierValueDB, number>;
-  product_modifiers_relations!: Table<ProductModifierRelationDB, number>;
-  orders!: Table<OrderDB, number>;
-  order_items!: Table<OrderItemDB, number>;
-  logs!: Table<LogDB, number>;
-  clients!: Table<ClientDB, number>;
-  cart!: Table<CartDB, number>;
-  cart_items!: Table<CartItemDB, number>;
+  products!: Table<ProductDB, string>;
+  modifiers_groups!: Table<ModifierGroupDB, string>;
+  modifiers_values!: Table<ModifierValueDB, string>;
+  product_modifiers_relations!: Table<ProductModifierRelationDB, string>;
+  orders!: Table<OrderDB, string>;
+  order_items!: Table<OrderItemDB, string>;
+  logs!: Table<LogDB, string>;
+  clients!: Table<ClientDB, string>;
+  cart!: Table<CartDB, string>;
+  cart_items!: Table<CartItemDB, string>;
 
   constructor() {
     super("crm");
 
-    this.version(2).stores({
+    this.version(3).stores({
       products:
-        "++id, category, categoryId, categoryName, name, weight, length, thickness",
-      modifiers_groups: "++id, *category",
-      modifiers_values: "++id, groupId",
-      product_modifiers_relations: "++id, productId, groupId",
-      orders: "++id, clientId, createdAt, deadline",
-      order_items: "++id, orderId, productId",
-      logs: "++id, type, timestamp",
-      clients: "++id, name, phone",
+        "id, category, categoryId, categoryName, name, weight, length, thickness",
+      modifiers_groups: "id, *category",
+      modifiers_values: "id, groupId",
+      product_modifiers_relations: "id, productId, groupId",
+      orders: "id, clientId, createdAt, deadline",
+      order_items: "id, orderId, productId",
+      logs: "id, type, timestamp",
+      clients: "id, name, phone",
       cart: "id, clientId, createdAt",
-      cart_items: "++id, cartId, productId, [productId+cartId]",
+      cart_items: "id, cartId, productId, [cartId+productId]",
     });
   }
 }

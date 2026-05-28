@@ -1,13 +1,14 @@
 import { BaseProduct } from "../../domain/product/BaseProduct";
-import type { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
+import type { ProductCategory } from "../../domain/product/ProductCategory";
 
 export interface IProductRepository {
-  save(product: BaseProduct): Promise<number>;
-  update(product: BaseProduct): Promise<number>;
-  getById(id: number): Promise<BaseProduct>;
-  getByIds(id: number[]): Promise<BaseProduct[]>;
-  getAll(): Promise<BaseProduct[]>;
-  delete(id: number): Promise<number>;
-  getProductsByCategory(category: string): Promise<BaseProduct[]>;
-  getAllModifiers(): Promise<ProductModifier[]>;
+  save(product: BaseProduct<ProductCategory>): Promise<string>;
+  update(product: BaseProduct<ProductCategory>): Promise<string>;
+  getById(id: string): Promise<BaseProduct<ProductCategory>>;
+  getByIds(id: string[]): Promise<BaseProduct<ProductCategory>[]>;
+  getAll(): Promise<BaseProduct<ProductCategory>[]>;
+  delete(id: string): Promise<string>;
+  getProductsByCategory(
+    category: ProductCategory,
+  ): Promise<BaseProduct<ProductCategory>[]>;
 }

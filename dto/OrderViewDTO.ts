@@ -2,7 +2,7 @@ import type { OrderItem, OrderStatus } from "../backend/domain/order/Order";
 import type { ClientViewDTO } from "./ClientViewDTO";
 
 export interface OrderViewDTO {
-  id: number;
+  id: string;
   client: ClientViewDTO;
   items: OrderItem[];
   totalAmount: number;

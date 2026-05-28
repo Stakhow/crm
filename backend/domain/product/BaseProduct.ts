@@ -1,188 +1,137 @@
-import type { ProductCategory } from "../../domain/product/ProductCategory";
+import { type ProductCategory } from "../../domain/product/ProductCategory";
 import { AppError } from "../../../utils/error";
 import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
-import type { ProductModifier } from "./modifiers/ProductModifier";
-import type { ProductViewDTO } from "./../../../dto/ProductViewDTO";
-import type {
-  ProductToCreateDTO,
-  ProductToCreateFieldDTO,
-} from "../../../dto/ProductToCreateDTO";
 
-type AppliedModifiersType = Record<number, number>;
+import type { ProductViewDTO, UnitType } from "./../../../dto/ProductViewDTO";
+import type { CreateProductFieldsDTO } from "../../../dto/ProductToCreateDTO";
 
 export interface BaseProductProps {
-  id: number;
+  id: string;
   createdAt: number;
   updatedAt: number;
-  category: {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  };
-  modifiers: ProductModifier[];
   name: string;
   quantity: number;
   price: number;
-  pricePerItem?: number;
-  totalAmount: number;
-  appliedModifiers: AppliedModifiersType;
+  categoryName: ProductCategory;
 }
 
-export abstract class BaseProduct {
-  public readonly id: number;
-  protected createdAt: number;
-  protected updatedAt: number;
+export abstract class BaseProduct<C extends ProductCategory> {
+  abstract readonly categoryName: C;
 
-  protected category: {
-    id: number;
-    name: ProductCategory;
-    title: string;
-  };
+  public readonly id: string;
+  public readonly unit: UnitType = "kilogram";
 
-  public appliedModifiers: AppliedModifiersType;
+  protected readonly createdAt: number;
+  protected readonly updatedAt: number;
 
-  public name: string;
-  protected modifiers: ProductModifier[];
-  protected quantity: number;
-  protected price: number;
-  protected totalAmount: number;
+  protected _name: string = "";
+  protected _quantity: number = 0;
+
+  protected _price: number = 0;
 
   protected constructor(props: BaseProductProps) {
     this.id = props.id;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
 
-    if (!props.category) throw new AppError("DOMAIN", "Не вказана категорія");
-    this.category = props.category;
+    this.name = props.name;
 
-    this.name = props.name ?? "";
     this.quantity = props.quantity;
-
-    if (!props.modifiers || !props.modifiers.length)
-      throw new AppError("DOMAIN", "Не вказані модифікатори");
-    this.modifiers = props.modifiers;
-    this.appliedModifiers = props.appliedModifiers ?? [];
-    this.price = props.price ?? 0;
-
-    this.totalAmount = 0;
+    this.price = props.price;
   }
 
-  selectModifiers(values: ProductToCreateDTO) {
-    this.appliedModifiers = values.modifiers.reduce((acc, current) => {
-      acc[current.id] = current.value;
-      return acc;
-    }, {} as AppliedModifiersType);
+  set name(value: string) {
+    if (!value.trim()) {
+      throw new AppError("DOMAIN", "Назву не вказано");
+    }
+
+    this._name = value.trim();
   }
 
-  get getQuantity() {
+  get name() {
+    return this._name;
+  }
+
+  get totalAmount() {
+    return Number((this.weight * this.price).toFixed(2));
+  }
+
+  get weight() {
     return this.quantity;
   }
 
-  fillData(data: ProductToCreateDTO) {
-    this.selectModifiers(data);
+  set quantity(value: number) {
+    if (value < 0)
+      throw new AppError("DOMAIN", "Кількість не може бути нижче нуля");
 
-    const values = data.fields;
-
-    values.map((i) => {
-      if (i.name in this) {
-        // @ts-ignore
-        this[i.name] = i.value;
-      }
-    });
-
-    this.autofillName();
-    this.price = this.getPrice();
-
-    this.totalAmount = this.getTotalAmount(this.quantity);
-
-    this.isValid();
-
-    return this;
+    this._quantity = value;
   }
-  protected getPrice(): number {
-    return this.modifiers.reduce((price, modifier) => {
-      modifier.select(this.appliedModifiers[modifier.id]);
 
-      return modifier.apply(price);
-    }, 0);
+  get quantity() {
+    return this._quantity;
+  }
+
+  set price(value: number) {
+    if (value <= 0) {
+      throw new AppError("DOMAIN", `Ціна має бути більше нуля`);
+    }
+
+    this._price = value;
+  }
+
+  get price(): number {
+    return this._price;
   }
 
   isValid(): boolean {
-    const isValid = this.quantity >= 0 && this.price > 0;
+    const isValid = this.quantity >= 0 && this._price > 0;
     if (!isValid) throw new AppError("DOMAIN", "Ціна не вказана");
 
     return isValid;
   }
 
-  getPricePerItem(): number {
-    try {
-      const res = Number((this.totalAmount / this.quantity).toFixed(2));
+  get pricePerUnit(): number {
+    if (this.quantity === 0) return 0;
 
-      if (Number.isNaN(res)) {
-        throw new AppError("DOMAIN", "Помилка обчислення ціну пакета за штуку");
-      }
+    const res = Number((this.totalAmount / this.quantity).toFixed(2));
 
-      return res;
-    } catch (error) {}
+    if (Number.isNaN(res)) {
+      throw new AppError("DOMAIN", "Помилка обчислення ціни за одиницю");
+    }
 
-    return 0;
+    return res;
   }
 
-  get modifiersPersistence() {
-    return this.modifiers.map((i) => i.toDTO());
+  get weightPerUnit(): number {
+    if (this.quantity === 0) return 0;
+
+    const res = Number((this.weight / this.quantity).toFixed(3));
+
+    if (Number.isNaN(res)) {
+      throw new AppError("DOMAIN", "Помилка обчислення ваги за одиницю");
+    }
+
+    return res;
   }
 
-  toPersistence(): ProductDataDTO {
+  abstract toPersistence(): ProductDataDTO;
+
+  getFields() {
     return {
       name: this.name,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      category: this.category,
-      categoryName: this.category.name,
+      price: this.price,
       quantity: this.quantity,
-      ...Object.fromEntries(this.getFields().map((i) => [[i.name], i.value])),
+      weightPerUnit: this.weightPerUnit,
+      pricePerUnit: this.pricePerUnit,
     };
   }
 
-  public getTotalAmount(quantity: number) {
-    const totalAmount = Number((quantity * this.price).toFixed(2));
-
-    try {
-      if (Number.isNaN(totalAmount)) {
-        throw new AppError("DOMAIN", "Помилка обчислення вартості продукта");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-
-    return totalAmount;
-  }
-
-  protected autofillName(): void {
-    if (!this.name) this.name = `${this.category.title}`;
-  }
-
-  public getWeight() {
-    return this.quantity;
-  }
-
-  getFields(): ProductToCreateFieldDTO[] {
-    return [
-      {
-        name: "quantity",
-        title: "Вага (кг)",
-        fieldType: "number",
-        value: this.quantity,
-        placeholder: "",
-      },
-      {
-        name: "name",
-        title: "Назва продукту",
-        fieldType: "text",
-        value: this.name,
-        placeholder: "",
-      },
-    ];
+  static get fieldsToCreate(): CreateProductFieldsDTO {
+    return {
+      name: "",
+      price: 0,
+      quantity: 0,
+    };
   }
 
   toView(): ProductViewDTO {
@@ -190,73 +139,24 @@ export abstract class BaseProduct {
       id: this.id,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-      name: this.name,
-      category: this.category,
-      categoryName: this.category.name,
+      name: this._name,
+      categoryName: this.categoryName,
       quantity: this.quantity,
-      modifiers: this.modifiers.map((i) => i.toView()),
+      weight: this.weight,
       price: this.price,
-      totalAmount: this.getTotalAmount(this.quantity),
-      fields: this.getFields()
-        .filter((i) => !["name"].includes(i.name))
-        .map(({ title, value, name }) => ({
-          title,
-          value,
-          name,
-        })),
-
-      productToCreate: this.toCreate(),
+      totalAmount: this.totalAmount,
       isAvailable: this.isAvailable(),
+      fields: this.getFields(),
+      unit: this.categoryName === "bag" ? "piece" : "kilogram",
     };
   }
 
-  toCreate(): ProductToCreateDTO {
-    const fields = this.getFields();
-    const modifiers = this.modifiers.map((i) => i.showFullData());
-
-    return {
-      price: this.price,
-      categoryName: this.category.name,
-      fields,
-      quantity: this.quantity,
-
-      modifiers: modifiers.map((mod) => ({
-        ...mod,
-        value:
-          mod.list.find((i) => i.id === this.appliedModifiers[mod.id])?.id ??
-          mod.list[0].id,
-      })),
-    };
+  increaseQuantity(quantity: number) {
+    this.quantity = this.quantity + Number(quantity);
   }
 
-  updateQuantity(value: number, unitOperation: "add" | "subtract") {
-    let result = 0;
-
-    if (unitOperation === "add") result = this.quantity + Number(value);
-    if (unitOperation === "subtract") result = this.quantity - Number(value);
-
-    this.setQuantity(result);
-
-    return this;
-  }
-
-  increase(quantity: number) {
-    return this.updateQuantity(quantity, "add");
-  }
-
-  decrease(quantity: number) {
-    return this.updateQuantity(quantity, "subtract");
-  }
-
-  setQuantity(value: number) {
-    if (value < 0)
-      throw new AppError("DOMAIN", `Вага не може бути нижче нуля: ${value}`);
-
-    this.quantity = value;
-
-    this.totalAmount = this.getTotalAmount(this.quantity);
-
-    return this;
+  decreaseQuantity(quantity: number) {
+    this.quantity = this.quantity + Number(quantity);
   }
 
   isAvailable() {

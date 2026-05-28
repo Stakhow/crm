@@ -5,6 +5,7 @@ import type { IOrderRepository } from "./IOrderRepository";
 
 import type { OrderDB, OrderItemDB } from "../../../config/db.types";
 import { AppError } from "../../../utils/error";
+import type { ProductCategory } from "../../domain/product/ProductCategory";
 
 function groupByOrderId(items: OrderItemDB[]) {
   const map = new Map<number, OrderItemDB[]>();
@@ -49,7 +50,10 @@ function getMonthRange(timestamp: number) {
 }
 
 export class OrderRepository implements IOrderRepository {
-  async save(order: Order, products: BaseProduct[]): Promise<number> {
+  async save(
+    order: Order,
+    products: BaseProduct<ProductCategory>[],
+  ): Promise<string> {
     return db.transaction(
       "rw",
       db.products,
@@ -57,41 +61,39 @@ export class OrderRepository implements IOrderRepository {
       db.order_items,
       async () => {
         await db.products.bulkUpdate(
-          products.map((p) => {
-            const orderItem = order.getOrderItem(p.id);
+          order.items.map((i) => {
+            i.productId;
 
-            if (!orderItem)
+            const product = products.find((p) => p.id === i.productId);
+
+            if (!product)
               throw new AppError("DOMAIN", "Не знайдено відповідного продукту");
 
-            p.decrease(orderItem.quantity);
+            product.decreaseQuantity(i.quantity);
 
             return {
-              key: p.id,
-              changes: { quantity: p.getQuantity },
+              key: product.id,
+              changes: { quantity: product.quantity },
             };
           }),
         );
 
         const orderId = await db.orders.add(order.toSaveDB());
 
-        await db.order_items.bulkAdd(
-          order.items.map((i) => ({
-            orderId,
-            productId: i.id,
-            data: i,
-          })),
-        );
+        await db.order_items.bulkAdd(order.toSaveItemsDB());
 
         return orderId;
       },
     );
   }
 
-  async update(order: Order): Promise<number> {
-    return db.orders.update(order.id, order.toSaveDB());
+  async update(order: Order): Promise<string> {
+    await db.orders.update(order.id, order.toSaveDB());
+
+    return order.id;
   }
 
-  async getById(id: number): Promise<Order> {
+  async getById(id: string): Promise<Order> {
     const orderDTO = await db.orders.get(id);
     if (!orderDTO) throw new AppError("SERVICE", "Замовлення не знайдено");
 
@@ -104,7 +106,7 @@ export class OrderRepository implements IOrderRepository {
     return this.buildOrders(orders);
   }
 
-  async getByClient(clientId: number): Promise<Order[]> {
+  async getByClient(clientId: string): Promise<Order[]> {
     const orders = await db.orders
       .where("clientId")
       .equals(clientId)

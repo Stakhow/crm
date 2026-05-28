@@ -1,55 +1,48 @@
-import { Cart, CartItem } from "../../domain/cart/Cart";
+import { AppError } from "../../../utils/error";
+import { Cart } from "../../domain/cart/Cart";
 import { db } from "./../../../config/db";
 
 export class CartRepository {
-  async load(): Promise<Cart> {
-    const rows = await db.cart_items.toArray();
-    const cartRow = await db.cart.get(0);
+  async load(id: string): Promise<Cart> {
+    const cartRow = await db.cart.get(id);
 
-    const items = rows.map(
-      (r) => new CartItem(r.productId, r.name, r.price, r.quantity, r.total),
-    );
+    if (!cartRow)
+      throw new AppError("DOMAIN", `Корзини з таким ID:${id} не існує`);
 
-    return new Cart(0, items, cartRow?.createdAt, cartRow?.clientId);
+    const cartItems = await db.cart_items.where({ cartId: id }).toArray();
+
+    const cart = new Cart(cartRow.id, [], cartRow.createdAt);
+
+    if (cartItems) cartItems.map((i) => cart.addItem(i));
+
+    return cart;
   }
 
   async save(cart: Cart): Promise<void> {
-    await this.delete();
+    await this.delete(cart.id);
     const persistentCart = cart.toPersistent();
 
     db.transaction("rw", db.cart, db.cart_items, async () => {
-      const cartId = await db.cart.put({
-        id: 0,
-        clientId: persistentCart.clientId,
-        createdAt: Date.now(),
-      });
-
-      await db.cart_items.bulkPut(
-        cart.getItems().map((i) => ({
-          productId: i.productId,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          cartId,
-          total: i.total,
-        })),
-      );
+      await db.cart.put(persistentCart);
+      await db.cart_items.bulkPut(cart.cartItemsToDB());
     });
   }
 
-  async delete() {
+  async delete(cartId: string) {
+    console.log(cartId);
     return db.transaction("rw", db.cart, db.cart_items, async () => {
-      await db.cart.clear();
-      await db.cart_items.clear();
+      await db.cart.where({ id: cartId }).delete();
+      await db.cart_items.where({ cartId }).delete();
     });
   }
 
-  async deleteCartItem(productId: number, cartId: number): Promise<void> {
+  async deleteCartItem(cartId: string, productId: string): Promise<void> {
+    console.log(cartId, productId);
     await db.cart_items
-      .where("[productId+cartId]")
-      .equals([productId, cartId])
+      .where("[cartId+productId]")
+      .equals([cartId, productId])
       .delete();
 
-    if ((await db.cart_items.count()) === 0) await this.delete();
+    if ((await db.cart_items.count()) === 0) await this.delete(cartId);
   }
 }

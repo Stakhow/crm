@@ -2,6 +2,14 @@ import { AppError } from "../../utils/error";
 import { CartRepository } from "../repositories/cart/CartRepository";
 import type { ProductService } from "./ProductService";
 import type { CartDTO } from "../../dto/CartDTO";
+import { generateId } from "../../utils/utils";
+import { Cart } from "../domain/cart/Cart";
+
+export type CartItemAdd = {
+  cartId: string;
+  productId: string;
+  quantity: number;
+};
 
 export class CartService {
   constructor(
@@ -9,84 +17,92 @@ export class CartService {
     private productService: ProductService,
   ) {}
 
-  async getCart() {
-    return await this.cartReposirory.load();
+  async getCart(id?: string) {
+    if (!id) return new Cart(generateId(), [], Date.now());
+
+    return await this.cartReposirory.load(id);
   }
 
-  async createFromOrder(
-    cartItems: {
-      productId: number;
-      quantity: number;
-      clientId: number;
-    }[],
-  ) {
-    await this.resetCart();
-
+  async getCartToView(id: string): Promise<CartDTO> {
+    const cart = await this.getCart(id);
     const products = await this.productService.getProductByIds(
-      cartItems.map((i) => i.productId),
+      cart.getProductsId(),
     );
 
-    const notAvailableProducts = products.filter((i) => !i.isAvailable());
+    const totalAmount = products.reduce((acc, product) => {
+      const cartItem = cart.getItem(product.id);
+      if (cartItem) {
+        product.quantity = cartItem.quantity;
 
-    if (notAvailableProducts.length > 0) {
-      const producNames = notAvailableProducts.map((i) => i.name).join("|");
+        acc += Number(product.totalAmount);
+      }
 
-      throw new AppError("DOMAIN", `не доступні ${producNames}`);
-    } else cartItems.map((i) => this.addCartItem(i));
+      return acc;
+    }, 0);
 
-    return await this.getCartToView();
+    const items = products.map((product) => {
+      const cartItem = cart.getItem(product.id);
+      if (!cartItem) throw new AppError("DOMAIN", "Позиція відсутня!");
+
+      product.quantity = cartItem.quantity;
+
+      return {
+        ...cartItem.toPersistence(),
+        name: product.name,
+        price: product.price,
+        total: product.totalAmount,
+      };
+    });
+
+    return {
+      ...cart.toPersistent(),
+      items,
+      productsIds: cart.getProductsId(),
+      totalAmount,
+    };
   }
 
-  async getCartToView(): Promise<CartDTO> {
-    const cart = await this.getCart();
-
-    return cart.toPersistent();
-  }
-
-  async addCartItem(data: {
-    productId: number;
-    quantity: number;
-    clientId: number;
-  }): Promise<CartDTO> {
-    const cart = await this.getCart();
-
-    const product = await this.productService.getProductById(data.productId);
-    const productData = product.toView();
-
-    if (!data.clientId || !data.clientId)
-      throw new AppError("DOMAIN", "Клієнта не вказано");
+  async addCartItem(data: CartItemAdd): Promise<CartDTO> {
+    const cart = await this.getCart(data.cartId);
 
     cart.addItem({
       productId: data.productId,
-      name: productData.name,
-      price: productData.price,
       quantity: data.quantity,
-      total: product.getTotalAmount(data.quantity),
     });
-
-    cart.setClientId = data.clientId;
 
     await this.cartReposirory.save(cart);
 
-    return this.getCartToView();
+    return this.getCartToView(cart.id);
   }
 
-  async deleteCartItem(productId: number): Promise<CartDTO> {
-    const cart = await this.getCart();
+  async deleteCartItem(cartId: string, productId: string): Promise<CartDTO> {
+    console.log("deleteCartItem", cartId, productId);
+
+    const cart = await this.getCart(cartId);
 
     const cartItem = cart.getItem(productId);
     if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
 
-    await this.cartReposirory.deleteCartItem(productId, cart.id);
+    await this.cartReposirory.deleteCartItem(cart.id, productId);
 
-    return this.getCartToView();
+    return this.getCartToView(cartId);
   }
 
-  async deleteCart() {
-    return this.resetCart();
+  async deleteCart(id: string) {
+    return this.resetCart(id);
   }
 
-  async resetCart() {
-    return await this.cartReposirory.delete();
+  async resetCart(id: string) {
+    return await this.cartReposirory.delete(id);
+  }
+
+  async createFromOrder(cartItems: CartItemAdd[]) {
+    const cart = await this.getCart();
+
+    cartItems.map((i) => cart.addItem(i));
+
+    await this.cartReposirory.save(cart);
+
+    return this.getCartToView(cart.id);
   }
 }

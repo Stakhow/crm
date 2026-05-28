@@ -1,5 +1,3 @@
-// app/container.ts
-
 import { ProductFactory } from "./shared/factory/ProductFactory";
 import { ProductManager } from "./domain/product/ProductManager";
 
@@ -24,7 +22,10 @@ const cartRepository = new CartRepository();
 
 export const clientService = new ClientService(clientRepository);
 
-export const productService = new ProductService(productRepository);
+export const productService = new ProductService(
+  productRepository,
+  productManager,
+);
 
 export const cartService = new CartService(cartRepository, productService);
 

@@ -1,3 +1,5 @@
+import type { ClientCreateDTO } from "../../../dto/ClientViewDTO";
+import { generateId } from "../../../utils/utils";
 import { db } from "./../../../config/db";
 import { AppError } from "./../../../utils/error";
 import { Client, type ClientProps } from "./../../domain/client/Client";
@@ -9,26 +11,30 @@ export class ClientRepository implements IClientRepository {
   }
 
   private _formatPhoneNumber(phone: string) {
-    // 1. Remove all non-numeric characters
     let cleaned = ("" + phone).replace(/\D/g, "");
 
-    // 2. Normalize: Remove leading '38' if it exists to normalize (0xx)xxx-xx-xx
     if (cleaned.startsWith("38")) {
       cleaned = cleaned.substring(2);
     }
 
-    // 3. Ensure it starts with '0' and has 10 digits
     const match = cleaned.match(/^0\d{9}$/);
 
     if (match) {
-      // 4. Apply format: +38 (0xx) xxx-xx-xx
       return `+380${cleaned.substring(1, 3)}${cleaned.substring(3, 6)}${cleaned.substring(6, 8)}${cleaned.substring(8, 10)}`;
     } else throw new AppError("DOMAIN", "Помилка формату номера телефону");
-
-    // return phone; // Return original or handle error if invalid
   }
 
-  private async _createClientById(id: number) {
+  async createDomain(data: ClientCreateDTO) {
+    return this._create({
+      id: generateId(),
+      name: data.name,
+      phone: data.phone,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  }
+
+  async getById(id: string): Promise<Client> {
     const clientDTO = await db.clients.get(id);
 
     if (!clientDTO)
@@ -37,31 +43,7 @@ export class ClientRepository implements IClientRepository {
     return this._create(clientDTO);
   }
 
-  async createClient(data: { name: string; phone: string }) {
-    const clientDTO = {
-      id: 0,
-      name: "",
-      phone: "",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    return this._create({ ...clientDTO, name: data.name, phone: data.phone });
-  }
-
-  async getById(id: number): Promise<Client> {
-    return !!id
-      ? await this._createClientById(id)
-      : this._create({
-          id: 0,
-          name: "",
-          phone: "",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-  }
-
-  async getByIds(ids: number[]): Promise<Client[]> {
+  async getByIds(ids: string[]): Promise<Client[]> {
     const clientsDTO = await db.clients.bulkGet(ids);
 
     const clients = await Promise.all(
@@ -77,7 +59,7 @@ export class ClientRepository implements IClientRepository {
     return client;
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     return await db.clients.delete(id);
   }
 
@@ -91,7 +73,7 @@ export class ClientRepository implements IClientRepository {
     return clientsDTO.map((i) => this._create(i));
   }
 
-  async save(client: Client): Promise<number> {
+  async create(client: Client): Promise<string> {
     const existingClient = await this.getByPhone(client.phone);
 
     if (!!existingClient && existingClient.id !== client.id) {
@@ -105,14 +87,27 @@ export class ClientRepository implements IClientRepository {
 
     clientDTO.phone = this._formatPhoneNumber(clientDTO.phone);
 
-    const savedClientId = existingClient
-      ? await db.clients.update(client.id, {
-          ...clientDTO,
-          updatedAt: Date.now(),
-        })
-      : await db.clients.put(clientDTO);
+    await db.clients.put(clientDTO);
 
-    return savedClientId;
+    return client.id;
+  }
+  async update(client: Client): Promise<string> {
+    const existingClient = await this.getByPhone(client.phone);
+
+    if (!!existingClient && existingClient.id !== client.id) {
+      throw new AppError(
+        "DATABASE",
+        `Клієнт з таким номером вже існує: ${client.phone}`,
+      );
+    }
+
+    const clientDTO = client.toSaveDB();
+
+    clientDTO.phone = this._formatPhoneNumber(clientDTO.phone);
+
+    await db.clients.update(client.id, clientDTO);
+
+    return client.id;
   }
 
   async saveBulk(clients: Client[]) {
@@ -123,7 +118,6 @@ export class ClientRepository implements IClientRepository {
       .where("phone")
       .anyOf(phones)
       .toArray();
-
 
     if (!!existingClients.length) {
       const existingPhones = existingClients.map((i) => i.phone);

@@ -1,5 +1,5 @@
 export interface ProductModifierItemDTO {
-  id: number;
+  id: string;
   name: string;
   price: number;
   isAbsolute?: boolean;

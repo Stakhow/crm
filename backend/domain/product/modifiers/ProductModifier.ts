@@ -4,7 +4,7 @@ import type { ProductCategory } from "../ProductCategory";
 import type { IProductModifier } from "./IProductModifier";
 
 export type ProductModifierProps = {
-  id: number;
+  id: string;
   name: string;
   categories: ProductCategory[];
   list: ProductModifierItemDTO[];
@@ -14,7 +14,7 @@ export class ProductModifier implements IProductModifier {
   private _list;
 
   constructor(
-    readonly id: number,
+    readonly id: string,
     public name: string,
     public categories: ProductCategory[],
     public list: ProductModifierItemDTO[],
@@ -67,10 +67,10 @@ export class ProductModifier implements IProductModifier {
     return this._list;
   }
 
-  select(value: number) {
+  select(valueId: string) {
     const selectedList =
-      typeof value !== "undefined"
-        ? this._getList().filter((i) => i.id === value)
+      typeof valueId !== "undefined"
+        ? this._getList().filter((i) => i.id === valueId)
         : this._getList().filter((_, idx) => idx === 0);
 
     if (!selectedList.length)
@@ -93,7 +93,7 @@ export class ProductModifier implements IProductModifier {
   toView() {
     return {
       title: this.name,
-      value: (this.list.length > 0 && this.list[0].name) || "",
+      valueId: (this.list.length > 0 && this.list[0].name) || "",
       price: (this.list.length > 0 && this.list[0].price) || 0,
     };
   }

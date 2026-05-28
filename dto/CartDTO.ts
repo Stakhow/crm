@@ -1,11 +1,16 @@
-import type { CartItemProps } from "../backend/domain/cart/Cart";
+export interface CartItemDTO {
+  productId: string;
+  price: number;
+  quantity: number;
+  name: string;
+  total: number;
+}
 
 export interface CartDTO {
-  id: number;
-  items: CartItemProps[];
+  id: string;
+  items: CartItemDTO[];
   quantity: number;
   totalAmount: number;
   createdAt: number;
-  clientId: number;
-  productsIds: number[];
+  productsIds: string[];
 }

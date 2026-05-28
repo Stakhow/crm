@@ -3,7 +3,7 @@ import { Optional } from "dexie";
 
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
 import type { OrderStatus } from "../backend/domain/order/Order";
-import type { ProductViewDTO } from "../dto/ProductViewDTO";
+import type { ProductViewUIDTO } from "../dto/ProductViewDTO";
 import type { ProductDataDTO } from "../dto/ProductDataDTO";
 import type { ClientViewDTO } from "../dto/ClientViewDTO";
 
@@ -13,7 +13,7 @@ export type ProductDB = ProductDataDTO;
 // ---------- MODIFIERS ----------
 export type ModifierGroupDB = Optional<
   {
-    id: number;
+    id: string;
     category: ProductCategory[];
     name: string;
     createdAt: number;
@@ -24,8 +24,8 @@ export type ModifierGroupDB = Optional<
 
 export type ModifierValueDB = Optional<
   {
-    id: number;
-    groupId: number;
+    id: string;
+    groupId: string;
     name: string;
     price: number;
   },
@@ -33,17 +33,16 @@ export type ModifierValueDB = Optional<
 >;
 
 export type ProductModifierRelationDB = {
-  productId: number;
-  itemId: number;
-  groupId: number;
+  productId: string;
+  itemId: string;
+  groupId: string;
 };
 
 // ---------- ORDERS ----------
 export type OrderDB = Optional<
   {
-    id: number;
+    id: string;
     client: ClientViewDTO;
-    clientId: number;
     totalAmount: number;
     quantity: number;
     status: OrderStatus;
@@ -56,10 +55,10 @@ export type OrderDB = Optional<
 
 export type OrderItemDB = Optional<
   {
-    id: number;
-    orderId: number;
-    productId: number;
-    data: ProductViewDTO;
+    id: string;
+    orderId: string;
+    productId: string;
+    data: ProductViewUIDTO;
   },
   "id"
 >;
@@ -67,7 +66,7 @@ export type OrderItemDB = Optional<
 // ---------- CLIENTS ----------
 export type ClientDB = Optional<
   {
-    id: number;
+    id: string;
     name: string;
     phone: string;
     createdAt: number;
@@ -76,12 +75,21 @@ export type ClientDB = Optional<
   "id"
 >;
 
+// ---------- CART ----------
+export type CartDB = {
+  id: string;
+  createdAt: number;
+};
+export type CartItemDB = {
+  id: string;
+  productId: string;
+  quantity: number;
+  cartId: string;
+};
+
 // ---------- OTHER ----------
 export type LogDB = {
-  id?: number;
+  id?: string;
   type: string;
   timestamp: number;
 };
-
-export type CartDB = any;
-export type CartItemDB = any;

@@ -1,5 +1,5 @@
 import { Client } from "../domain/client/Client";
-import type { ClientViewDTO } from "../../dto/ClientViewDTO";
+import type { ClientCreateDTO, ClientViewDTO } from "../../dto/ClientViewDTO";
 import type { ClientRepository } from "../repositories/client/ClientRepository";
 
 export class ClientService {
@@ -9,7 +9,7 @@ export class ClientService {
 
   async saveBulk(clientsDTO: { name: string; phone: string }[]) {
     const clientsRaw = await Promise.all(
-      clientsDTO.map((i) => this.clientRepository.createClient(i)),
+      clientsDTO.map((i) => this.clientRepository.createDomain(i)),
     );
 
     const savedClientsIds = await this.clientRepository.saveBulk(clientsRaw);
@@ -19,20 +19,32 @@ export class ClientService {
     return clients.map((i) => i.toView());
   }
 
-  async save(clientDTO: ClientViewDTO): Promise<ClientViewDTO> {
-    const client = await this.clientRepository.createClient(clientDTO);
+  async create(data: ClientCreateDTO): Promise<ClientViewDTO> {
+    const client = await this.clientRepository.createDomain(data);
 
-    const id = await this.clientRepository.save(client);
+    const clientId = await this.clientRepository.create(client);
 
-    const savedClient = await this.getById(id);
+    const newClient = await this.getById(clientId);
 
-    return savedClient.toView();
+    return newClient.toView();
+  }
+  async update(id: string, data: ClientCreateDTO): Promise<ClientViewDTO> {
+    const client = await this.getById(id);
+
+    client.name = data.name;
+    client.phone = data.phone;
+
+    const clientId = await this.clientRepository.update(client);
+
+    const updatedClient = await this.getById(clientId);
+
+    return updatedClient.toView();
   }
 
-  async getById(id: number): Promise<Client> {
+  async getById(id: string): Promise<Client> {
     return this.clientRepository.getById(id);
   }
-  async getByIdToView(id: number): Promise<ClientViewDTO> {
+  async getByIdToView(id: string): Promise<ClientViewDTO> {
     const client = await this.getById(id);
 
     return client.toView();
@@ -44,7 +56,7 @@ export class ClientService {
     return clients.map((i) => i.toView());
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     return this.clientRepository.delete(id);
   }
 }
