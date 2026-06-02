@@ -39,8 +39,6 @@ export default function OrderPageNew() {
         }
     }, [productId, products]);
 
-    // console.log(categoryName);
-
     const initialValues: OrderFormValues = {
         totalAmount: cart?.totalAmount ?? 0,
         categoryName: categoryName,

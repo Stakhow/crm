@@ -86,10 +86,7 @@ export class Cart {
   }
 
   getProductsId() {
-    console.log(
-      "getProductsId",
-      this.getItems().map((i) => i.productId),
-    );
+  
     return this.getItems().map((i) => i.productId);
   }
 

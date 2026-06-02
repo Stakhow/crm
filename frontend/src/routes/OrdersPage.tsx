@@ -6,7 +6,7 @@ import { orderStore } from '../../store';
 
 export default function OrdersPage() {
     const { getOrders, orders } = orderStore((s) => s);
-    console.log(orders);
+    
     useEffect(() => {
         getOrders();
     }, []);

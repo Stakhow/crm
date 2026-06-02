@@ -25,7 +25,6 @@ export class CartService {
 
   async getCartToView(cartId: string): Promise<CartDTO> {
     const cart = await this.getCart(cartId);
-    console.log("cart!!!", cart.getProductsId());
     const products = await this.productService.getProductByIds(
       cart.getProductsId(),
     );
@@ -62,8 +61,6 @@ export class CartService {
       totalAmount,
     };
 
-    console.log(cartDTO);
-
     return cartDTO;
   }
 
@@ -94,7 +91,6 @@ export class CartService {
   }
 
   async createFromOrder(cartItems: CartItemAdd[]) {
-    console.log("createFromOrder", cartItems);
     const cart = await this.getCart();
 
     cartItems.map((i) => cart.addItem(i));

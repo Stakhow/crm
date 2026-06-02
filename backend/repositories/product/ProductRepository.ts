@@ -151,7 +151,6 @@ export class ProductRepository implements IProductRepository {
     });
   }
   async deleteFromProduce(id: string): Promise<string> {
-    console.log("deleted From Produce");
 
     await db.products_to_produce.delete(id);
 

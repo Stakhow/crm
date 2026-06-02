@@ -38,7 +38,6 @@ export const OrderAmountPaid = () => {
                     name={'amountPaid'}
                     value={!!amountPaid ? amountPaid : ''}
                     onChange={(e) => {
-                        console.log(e.target.value);
                         updateAmount(e.target.value);
                     }}
                     type={'number'}

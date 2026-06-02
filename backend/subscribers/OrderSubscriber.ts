@@ -7,7 +7,6 @@ export class OrderSubscriber {
 
   init() {
     globalEventBus.subscribe("ORDER_CREATED", async (order: Order) => {
-      console.log("ORDER_CREATED", order);
 
       const products = order.getProductsToWrightOff();
 
