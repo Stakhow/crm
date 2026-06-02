@@ -193,7 +193,26 @@ export class ProductService {
     return await this.productRepository.getProductsByCategory(categoryName);
   }
 
-  public async writeOffStock(data: { productId: string; quantity: number }[]) {
+  public async restockProducts(
+    data: { productId: string; quantity: number }[],
+  ) {
+    const ids = data.map((i) => i.productId);
+    const products = await this.getProductByIdsMap(ids);
+    
+    data.map((i) => {
+      const product = products.get(i.productId);
+
+      if (product) {
+        product.increaseQuantity(i.quantity);
+      }
+    });
+    
+    return await this.productRepository.updateBulk([...products.values()]);
+  }
+
+  public async withdrawProducts(
+    data: { productId: string; quantity: number }[],
+  ) {
     const ids = data.map((i) => i.productId);
 
     const products = await this.getProductByIdsMap(ids);

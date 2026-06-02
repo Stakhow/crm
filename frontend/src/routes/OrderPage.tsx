@@ -16,7 +16,14 @@ export default function OrderPage() {
         <Box>
             {!isLoading && <OrderFullItem />}
 
-            <Backdrop sx={(theme: any) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={isLoading}>
+            <Backdrop
+                sx={(theme: any) => ({
+                    color: '#fff',
+                    zIndex: theme.zIndex.drawer + 1,
+                    backdropFilter: 'blur(3px)',
+                })}
+                open={isLoading}
+            >
                 <CircularProgress color="inherit" />
             </Backdrop>
         </Box>

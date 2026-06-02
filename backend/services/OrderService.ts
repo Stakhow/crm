@@ -74,8 +74,17 @@ export class OrderService {
 
   async updateStatus(id: string, status: OrderStatus): Promise<string> {
     const order = await this.orderRepository.getById(id);
+    const oldStatus = order.status;
 
     order.updateStatus(status);
+
+    if (status === "Done") {
+      await this.productService.withdrawProducts(order.getWithdrawProducts());
+    }
+
+    if (status === "Cancelled" && oldStatus === "Done") {
+      await this.productService.restockProducts(order.getWithdrawProducts());
+    }
 
     return await this.orderRepository.update(order);
   }

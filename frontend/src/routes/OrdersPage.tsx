@@ -1,23 +1,33 @@
 import { useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { OrderSummary } from '../components/Order/OrderSummary';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
 import { orderStore } from '../../store';
 
 export default function OrdersPage() {
-    const { getOrders, orders } = orderStore((s) => s);
-    
+    const { getOrders, orders, isLoading } = orderStore((s) => s);
+
     useEffect(() => {
         getOrders();
     }, []);
 
+    if (isLoading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+                <CircularProgress color="primary" />
+            </Box>
+        );
+    }
+
+    if (!orders || orders.length === 0) {
+        return <OrdersNotFound />;
+    }
+
     return (
-        <Box>
-            {!!orders && !!orders.length ? (
-                orders.map((i) => <OrderSummary key={i.id} order={i} />)
-            ) : (
-                <OrdersNotFound />
-            )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {orders.map((order) => (
+                <OrderSummary key={order.id} order={order} />
+            ))}
         </Box>
     );
 }

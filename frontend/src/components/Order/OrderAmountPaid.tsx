@@ -17,16 +17,18 @@ export const OrderAmountPaid = () => {
             .max(order.totalAmount, `Максимальне значення: ${order.totalAmount}`),
     });
 
-    const updateAmount = async (amount: string) => {
+    const updateAmount = async (amount: number) => {
         setError('');
 
         try {
-            userSchema.validateSync({ amount: Number(amount) });
-            setAmountPaid(Number(amount));
+            userSchema.validateSync({ amount });
         } catch (error) {
             console.log(error);
+
             if (error instanceof yup.ValidationError) setError(error.message);
         }
+
+        setAmountPaid(amount);
     };
 
     if (order.isPaid) return <Chip sx={{ fontSize: 20 }} label="Замовлення сплачено" color="success" />;
@@ -38,7 +40,7 @@ export const OrderAmountPaid = () => {
                     name={'amountPaid'}
                     value={!!amountPaid ? amountPaid : ''}
                     onChange={(e) => {
-                        updateAmount(e.target.value);
+                        updateAmount(+e.target.value);
                     }}
                     type={'number'}
                     label={'Оплачено клієнтом (грн.)'}
@@ -54,7 +56,7 @@ export const OrderAmountPaid = () => {
                         fullWidth
                         type={'submit'}
                         onClick={() => {
-                            setAmountPaid(order.totalAmount);
+                            updateAmount(order.totalAmount);
                         }}
                     >
                         Оплатити все

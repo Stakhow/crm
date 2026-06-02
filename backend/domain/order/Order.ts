@@ -7,9 +7,21 @@ import { type DomainEvent, EventBusRoot } from "../../shared/EventBus";
 
 export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
-export class OrderCreateEvent implements DomainEvent {
+class OrderCreateEvent implements DomainEvent {
   occurredOn: Date = new Date();
-  eventName: string = "ORDER_CREATED";
+  eventName: string = "ORDER_IS_CREATED";
+  constructor(public payload: Order) {}
+}
+
+class OrderDoneEvent implements DomainEvent {
+  occurredOn: Date = new Date();
+  eventName: string = "ORDER_IS_DONE";
+  constructor(public payload: Order) {}
+}
+
+class OrderCancelledEvent implements DomainEvent {
+  occurredOn: Date = new Date();
+  eventName: string = "ORDER_IS_CANCELLED";
   constructor(public payload: Order) {}
 }
 
@@ -17,15 +29,13 @@ export class Order extends EventBusRoot {
   public statuses: OrderStatus[] = ["InProgress", "Done", "Cancelled"];
   public itemsMap: Map<string, OrderItem>;
 
-  // private localedStatuses: Map<OrderStatus, string>;
-
   constructor(
     public id: string,
     public client: { id: string; name: string; phone: string },
     public items: OrderItem[],
     public totalAmount: number,
     public quantity: number,
-    public status: OrderStatus,
+    private _status: OrderStatus,
     public deadline: number,
     public createdAt: number,
     public amountPaid: number,
@@ -49,7 +59,7 @@ export class Order extends EventBusRoot {
       throw new AppError("DOMAIN", "Кількість не вказана");
     this.quantity = quantity;
 
-    this.status = status;
+    this.status = _status;
 
     if (!dayjs.unix(deadline).isValid())
       throw new AppError("DOMAIN", "Не вказана кінцева дата замовлення");
@@ -65,6 +75,24 @@ export class Order extends EventBusRoot {
     this.addDomainEvent(new OrderCreateEvent(this));
   }
 
+  set status(status: OrderStatus) {
+    if (!this.statuses.includes(status))
+      throw new AppError("DOMAIN", "Невідомий статус замовлення");
+
+    if (
+      status === "InProgress" &&
+      (this.status === "Done" || this.status === "Cancelled")
+    ) {
+      throw new AppError("DOMAIN", "Замовлення уже виконане або відмінене");
+    }
+
+    this._status = status;
+  }
+
+  get status() {
+    return this._status;
+  }
+
   getOrderItem(id: string) {
     return this.itemsMap.get(id);
   }
@@ -74,15 +102,21 @@ export class Order extends EventBusRoot {
   }
 
   updateStatus(status: OrderStatus) {
-    if (!status)
-      throw new AppError("DOMAIN", "Помилка встановлення статусу замовлення");
-
     this.status = status;
+
+    if (status === "Done") this.addDomainEvent(new OrderDoneEvent(this));
+
+    if (status === "Cancelled")
+      this.addDomainEvent(new OrderCancelledEvent(this));
   }
 
   updateAmount(amount: number) {
-    if (Number.isNaN(amount) && amount <= 0)
+    if (Number.isNaN(amount) || amount <= 0 || amount < this.amountPaid)
       throw new AppError("DOMAIN", "Помилка ставновлення оплати замовлення");
+
+    if (amount < this.amountPaid)
+      throw new AppError("DOMAIN", "Сума оплати менша ніж уже оплачена");
+
     this.amountPaid = amount;
   }
 
@@ -97,7 +131,7 @@ export class Order extends EventBusRoot {
       items: this.items.map((i) => i.toViewItem()),
       totalAmount: this.totalAmount,
       quantity: this.quantity,
-      status: this.status,
+      status: this._status,
       statuses: this.statuses,
       deadline: this.deadline,
       createdAt: this.createdAt,
@@ -113,7 +147,7 @@ export class Order extends EventBusRoot {
       clientPhone: this.client.phone,
       totalAmount: this.totalAmount,
       quantity: this.quantity,
-      status: this.status,
+      status: this._status,
       deadline: this.deadline,
       createdAt: this.createdAt,
       amountPaid: this.amountPaid,
@@ -128,7 +162,7 @@ export class Order extends EventBusRoot {
     }));
   }
 
-  getProductsToWrightOff() {
+  getWithdrawProducts() {
     return this.items.map((i) => ({
       productId: i.productId,
       quantity: i.quantity,

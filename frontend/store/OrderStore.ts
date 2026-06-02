@@ -32,7 +32,7 @@ interface OrderState {
     getOrdersByMonth: (date: Dayjs) => Promise<void>;
     getOrdersByTargetDate: (date: Dayjs) => Promise<void>;
     getOrder: (orderId: string) => Promise<OrderViewUI | undefined>;
-    updateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+    updateStatus: (orderId: string, status: OrderStatus) => OrderStatus;
     setAmountPaid: (value: number) => void;
     updateAmountPaid: () => Promise<any>;
     repeatOrder: (orderId: string) => Promise<CartDTO | undefined>;
@@ -166,7 +166,16 @@ export const orderStore = create<OrderState>()(
                         'Помилка оновлення статусу',
                         async () => {
                             await orderService.updateStatus(orderId, status);
-                            notify.success('Статус оновлено');
+
+                            const message: Record<OrderStatus, string> = {
+                                InProgress: 'Замовлення в роботі',
+                                Done: 'Замовлення виконано. Товари списано зі складу',
+                                Cancelled: 'Замовлення відмінено. Товари повернуто на склад',
+                            };
+
+                            notify.success(message[status]);
+
+                            return status;
                         },
                         { error: '' },
                     ),

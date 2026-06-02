@@ -13,7 +13,7 @@ export const OrderStatusSelect = ({
     name: string;
     value: OrderViewUI['status'];
     options: OrderViewUI['statuses'];
-    onChange: (value: OrderViewUI['status']) => void;
+    onChange: (value: OrderViewUI['status']) => OrderViewUI['status'];
 }) => {
     const [selected, setSelected] = useState<OrderViewUI['status']>(value);
 
@@ -21,14 +21,16 @@ export const OrderStatusSelect = ({
         <FormControl fullWidth margin="dense">
             <InputLabel id={`modifierSelectLabel_${name}`}>{title}</InputLabel>
             <Select
+                disabled={value === 'Cancelled'}
                 aria-labelledby={`modifierSelectLabel_${name}`}
                 id={`modifier-select-${name}`}
                 label={title}
                 name={name}
                 value={selected}
-                onChange={(e) => {
-                    setSelected(e.target.value);
-                    onChange(e.target.value);
+                onChange={async (e) => {
+                    const status = await onChange(e.target.value);
+
+                    if (status) setSelected(e.target.value);
                 }}
             >
                 {options.map((i, itemIdx) => (

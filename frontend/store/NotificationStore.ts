@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { generateId } from '../../utils/utils';
 
 type Notification = {
     id: string;
@@ -22,7 +23,7 @@ export const useNotificationStore = create<Store>()(
             push: (n) =>
                 set(
                     (state) => ({
-                        notifications: [...state.notifications, { ...n, id: crypto.randomUUID() }],
+                        notifications: [...state.notifications, { ...n, id: generateId() }],
                     }),
                     false,
                     `${name}/push`,

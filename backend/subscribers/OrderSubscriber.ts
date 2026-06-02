@@ -6,12 +6,24 @@ export class OrderSubscriber {
   constructor(private productService: ProductService) {}
 
   init() {
-    globalEventBus.subscribe("ORDER_CREATED", async (order: Order) => {
-
-      const products = order.getProductsToWrightOff();
+    globalEventBus.subscribe("ORDER_IS_CREATED", async (order: Order) => {
+      const products = order.getWithdrawProducts();
 
       await this.productService.addToReserve(products);
       await this.productService.createRequestToProduce(products);
+    });
+
+    globalEventBus.subscribe("ORDER_IS_DONE", async (order: Order) => {
+      console.log("ORDER_IS_DONE", order);
+      const products = order.getWithdrawProducts();
+
+      await this.productService.withdrawProducts(products);
+    });
+
+    globalEventBus.subscribe("ORDER_IS_CANCELLED", async (order: Order) => {
+      // const products = order.getProductsToWrightOff();
+
+      console.log("ORDER_IS_CANCELLED", order);
     });
   }
 }

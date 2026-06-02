@@ -34,9 +34,7 @@ export const OrderFullItem = () => {
                         name={'status'}
                         value={order.status}
                         options={order.statuses}
-                        onChange={async (value) => {
-                            await updateStatus(order.id, value);
-                        }}
+                        onChange={(value) => updateStatus(order.id, value)}
                     />
 
                     <OrderAmountPaid />
