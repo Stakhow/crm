@@ -1,6 +1,6 @@
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useState } from 'react';
-import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
+import type { OrderViewUI } from '../../../store/OrderStore';
 
 export const OrderStatusSelect = ({
     title,
@@ -11,11 +11,11 @@ export const OrderStatusSelect = ({
 }: {
     title: string;
     name: string;
-    value: string;
-    options: { title: string; value: OrderViewDTO['status'] }[];
-    onChange: (value: OrderViewDTO['status']) => void;
+    value: OrderViewUI['status'];
+    options: OrderViewUI['statuses'];
+    onChange: (value: OrderViewUI['status']) => void;
 }) => {
-    const [selected, setSelected] = useState<string>(value);
+    const [selected, setSelected] = useState<OrderViewUI['status']>(value);
 
     return (
         <FormControl fullWidth margin="dense">
@@ -28,7 +28,7 @@ export const OrderStatusSelect = ({
                 value={selected}
                 onChange={(e) => {
                     setSelected(e.target.value);
-                    onChange(e.target.value as OrderViewDTO['status']);
+                    onChange(e.target.value);
                 }}
             >
                 {options.map((i, itemIdx) => (

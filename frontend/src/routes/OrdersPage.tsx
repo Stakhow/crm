@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
-import { orderService } from '../../../backend';
+import { useEffect } from 'react';
 import { Box } from '@mui/material';
-import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
 import { OrderSummary } from '../components/Order/OrderSummary';
 import { OrdersNotFound } from '../components/Order/OrdersNotFound';
+import { orderStore } from '../../store';
 
 export default function OrdersPage() {
-    const [orders, setOrders] = useState<OrderViewDTO[]>();
-
+    const { getOrders, orders } = orderStore((s) => s);
+    console.log(orders);
     useEffect(() => {
-        orderService.getAll().then((orders) => setOrders(orders));
+        getOrders();
     }, []);
 
     return (

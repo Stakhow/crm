@@ -11,21 +11,20 @@ import {
 } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { ukUA } from '@mui/x-date-pickers/locales';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/uk';
 import { useState } from 'react';
-import type { OrderViewDTO } from '../../../dto/OrderViewDTO';
-import type { PickerValue } from '@mui/x-date-pickers/internals';
 import { calendarStore } from '../../store/index';
 import updateLocale from 'dayjs/plugin/updateLocale';
+import type { OrderViewUI } from '../../store/OrderStore';
 
 dayjs.extend(updateLocale);
-dayjs.updateLocale('en', {
+dayjs.updateLocale('uk', {
     weekStart: 1,
 });
 
-const withDateLocalization = (Component: React.ComponentType<any>) => {
-    return (props: any) => (
+const withDateLocalization = <P extends object>(Component: React.ComponentType<P>) => {
+    return (props: P) => (
         <LocalizationProvider
             dateAdapter={AdapterDayjs}
             adapterLocale="uk"
@@ -36,45 +35,49 @@ const withDateLocalization = (Component: React.ComponentType<any>) => {
     );
 };
 
-const withCalendarState = (Component: React.ComponentType<any>) => {
+const withCalendarState = <P extends object>(Component: React.ComponentType<P>) => {
     return (props: any) => {
         const { date, setDate } = calendarStore((s) => s);
 
         return (
             <Component
-                value={dayjs(date)}
-                onChange={(v: PickerValue) => {
+                {...(props as P)}
+                value={date ? dayjs(date) : null}
+                onChange={(v: Dayjs | null) => {
                     if (v) setDate(v);
-                    return v;
                 }}
-                {...props}
             />
         );
     };
 };
 
-function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewDTO[]> }) {
-    const { day, outsideCurrentMonth, ...other } = props;
+interface ServerDayProps extends PickerDayProps {
+    monthOrders?: Map<number, OrderViewUI[]>;
+}
 
-    const orders = props.monthOrders ? props.monthOrders.get(day.date()) : undefined;
+function ServerDay(props: ServerDayProps) {
+    const { day, outsideCurrentMonth, monthOrders, ...other } = props;
+
+    const orders = monthOrders && !outsideCurrentMonth ? monthOrders.get(day.date()) : undefined;
+
     const isPast = day.isBefore(dayjs(), 'day');
 
-    let color: ButtonProps['color'] = 'info';
+    let badgeColor: ButtonProps['color'] = 'info';
 
-    if (orders) {
-        if (orders.some((i) => i.status === 'InProgress')) color = 'error';
-        if (orders.every((i) => i.status === 'Done')) color = 'success';
+    if (orders && orders.length > 0) {
+        if (orders.some((i) => i.status === 'InProgress')) badgeColor = 'error';
+        if (orders.every((i) => i.status === 'Done')) badgeColor = 'success';
     }
 
     return (
         <Badge
-            key={props.day.toString()}
+            key={day.toString()}
             overlap="circular"
-            color={isPast ? 'info' : color}
+            color={isPast ? 'info' : badgeColor}
             badgeContent={orders ? orders.length : undefined}
             sx={{
                 '& .MuiBadge-badge': {
-                    boxShadow: '1px 1px 3px 1px rgba(0, 0, 0, 0.7)',
+                    boxShadow: '1px 1px 3px 1px rgba(0, 0, 0, 0.4)',
                 },
                 '& .MuiBadge-colorInfo': {
                     backgroundColor: grey[500],
@@ -86,7 +89,7 @@ function ServerDay(props: PickerDayProps & { monthOrders: Map<number, OrderViewD
     );
 }
 
-const CalendarInputBase = ({ ...props }) => {
+const CalendarInputBase = ({ error, ...props }: any) => {
     const [open, setOpen] = useState(false);
 
     return (
@@ -94,15 +97,13 @@ const CalendarInputBase = ({ ...props }) => {
             open={open}
             onOpen={() => setOpen(true)}
             onClose={() => setOpen(false)}
-            value={props.value}
             format="DD.MM.YYYY"
             slotProps={{
                 textField: {
                     readOnly: true,
-                    contentEditable: false,
                     onClick: () => setOpen(true),
-                    error: props.error ?? false,
-                    helperText: props.error ? "Поле обов'язкове" : '',
+                    error: error ?? false,
+                    helperText: error ? "Поле обов'язкове" : '',
                 },
             }}
             {...props}
@@ -113,16 +114,19 @@ const CalendarInputBase = ({ ...props }) => {
 export const CalendarInput = withDateLocalization(CalendarInputBase);
 
 type CalendarBaseProps = {
-    date: PickerValue;
+    value: Dayjs | null;
+    onChange: (v: Dayjs | null) => void;
     isLoading: boolean;
-    monthOrders: Map<number, OrderViewDTO[]>;
+    monthOrders: Map<number, OrderViewUI[]> | null;
 };
-const CalendarBase = ({ date, isLoading, monthOrders, ...props }: CalendarBaseProps) => {
+
+const CalendarBase = ({ isLoading, monthOrders, ...props }: CalendarBaseProps) => {
     return (
         <DateCalendar
             loading={isLoading}
             dayOfWeekFormatter={(weekday) => `${weekday.format('dd')}.`}
             renderLoading={() => <DayCalendarSkeleton />}
+            showDaysOutsideCurrentMonth={false}
             sx={{
                 width: '100%',
                 maxWidth: '400px',
@@ -134,7 +138,7 @@ const CalendarBase = ({ date, isLoading, monthOrders, ...props }: CalendarBasePr
                 },
             }}
             slots={{
-                day: ServerDay as any,
+                day: ServerDay,
             }}
             slotProps={{
                 day: {

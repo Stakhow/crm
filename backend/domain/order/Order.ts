@@ -14,29 +14,21 @@ export class OrderCreateEvent implements DomainEvent {
 }
 
 export class Order extends EventBusRoot {
-  public id: string;
-  public client: {id: string, name: string, phone: string};
-  public items: OrderItem[];
+  public statuses: OrderStatus[] = ["InProgress", "Done", "Cancelled"];
   public itemsMap: Map<string, OrderItem>;
-  public totalAmount: number;
-  public quantity: number;
-  public status: OrderStatus;
-  public deadline: number;
-  public createdAt: number;
-  public amountPaid: number;
 
-  private localedStatuses: Map<OrderStatus, string>;
+  // private localedStatuses: Map<OrderStatus, string>;
 
   constructor(
-    id: string,
-    client: {id: string, name: string, phone: string},
-    items: OrderItem[],
-    totalAmount: number,
-    quantity: number,
-    status: OrderStatus,
-    deadline: number,
-    createdAt: number,
-    amountPaid: number,
+    public id: string,
+    public client: { id: string; name: string; phone: string },
+    public items: OrderItem[],
+    public totalAmount: number,
+    public quantity: number,
+    public status: OrderStatus,
+    public deadline: number,
+    public createdAt: number,
+    public amountPaid: number,
   ) {
     super();
 
@@ -67,11 +59,6 @@ export class Order extends EventBusRoot {
     this.createdAt = createdAt;
 
     this.amountPaid = amountPaid ?? 0;
-
-    this.localedStatuses = new Map();
-    this.localedStatuses.set("InProgress", "В роботі");
-    this.localedStatuses.set("Done", "Виконано");
-    this.localedStatuses.set("Cancelled", "Відмінений");
 
     this.itemsMap = new Map(items.map((i) => [i.id, i]));
 
@@ -111,11 +98,7 @@ export class Order extends EventBusRoot {
       totalAmount: this.totalAmount,
       quantity: this.quantity,
       status: this.status,
-      statusTitle: this.localedStatuses.get(this.status) ?? "",
-      statuses: Array.from(this.localedStatuses, ([key, value]) => ({
-        value: key,
-        title: value,
-      })),
+      statuses: this.statuses,
       deadline: this.deadline,
       createdAt: this.createdAt,
       amountPaid: this.amountPaid,

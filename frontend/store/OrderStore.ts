@@ -10,213 +10,200 @@ import type { CartDTO } from '../../dto/CartDTO';
 import { Category } from '../../backend/domain/product/ProductCategory';
 import type { OrderItemProp } from '../../backend/domain/order/OrderItem';
 
-export type OrderItemView = Omit<OrderItemProp, 'category'> & {
-    category: string;
-};
-export type OrderViewUI = Omit<OrderViewDTO, 'items'> & {
+export type OrderItemView = Omit<OrderItemProp, 'category'> & { category: string };
+export type OrderViewUI = Omit<OrderViewDTO, 'items' | 'statuses'> & {
     items: OrderItemView[];
+    statusTitle: string;
+    statuses: { title: string; value: string }[];
 };
 
 interface OrderState {
     isLoading: boolean;
     error: string;
     orders: OrderViewUI[];
-
-    dueDate: Dayjs;
-    setDueDate: (date: Dayjs) => void;
-
+    dueDate: Dayjs | null;
     order: OrderViewUI;
-    monthOrders: Map<number, OrderViewUI[]>;
+    monthOrders: Map<number, OrderViewUI[]> | null;
     amountPaid: number;
-    getOrdersByClient: (clientId: string) => void;
-    getOrders: (orderId: string) => OrderViewUI[];
-    getOrder: (orderId: string) => OrderViewUI;
-    createOrder: (cartId: string, clientId: string) => OrderViewUI;
-    getOrdersByMonth: (date: Dayjs) => void;
-    getOrdersByTargetDate: (date: Dayjs) => void;
-    updateStatus: (orderId: string, status: OrderStatus) => void;
-    setAmountPaid: (value: number) => number;
-    updateAmountPaid: () => OrderViewUI;
-    repeatOrder: (orderId: string) => CartDTO;
+    setDueDate: (date: Dayjs) => void;
+    getOrders: () => Promise<void>;
+    getOrdersByClient: (clientId: string) => Promise<void>;
+    createOrder: (cartId: string, clientId: string) => Promise<any>;
+    getOrdersByMonth: (date: Dayjs) => Promise<void>;
+    getOrdersByTargetDate: (date: Dayjs) => Promise<void>;
+    getOrder: (orderId: string) => Promise<OrderViewUI | undefined>;
+    updateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+    setAmountPaid: (value: number) => void;
+    updateAmountPaid: () => Promise<any>;
+    repeatOrder: (orderId: string) => Promise<CartDTO | undefined>;
 }
 
 const name = 'order';
+const categoryInstance = new Category();
+
+const STATUS_TITLES = {
+    InProgress: 'В роботі',
+    Done: 'Виконано',
+    Cancelled: 'Відмінений',
+} as const;
+
 export const orderStore = create<OrderState>()(
     devtools(
-        (set, get) => ({
-            isLoading: false,
-            error: '',
-            dueDate: null,
-            orders: undefined,
-            order: undefined,
-            monthOrders: undefined,
-            amountPaid: 0,
-
-            setDueDate: (date: Dayjs) => set({ dueDate: date }),
-
-            getOrdersByClient: async (clientId) => {
-                set({ isLoading: true, orders: undefined, error: '' }, false, `${name}/getOrdersByClient:start`);
-
+        (set, get) => {
+            const handleRequest = async <T>(
+                actionName: string,
+                errorMessage: string,
+                requestFn: () => Promise<T>,
+                onStartInit: Partial<OrderState> = { isLoading: true, error: '' },
+            ): Promise<T | undefined> => {
+                set(onStartInit, false, `${name}/${actionName}:start`);
                 try {
-                    const orders = await orderService.getByClient(clientId);
-
-                    set({ isLoading: false, orders: orders.map((order) => orderMap(order)) });
+                    const result = await requestFn();
+                    set({ isLoading: false }, false, `${name}/${actionName}:success`);
+                    return result;
                 } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getOrdersByClient:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getOrdersByClient:error`);
-                    notify.error(`Помилка отримання списку замовлень клієнта: ${get().error}`);
+                    const msg = error instanceof AppError ? error.message : 'Невідома помилка';
+                    set({ error: msg, isLoading: false }, false, `${name}/${actionName}:error`);
+                    notify.error(`${errorMessage}: ${msg}`);
+                    return undefined;
                 }
-            },
-            createOrder: async (cartId, clientId) => {
-                set({ order: undefined, isLoading: true, error: '' }, false, `${name}/createOrder:start`);
+            };
 
-                try {
-                    const order = await orderService.createOrder(
-                        cartId,
-                        get().dueDate.valueOf(),
-                        get().amountPaid,
-                        clientId,
-                    );
+            return {
+                isLoading: false,
+                error: '',
+                dueDate: null,
+                orders: [],
+                order: null,
+                monthOrders: null,
+                amountPaid: 0,
 
-                    set({ isLoading: false, order }, false, `${name}/createOrder:success`);
+                setDueDate: (date) => set({ dueDate: date }),
+                setAmountPaid: (value) => set({ amountPaid: value }),
 
-                    notify.success('Замовлення успішно створено');
+                getOrders: () =>
+                    handleRequest(
+                        'getOrders',
+                        'Помилка отримання списку замовлень',
+                        async () => {
+                            const res = await orderService.getAll();
+                            set({ orders: res.map(orderMap) });
+                        },
+                        { isLoading: true, orders: [], error: '' },
+                    ),
 
-                    localStorage.removeItem('cartId');
+                getOrdersByClient: (clientId) =>
+                    handleRequest(
+                        'getOrdersByClient',
+                        'Помилка отримання списку замовлень клієнта',
+                        async () => {
+                            const res = await orderService.getByClient(clientId);
+                            set({ orders: res.map(orderMap) });
+                        },
+                        { isLoading: true, orders: [], error: '' },
+                    ),
 
-                    return order;
-                } catch (error: unknown) {
-                    console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/createOrder:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/createOrder:error`);
+                createOrder: (cartId, clientId) =>
+                    handleRequest(
+                        'createOrder',
+                        'Помилка створення замовлення',
+                        async () => {
+                            const res = await orderService.createOrder(
+                                cartId,
+                                get().dueDate?.valueOf() || 0,
+                                get().amountPaid,
+                                clientId,
+                            );
+                            set({ order: orderMap(res) });
+                            notify.success('Замовлення успішно створено');
+                            localStorage.removeItem('cartId');
+                            return res;
+                        },
+                        { order: undefined, isLoading: true, error: '' },
+                    ),
 
-                    notify.error(`Помилка створення замовлення: ${get().error}`);
-                }
-            },
+                getOrdersByMonth: (date) =>
+                    handleRequest(
+                        'getOrdersByMonth',
+                        'Помилка отримання списку замовлень місяця',
+                        async () => {
+                            const raw = await orderService.getOrdersByMonth(date.valueOf());
+                            const monthOrders = new Map<number, OrderViewUI[]>(
+                                Array.from(raw.entries()).map(([day, list]) => [day, list.map(orderMap)]),
+                            );
+                            set({ monthOrders, orders: monthOrders.get(date.date()) || [] });
+                        },
+                        { isLoading: true, error: '', monthOrders: null, orders: [] },
+                    ),
 
-            getOrdersByMonth: async (date) => {
-                set({ isLoading: true, error: '', monthOrders: undefined }, false, `${name}/getOrdersByMonth:start`);
+                getOrdersByTargetDate: (date) =>
+                    handleRequest(
+                        'getOrdersByTargetDate',
+                        'Помилка отримання списку замовлень дня',
+                        async () => {
+                            const res = await orderService.getAllByTargetDate(date.valueOf());
+                            set({ orders: res.map(orderMap) });
+                        },
+                        { orders: [], isLoading: true, error: '' },
+                    ),
 
-                try {
-                    const monthOrders = await orderService.getOrdersByMonth(date.valueOf());
-                    const orders = monthOrders.get(date.date());
+                getOrder: (orderId) =>
+                    handleRequest(
+                        'getOrder',
+                        'Помилка отримання замовлення',
+                        async () => {
+                            const res = await orderService.getById(orderId);
+                            const OrderUI = orderMap(res);
+                            set({ order: OrderUI, amountPaid: OrderUI.amountPaid });
+                            return OrderUI;
+                        },
+                        { order: undefined, isLoading: true, error: '' },
+                    ),
 
-                    if (!orders) return;
+                updateStatus: (orderId, status) =>
+                    handleRequest(
+                        'updateStatus',
+                        'Помилка оновлення статусу',
+                        async () => {
+                            await orderService.updateStatus(orderId, status);
+                            notify.success('Статус оновлено');
+                        },
+                        { error: '' },
+                    ),
 
-                    set(
-                        { isLoading: false, monthOrders, orders: orders.map((order) => orderMap(order)) },
-                        false,
-                        `${name}/getOrdersByMonth:success`,
-                    );
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getOrdersByMonth:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getOrdersByMonth:error`);
-                    notify.error(`Помилка отримання списку замовлень місяця: ${get().error}`);
-                }
-            },
-            getOrdersByTargetDate: async (date) => {
-                set({ isLoading: true, error: '' }, false, `${name}/getOrdersByTargetDate:start`);
+                updateAmountPaid: () =>
+                    handleRequest(
+                        'updateAmountPaid',
+                        'Помилка оновлення суми оплати',
+                        async () => {
+                            const res = await orderService.updateAmountPaid(get().order!.id, get().amountPaid);
+                            set({ order: orderMap(res) });
+                            notify.success('Суму оплати оновлено');
+                            return res;
+                        },
+                        { error: '', isLoading: true },
+                    ),
 
-                try {
-                    const orders = await orderService.getAllByTargetDate(date.valueOf());
-                    set(
-                        { isLoading: false, orders: orders.map((order) => orderMap(order)) },
-                        false,
-                        `${name}/getOrdersByTargetDate:success`,
-                    );
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getOrdersByTargetDate:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getOrdersByTargetDate:error`);
-                    notify.error(`Помилка отримання списку замовлень дня: ${get().error}`);
-                }
-            },
-            getOrder: async (orderId) => {
-                set({ order: undefined, isLoading: true, error: '' }, false, `${name}/getOrder:start`);
-
-                try {
-                    const orderRow = await orderService.getById(orderId);
-                    const order = orderMap(orderRow);
-
-                    set({ isLoading: false, order, amountPaid: order.amountPaid }, false, `${name}/getOrder:success`);
-
-                    return order;
-                } catch (error: unknown) {
-                    console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getOrder:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getOrder:error`);
-                    notify.error(`Помилка отримання замовлення: ${get().error}`);
-                }
-            },
-            updateStatus: async (orderId, status) => {
-                set({ error: '' }, false, `${name}/updateStatus:start`);
-
-                try {
-                    await orderService.updateStatus(orderId, status);
-
-                    set({ isLoading: false }, false, `${name}/updateStatus:success`);
-
-                    notify.success('Статус оновлено');
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/updateStatus:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/updateStatus:error`);
-                    notify.error(`Помилка оновлення статусу: ${get().error}`);
-                }
-            },
-            setAmountPaid: (value) => set({ amountPaid: value }),
-
-            updateAmountPaid: async () => {
-                set({ error: '', isLoading: true }, false, `${name}/updateAmountPaid:init`);
-
-                try {
-                    const order = await orderService.updateAmountPaid(get().order.id, get().amountPaid);
-
-                    set({ isLoading: false, order: orderMap(order) }, false, `${name}/updateAmountPaid:success`);
-
-                    notify.success('Суму оплати оновлено');
-
-                    return order;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/updateAmountPaid:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/updateAmountPaid:error`);
-                    notify.error(`Помилка оновлення суми оплати: ${get().error}`);
-                }
-            },
-
-            repeatOrder: async (orderId) => {
-                set({ isLoading: true, error: '' }, false, `${name}/repeatOrder:start`);
-
-                try {
-                    const cart = await orderService.repeatOrder(orderId);
-
-                    set({ isLoading: false }, false, `${name}/repeatOrder:success`);
-
-                    notify.success('Створено корзину із замовлення');
-
-                    return cart;
-                } catch (error: unknown) {
-                    console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/repeatOrder:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/repeatOrder:error`);
-                    notify.error(`Помилка при повторенні замовлення: ${get().error}`);
-                }
-            },
-        }),
+                repeatOrder: (orderId) =>
+                    handleRequest('repeatOrder', 'Помилка при повторенні замовлення', async () => {
+                        const cart = await orderService.repeatOrder(orderId);
+                        notify.success('Створено корзину із замовлення');
+                        return cart;
+                    }),
+            };
+        },
         { name, enabled: true },
     ),
 );
 
-function orderMap(order: OrderViewDTO) {
+function orderMap(order: OrderViewDTO): OrderViewUI {
     const items = order.items.map((i) => ({
         ...i,
-        category: new Category().getTitle(i.category) as string,
+        category: categoryInstance.getTitle(i.category) as string,
     }));
-    return { ...order, items };
+
+    const statuses = order.statuses.map((s) => ({ value: s, title: STATUS_TITLES[s] || s }));
+    const statusTitle = STATUS_TITLES[order.status] || '';
+
+    return { ...order, items, statuses, statusTitle };
 }

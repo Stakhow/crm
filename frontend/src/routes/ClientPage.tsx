@@ -56,7 +56,7 @@ export default function ClientPage() {
     if (isLoading) return <div></div>;
 
     return (
-        <Box>
+        <Box mb={10}>
             {!!client && !!client.id ? (
                 <Box>
                     <Card raised>
