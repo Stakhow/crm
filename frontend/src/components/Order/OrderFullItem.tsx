@@ -7,9 +7,9 @@ import { RepeatOrderButton } from './OrderButtons';
 import { OrderStatusSelect } from './OrderStatusSelect';
 import { orderStore } from '../../../store';
 import { OrdersNotFound } from './OrdersNotFound';
-import { OrderItem } from './OrderItem';
 import { OrderAmountPaid } from './OrderAmountPaid';
 import { ListItemDots } from '../ListItemDots';
+import { OrderItem } from './OrderItem';
 
 export const OrderFullItem = () => {
     const { order, updateStatus } = orderStore((s) => s);
@@ -20,8 +20,8 @@ export const OrderFullItem = () => {
         <Box mb={10}>
             <Card sx={{ p: 2 }} raised>
                 <Stack direction={'column'} spacing={2}>
-                    <Typography variant={'h5'} component={'h1'}>
-                        Замовлення #: {order.id}
+                    <Typography variant={'h5'} component={'h1'} textAlign={'center'}>
+                        Замовлення
                     </Typography>
 
                     <ListItemDots title={'Від'} value={dateToLocalString(order.createdAt)} />

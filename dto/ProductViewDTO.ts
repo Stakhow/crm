@@ -1,6 +1,6 @@
 import type { ProductCategory } from "./../backend/domain/product/ProductCategory";
 
-export type UnitType = "piece" | "kilogram";
+export type ProductUnitType = "piece" | "kilogram";
 
 type Base = {
   id: string;
@@ -13,7 +13,7 @@ type Base = {
   price: number;
   totalAmount: number;
   isAvailable: boolean;
-  unit: UnitType;
+  unit: ProductUnitType;
 };
 
 export type ProductViewDTO = Base & {

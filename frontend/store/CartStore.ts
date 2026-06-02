@@ -18,7 +18,7 @@ interface CartState {
     error: string;
     items: CartItemView[];
     getCartToView: (id?: string) => CartDTO;
-    addCartItem: (data: { productId: string; quantity: number }) => CartDTO;
+    addCartItem: (productId: string, quantity: number) => CartDTO;
     deleteCartItem: (cartItemId: string) => void;
     deleteCart: () => void;
 }
@@ -67,15 +67,16 @@ export const cartStore = create<CartState>()(
                     set({ isLoading: false }, false, `${name}/getCartToView:error`);
                     notify.error(`Помилка отримання корзини: ${get().error}`);
 
-                    // localStorage.removeItem(CART_ID_KEY);
+                    localStorage.removeItem(CART_ID_KEY);
                 }
             },
-            addCartItem: async (props) => {
+            addCartItem: async (productId, quantity) => {
                 set({ isLoading: true }, false, `${name}/addCartItem:start`);
 
                 try {
                     const cart = await cartService.addCartItem({
-                        ...props,
+                        productId,
+                        quantity,
                         cartId: localStorage.getItem(CART_ID_KEY) || '',
                     });
                     const items = await cartItemsMap(cart);
@@ -102,19 +103,15 @@ export const cartStore = create<CartState>()(
                     notify.error(`Помилка додавання товару: ${get().error}`);
                 }
             },
-            deleteCartItem: async (cartItemId) => {
+            deleteCartItem: async (productId) => {
                 set({ isLoading: true }, false, `${name}/deleteCartItem:start`);
 
                 const cartId = localStorage.getItem(CART_ID_KEY);
                 if (!cartId) return notify.error('ID Корзини не існує');
 
                 try {
-                    const cart = await cartService.deleteCartItem(cartId, cartItemId);
+                    const cart = await cartService.deleteCartItem(cartId, productId);
                     const items = await cartItemsMap(cart);
-
-                    if (cart.items.length === 0) {
-                        localStorage.removeItem(CART_ID_KEY);
-                    }
 
                     set(
                         {
@@ -139,6 +136,7 @@ export const cartStore = create<CartState>()(
                 set({ isLoading: true, cart: undefined }, false, `${name}/deleteCart:start`);
 
                 const cartId = localStorage.getItem(CART_ID_KEY);
+
                 if (!cartId) return;
 
                 try {
@@ -160,6 +158,7 @@ export const cartStore = create<CartState>()(
                     notify.success(`Корзину видалено`);
                 } catch (error: unknown) {
                     console.log(error);
+
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/deleteCart:errosMessage`);
                     set({ isLoading: false }, false, `${name}/deleteCart:error`);

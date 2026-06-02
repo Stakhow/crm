@@ -14,16 +14,17 @@ export const OrderAmountPaid = () => {
             .transform((value) => (Number.isNaN(value) ? null : value))
             .nullable()
             .positive('Тільки позитивне число')
-            .max(order.amountPaid, `Максимальне значення: ${order.amountPaid}`),
+            .max(order.totalAmount, `Максимальне значення: ${order.totalAmount}`),
     });
 
     const updateAmount = async (amount: string) => {
         setError('');
 
         try {
-            userSchema.validateSync({ amount });
+            userSchema.validateSync({ amount: Number(amount) });
             setAmountPaid(Number(amount));
         } catch (error) {
+            console.log(error);
             if (error instanceof yup.ValidationError) setError(error.message);
         }
     };
@@ -37,6 +38,7 @@ export const OrderAmountPaid = () => {
                     name={'amountPaid'}
                     value={!!amountPaid ? amountPaid : ''}
                     onChange={(e) => {
+                        console.log(e.target.value);
                         updateAmount(e.target.value);
                     }}
                     type={'number'}

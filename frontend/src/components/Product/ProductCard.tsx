@@ -1,13 +1,12 @@
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-import { dateToLocalString, priceFormat, quantityFormat } from '../../../../utils/utils';
+import { priceFormat, quantityFormat } from '../../../../utils/utils';
 import type { ProductViewUIDTO } from '../../../../dto/ProductViewDTO';
 import type { ReactNode } from 'react';
 import { Button, Divider, Stack } from '@mui/material';
 import { NavLink } from 'react-router';
-import type { SxProps, Theme } from '@mui/material';
-import { ListItemDots } from '../ListItemDots';
+import { Details } from './Details';
 
 type ProductCard = React.ComponentProps<'button'> & {
     variant: 'primary' | 'secondary';
@@ -17,10 +16,7 @@ export type ProductCardProps = {
     children?: ReactNode;
     showProductButton?: boolean;
 };
-export function ProductCard({ product, children, showProductButton: showProductButton = true }: ProductCardProps) {
-    const Details = ({ data, ...rest }: { data: { title: string; value: string | number }[]; sx?: SxProps<Theme> }) =>
-        !!data && data.map(({ title, value }, idx) => <ListItemDots key={idx} title={title} value={value} {...rest} />);
-
+export function ProductCard({ product, children, showProductButton = true }: ProductCardProps) {
     return (
         <Card
             sx={{
@@ -33,17 +29,18 @@ export function ProductCard({ product, children, showProductButton: showProductB
             raised
         >
             <CardContent>
-                <Typography gutterBottom variant="h5" component="div">
+                <Typography gutterBottom variant="h5" component={'h1'}>
                     {product.name}
                 </Typography>
 
                 <Divider sx={{ my: 1 }} />
 
-                <small>Створено: {dateToLocalString(product.createdAt)}</small>
-
-                <Details data={product.fields} />
-
-                <Divider sx={{ my: 2 }} />
+                {!!product.fields.length && (
+                    <>
+                        <Details data={product.fields} />
+                        <Divider sx={{ my: 2 }} />
+                    </>
+                )}
 
                 <Details
                     data={[
@@ -53,12 +50,6 @@ export function ProductCard({ product, children, showProductButton: showProductB
                     ]}
                     sx={{ color: 'text.primary' }}
                 />
-
-                {!product.quantity && (
-                    <Typography textAlign={'center'} color="error" gutterBottom={true}>
-                        Продукт Закінчився
-                    </Typography>
-                )}
             </CardContent>
             <Stack direction={'column'} sx={{ p: 2 }} spacing={2}>
                 {showProductButton && (
@@ -74,6 +65,40 @@ export function ProductCard({ product, children, showProductButton: showProductB
                     </Button>
                 )}
 
+                {children}
+            </Stack>
+        </Card>
+    );
+}
+export function ProductProduceCard({ product, children }: ProductCardProps) {
+    return (
+        <Card
+            sx={{
+                minWidth: 275,
+                my: 2,
+            }}
+            raised
+        >
+            <CardContent>
+                <Typography gutterBottom variant="h5" component={'h1'}>
+                    {product.name}
+                </Typography>
+
+                <Divider sx={{ my: 1 }} />
+
+                {!!product.fields.length && (
+                    <>
+                        <Details data={product.fields} />
+                        <Divider sx={{ my: 2 }} />
+                    </>
+                )}
+
+                <Details
+                    data={[{ title: 'Виготовити', value: quantityFormat(product.quantity, product.unit) }]}
+                    sx={{ color: 'text.primary' }}
+                />
+            </CardContent>
+            <Stack direction={'column'} sx={{ p: 2 }} spacing={2}>
                 {children}
             </Stack>
         </Card>

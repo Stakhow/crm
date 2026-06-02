@@ -1,14 +1,13 @@
 import { db } from "../../../config/db";
-import type { BaseProduct } from "../../domain/product/BaseProduct";
 import { Order } from "../../domain/order/Order";
 import type { IOrderRepository } from "./IOrderRepository";
 
 import type { OrderDB, OrderItemDB } from "../../../config/db.types";
 import { AppError } from "../../../utils/error";
-import type { ProductCategory } from "../../domain/product/ProductCategory";
+import { OrderItem } from "../../domain/order/OrderItem";
 
 function groupByOrderId(items: OrderItemDB[]) {
-  const map = new Map<number, OrderItemDB[]>();
+  const map = new Map<string, OrderItemDB[]>();
 
   for (const item of items) {
     if (!map.has(item.orderId)) {
@@ -50,41 +49,13 @@ function getMonthRange(timestamp: number) {
 }
 
 export class OrderRepository implements IOrderRepository {
-  async save(
-    order: Order,
-    products: BaseProduct<ProductCategory>[],
-  ): Promise<string> {
-    return db.transaction(
-      "rw",
-      db.products,
-      db.orders,
-      db.order_items,
-      async () => {
-        await db.products.bulkUpdate(
-          order.items.map((i) => {
-            i.productId;
+  async save(order: Order): Promise<string> {
+    return db.transaction("rw", db.orders, db.order_items, async () => {
+      await db.orders.put(order.toSaveDB());
+      await db.order_items.bulkAdd(order.toSaveItemsDB());
 
-            const product = products.find((p) => p.id === i.productId);
-
-            if (!product)
-              throw new AppError("DOMAIN", "Не знайдено відповідного продукту");
-
-            product.decreaseQuantity(i.quantity);
-
-            return {
-              key: product.id,
-              changes: { quantity: product.quantity },
-            };
-          }),
-        );
-
-        const orderId = await db.orders.add(order.toSaveDB());
-
-        await db.order_items.bulkAdd(order.toSaveItemsDB());
-
-        return orderId;
-      },
-    );
+      return order.id;
+    });
   }
 
   async update(order: Order): Promise<string> {
@@ -156,10 +127,24 @@ export class OrderRepository implements IOrderRepository {
   }
 
   private toDomain(order: OrderDB, items: OrderItemDB[]): Order {
+    const orderItems = items.map(
+      (i) =>
+        new OrderItem({
+          id: i.id,
+          productId: i.productId,
+          name: i.data.name,
+          category: i.data.category,
+          quantity: i.data.quantity,
+          price: i.data.price,
+          totalAmount: i.data.totalAmount,
+          unit: i.data.unit,
+        }),
+    );
+
     return new Order(
       order.id!,
-      order.client,
-      items.map((i) => i.data),
+      { id: order.clientId, name: order.clientName, phone: order.clientPhone },
+      orderItems,
       order.totalAmount,
       order.quantity,
       order.status,

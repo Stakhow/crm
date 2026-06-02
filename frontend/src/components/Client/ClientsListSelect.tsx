@@ -1,4 +1,4 @@
-import { Card, FormControl, InputLabel, Select, MenuItem, Skeleton } from '@mui/material';
+import { Card, FormControl, InputLabel, Select, MenuItem, Skeleton, FormHelperText } from '@mui/material';
 import { clientStore } from '../../../store';
 import { useEffect } from 'react';
 import { ComponentNotFound } from '../ComponentNotFound';
@@ -9,6 +9,8 @@ export const ClientsListSelect = () => {
     useEffect(() => {
         getClients();
     }, []);
+
+    const error = !clientId ? 'Виберіть клієнта' : '';
 
     const List = () =>
         !!clients && !!clients.length ? (
@@ -23,6 +25,7 @@ export const ClientsListSelect = () => {
                     onChange={(e) => {
                         setClient(e.target.value);
                     }}
+                    error={!!error}
                 >
                     {clients.map((item, itemIdx) => (
                         <MenuItem key={itemIdx} value={item.id} sx={{ textTransform: 'capitalize' }}>
@@ -30,6 +33,9 @@ export const ClientsListSelect = () => {
                         </MenuItem>
                     ))}
                 </Select>
+                <FormHelperText error={!!error} color={'error'}>
+                    {error}
+                </FormHelperText>
             </FormControl>
         ) : (
             <ComponentNotFound title={'Клієнтів не знайдено'} buttonText={'Додати клієнта'} link={'/clients/new'} />

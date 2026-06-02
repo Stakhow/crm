@@ -2,10 +2,10 @@ import { NavLink } from 'react-router';
 import { dateToLocalString } from '../../../../utils/utils';
 import { Button, Card, CardActions, CardContent, Chip, Paper, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
-import type { OrderViewDTO } from '../../../../dto/OrderViewDTO';
 import { OrderTotalAmount } from './OrderTotalAmount';
+import type { OrderViewUI } from '../../../store/OrderStore';
 
-export function OrderSummary({ order }: { order: OrderViewDTO }) {
+export function OrderSummary({ order }: { order: OrderViewUI }) {
     const color = {
         InProgress: red[400],
         Done: green[500],
@@ -15,10 +15,6 @@ export function OrderSummary({ order }: { order: OrderViewDTO }) {
     return (
         <Card raised component={Paper} sx={{ my: 1.5 }}>
             <CardContent>
-                <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-                    Номер замовлення: {order.id}
-                </Typography>
-
                 <Typography variant="body2" sx={{ color: 'text.secondary', my: 2 }} gutterBottom>
                     Статус:{' '}
                     <Chip

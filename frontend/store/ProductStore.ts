@@ -30,8 +30,9 @@ interface ProductState {
     success: boolean;
     productAmount: number;
     propsToCreate: CreateProductUIDTO;
+    productsToProduce: ProductViewUIDTO[];
     initCreate: () => void;
-    selectProduct: (id: string) => void;
+    selectProduct: (id: 'new' | string) => void;
     getProducts: (categoryName?: ProductCategory) => ProductViewUIDTO[];
     getProductsByIds: (ids: string[]) => ProductViewUIDTO[];
     getProduct: (id: string, categoryName?: ProductCategory) => ProductViewUIDTO;
@@ -42,7 +43,9 @@ interface ProductState {
 
     createProduct: (values: CreateProductUIDTO) => ProductViewUIDTO;
     updateProduct: (id: string, values: CreateProductUIDTO) => ProductViewUIDTO;
-    getProductsToOrder: (categoryName: ProductCategory) => ProductViewUIDTO[];
+
+    getProductsToProduce: () => ProductViewUIDTO[];
+    setProcustAsProduced: (id: string) => void;
 }
 
 const name = 'productStore';
@@ -54,9 +57,12 @@ export const productStore = create<ProductState>()(
             isLoading: false,
             error: '',
             success: true,
+            propsToCreate: undefined,
+            productsToProduce: [],
             initCreate: () => {
                 set({ product: undefined, products: [], error: '' }, false, `${name}/initCreate`);
             },
+
             getProducts: async (categoryName) => {
                 set(
                     {
@@ -66,16 +72,18 @@ export const productStore = create<ProductState>()(
                         products: [],
                         error: '',
                         success: false,
+                        propsToCreate: undefined,
                     },
                     false,
                     `${name}/getProducts:start`,
                 );
 
                 try {
-                    const products = await productService.getProductsToView(categoryName);
+                    const productsRaw = await productService.getProductsToView(categoryName);
+                    const products = await productsRaw.map((i) => productMapper(i));
                     set(
                         {
-                            products: products.map((i) => productMapper(i)),
+                            products,
                             isLoading: false,
                             product: undefined,
                             success: true,
@@ -83,11 +91,48 @@ export const productStore = create<ProductState>()(
                         false,
                         `${name}/getProducts:success`,
                     );
+
+                    return products;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getProducts:errorMessage`);
                     set({ isLoading: false }, false, `${name}/getProducts:error`);
                     notify.error(`Помилка отримання продуктів: ${get().error}`);
+                }
+            },
+            getProductsToProduce: async () => {
+                set(
+                    {
+                        isLoading: true,
+                        error: '',
+                        success: false,
+                        productsToProduce: [],
+                    },
+                    false,
+                    `${name}/getProductsToProduce:start`,
+                );
+
+                try {
+                    const productsRaw = await productService.getProductsToProduce();
+                    const productsToProduce = productsRaw.map((i) => productMapperShort(i));
+
+                    set(
+                        {
+                            productsToProduce,
+                            isLoading: false,
+                            product: undefined,
+                            success: true,
+                        },
+                        false,
+                        `${name}/getProductsToProduce:success`,
+                    );
+
+                    return productsToProduce;
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/getProductsToProduce:errorMessage`);
+                    set({ isLoading: false }, false, `${name}/getProductsToProduce:error`);
+                    notify.error(`Помилка отримання списку на виконання: ${get().error}`);
                 }
             },
             getProductsByIds: async (ids) => {
@@ -131,6 +176,7 @@ export const productStore = create<ProductState>()(
                     false,
                     `${name}/getProductAmount:start`,
                 );
+
                 try {
                     const productAmount = await productService.getTotalAmount(id, quantity);
 
@@ -145,18 +191,18 @@ export const productStore = create<ProductState>()(
                     return productAmount;
                 } catch (error: unknown) {
                     if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getProductAmount:errorMessage`);
+                        set({ error: error.message, isLoading: false }, false, `${name}/getProductAmount:errorMessage`);
+
                     notify.error(`Помилка обчислення вартості: ${get().error}`);
                 }
             },
             selectProduct: (id) => {
                 try {
-                    const product = get().products.find((i) => i.id === id);
-
                     set(
                         {
+                            propsToCreate: undefined,
                             productId: id,
-                            product,
+                            product: id === 'new' ? undefined : get().products.find((i) => i.id === id),
                         },
                         false,
                         `${name}/selectProduct:success`,
@@ -166,6 +212,7 @@ export const productStore = create<ProductState>()(
                         set({ error: error.message }, false, `${name}/selectProduct:errorMessage`);
 
                     set({ isLoading: false }, false, `${name}/selectProduct:error`);
+
                     notify.error(`Помилка вибору продукта: ${get().error}`);
                 }
             },
@@ -269,7 +316,6 @@ export const productStore = create<ProductState>()(
 
                 try {
                     const propsToCreate = await productService.getProductProps(categoryName);
-                    console.log(propsToCreate);
                     set({
                         propsToCreate: fieldsForCreate(propsToCreate),
                     });
@@ -277,7 +323,14 @@ export const productStore = create<ProductState>()(
             },
             createProduct: async (values) => {
                 set(
-                    { isLoading: true, product: undefined, products: [], error: '', success: false },
+                    {
+                        isLoading: true,
+                        product: undefined,
+                        products: [],
+                        error: '',
+                        success: false,
+                        propsToCreate: undefined,
+                    },
                     false,
                     `${name}/createProduct:start`,
                 );
@@ -357,137 +410,86 @@ export const productStore = create<ProductState>()(
                     console.log(error);
                 }
             },
+            setProcustAsProduced: async (id) => {
+                set({ isLoading: true, error: '' }, false, `${name}/setProcustAsProduced:start`);
+
+                try {
+                    await productService.setProcustAsProduced(id);
+                    const productsToProduce = get().productsToProduce.filter((i) => i.id !== id);
+
+                    set(
+                        {
+                            productsToProduce,
+                            isLoading: false,
+                        },
+                        false,
+                        `${name}/setProcustAsProduced:success`,
+                    );
+
+                    notify.success(`Продукт виготовлено`);
+                } catch (error: unknown) {
+                    if (error instanceof AppError)
+                        set({ error: error.message }, false, `${name}/setProcustAsProduced:errorMessage`);
+                    set({ isLoading: false }, false, `${name}/setProcustAsProduced:error`);
+                    notify.error(`Помилка встановлення: ${get().error}`);
+
+                    console.log(error);
+                }
+            },
         }),
         { name, enabled: false },
     ),
 );
 
-function fieldsToMap(fields: ProductFieldType[]) {
-    const fieldsMap = new Map(fields.map((i) => [i.name, i.value]));
+const BASE_PRODUCT_FIELDS = [
+    { name: 'length', title: 'Довжина', value: (v: any) => `${v} см` },
+    { name: 'width', title: 'Ширина', value: (v: any) => `${v} см` },
+    { name: 'thickness', title: 'Товщина', value: (v: any) => `${v} мкм` },
+];
 
-    return Object.fromEntries(fieldsMap);
-}
-
-function productMapper(product: ProductViewDTO): ProductViewUIDTO {
-    const fields = [
-        {
-            name: 'length',
-            title: 'Довжина',
-            value: (v: string | number) => `${v} см`,
-        },
-        {
-            name: 'width',
-            title: 'Ширина',
-            value: (v: string | number) => `${v} см`,
-        },
-        {
-            name: 'thickness',
-            title: 'Товщина',
-            value: (v: string | number) => `${v} мкм`,
-        },
-        ...(product.categoryName === 'bag'
+function productMapper(product: ProductViewDTO, includeBagFields = true): ProductViewUIDTO {
+    const bagFields =
+        includeBagFields && product.categoryName === 'bag'
             ? [
-                  {
-                      name: 'weightPerUnit',
-                      title: 'Вага',
-                      value: (v: string | number) => `${quantityFormat(v, 'kilogram')}/шт.`,
-                  },
-                  {
-                      name: 'pricePerUnit',
-                      title: 'Ціна',
-                      value: (v: string | number) => `${priceFormat(v)}/шт.`,
-                  },
+                  { name: 'weightPerUnit', title: 'Вага', value: (v: any) => `${quantityFormat(v, 'kilogram')}/шт.` },
+                  { name: 'pricePerUnit', title: 'Ціна', value: (v: any) => `${priceFormat(v)}/шт.` },
               ]
-            : []),
-    ]
-        .filter((i) => product.fields.hasOwnProperty(i.name))
+            : [];
+
+    const fields = [...BASE_PRODUCT_FIELDS, ...bagFields]
+        .filter((i) => Object.hasOwn(product.fields, i.name))
         .map((i) => ({ title: i.title, value: i.value(product.fields[i.name]) }));
 
-    return {
-        ...product,
-        fields,
-    };
+    return { ...product, fields };
 }
+
+const productMapperShort = (product: ProductViewDTO) => productMapper(product, false);
+
+const getBaseFormFields = (categoryName: string) =>
+    [
+        { name: 'name', title: 'Назва продукту', fieldType: 'text' },
+        { name: 'width', title: 'Ширина (см)', fieldType: 'number' },
+        { name: 'length', title: 'Довжина (см)', fieldType: 'number' },
+        { name: 'thickness', title: 'Товщина (мкм)', fieldType: 'number' },
+        { name: 'quantity', title: `Кількість (${categoryName === 'bag' ? 'шт.' : 'кг'})`, fieldType: 'number' },
+        { name: 'price', title: 'Ціна', fieldType: 'number' },
+    ].map((f) => ({ ...f, value: '', placeholder: '' })); // заповнюємо дефолтні значення
 
 function fieldsForCreate(data: CreateProductDTO): CreateProductUIDTO {
     return {
         categoryName: data.categoryName,
-        fields: [
-            {
-                name: 'name',
-                title: 'Назва продукту',
-                fieldType: 'text',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'width',
-                title: 'Ширина (см)',
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'length',
-                title: 'Довжина (см)',
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'thickness',
-                title: 'Товщина (мкм)',
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'quantity',
-                title: `Кількість (${data.categoryName === 'bag' ? 'шт.' : 'кг'})`,
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'price',
-                title: 'Ціна',
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-        ].filter((i) => data['fields'].hasOwnProperty(i.name)),
+        fields: getBaseFormFields(data.categoryName).filter((i) => Object.hasOwn(data.fields, i.name)),
     };
 }
+
 function fieldsForEdit(data: CreateProductDTO): CreateProductUIDTO {
-    return {
-        categoryName: data.categoryName,
-        fields: [
-            {
-                name: 'name',
-                title: 'Назва продукту',
-                fieldType: 'text',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'quantity',
-                title: `Кількість (${data.categoryName === 'bag' ? 'шт.' : 'кг'})`,
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-            {
-                name: 'price',
-                title: 'Ціна',
-                fieldType: 'number',
-                value: '',
-                placeholder: '',
-            },
-        ]
-            .filter((i) => data['fields'].hasOwnProperty(i.name))
-            .map((i) => ({
-                ...i,
-                value: data['fields'][i.name as keyof CreateProductDTO['fields']],
-            })),
-    };
+    const allowedEditNames = ['name', 'quantity', 'price'];
+
+    const fields = getBaseFormFields(data.categoryName)
+        .filter((i) => allowedEditNames.includes(i.name) && Object.hasOwn(data.fields, i.name))
+        .map((i) => ({ ...i, value: data.fields[i.name as keyof CreateProductDTO['fields']] }));
+
+    return { categoryName: data.categoryName, fields };
 }
+
+const fieldsToMap = (fields: ProductFieldType[]) => Object.fromEntries(fields.map((i) => [i.name, i.value]));

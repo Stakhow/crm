@@ -44,19 +44,21 @@ export class ClientRepository implements IClientRepository {
   }
 
   async getByIds(ids: string[]): Promise<Client[]> {
-    const clientsDTO = await db.clients.bulkGet(ids);
+    const clientsDTO = (await db.clients.bulkGet(ids)).filter((i) => !!i);
 
-    const clients = await Promise.all(
-      clientsDTO.map((dto) => this._create(dto)),
-    );
+    const clients = clientsDTO.map((dto) => this._create(dto));
 
     return clients;
   }
 
   async getByPhone(phone: string) {
     const client = await db.clients.where({ phone }).first();
+    if (!client)
+      throw new AppError("DATABASE", `Немає клієнта з таким номером телефону`, {
+        data: phone,
+      });
 
-    return client;
+    return this._create(client);
   }
 
   async delete(id: string): Promise<void> {

@@ -18,6 +18,7 @@ import OrderPageNew from './routes/OrderProcessPage.tsx';
 import OrdersPage from './routes/OrdersPage.tsx';
 import CartPage from './routes/CartPage.tsx';
 import ClientPageNew from './routes/ClientPageNew.tsx';
+import TasksPage from './routes/TasksPage.tsx';
 // import ModifiersPage from './routes/modifiers/ModifiersPage.tsx';
 // import ModifierPage from './routes/modifiers/ModifierPage.tsx';
 // import ModifierNewPage from './routes/modifiers/ModifierNewPage.tsx';
@@ -85,6 +86,7 @@ createRoot(document.getElementById('root')!).render(
                             </Route>
 
                             <Route path="cart" element={<CartPage />} />
+                            <Route path="tasks" element={<TasksPage />} />
 
                             {/* <Route path="modifiers">
                                 <Route index element={<ModifiersPage />} />

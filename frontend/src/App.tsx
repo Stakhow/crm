@@ -37,6 +37,7 @@ const navItems = [
     { title: 'Список замовлень', to: '/orders', end: false },
     { title: 'Нове Замовлення', to: '/orders/new', end: true },
     { title: 'Корзина', to: '/cart', end: true },
+    { title: 'Завдання', to: '/tasks', end: true },
     // { title: 'Модифікатори', to: '/modifiers', end: true },
 ];
 

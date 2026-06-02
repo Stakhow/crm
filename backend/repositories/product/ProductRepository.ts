@@ -13,6 +13,9 @@ import {
 import type { ProductManager } from "../../domain/product/ProductManager";
 import { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
 import type { ProductByCategory } from "../../domain/product/ProductByCategory";
+import type { ProductReserve } from "../../../dto/ProductReserve";
+import { ProductToProduce } from "../../domain/productToProduce/ProductToProduce";
+import { globalEventBus } from "../../shared/EventBus";
 
 type ModListDTO = {
   id: string;
@@ -36,28 +39,25 @@ export class ProductRepository implements IProductRepository {
 
   async update(product: BaseProduct<ProductCategory>): Promise<string> {
     const persistedProduct = product.toPersistence();
-    // const { appliedModifiers } = product;
 
     return await db.transaction(
       "rw",
       db.products,
-      // db.product_modifiers_relations,
-      async () => {
-        // await db.product_modifiers_relations
-        //   .where("productId")
-        //   .equals(product.id)
-        //   .modify((row) => {
-        //     row.itemId = appliedModifiers[row.groupId];
-        //   });
 
-        await db.products.update(product.id, {
-          ...persistedProduct,
-          updatedAt: Date.now(),
-        });
+      async () => {
+        await db.products.update(product.id, persistedProduct);
 
         return product.id;
       },
     );
+  }
+
+  async updateBulk(
+    products: BaseProduct<ProductCategory>[],
+  ): Promise<string[]> {
+    const productsPersisted = products.map((i) => i.toPersistence());
+
+    return await db.products.bulkPut(productsPersisted, { allKeys: true });
   }
 
   private _createProduct(
@@ -109,12 +109,12 @@ export class ProductRepository implements IProductRepository {
     return await db.transaction(
       "rw",
       db.products,
-      db.product_modifiers_relations,
+      // db.product_modifiers_relations,
       async () => {
-        await db.product_modifiers_relations
-          .where("productId")
-          .equals(id)
-          .delete();
+        // await db.product_modifiers_relations
+        //   .where("productId")
+        //   .equals(id)
+        //   .delete();
 
         await db.products.delete(id);
 
@@ -123,20 +123,70 @@ export class ProductRepository implements IProductRepository {
     );
   }
 
-  async decreaseStock(mapItems: Map<string, number>) {
-    const products = await this.getByIds([...mapItems.keys()]);
+  // ========= RESERVE ==========
+  async getReserved(): Promise<ProductReserve[]> {
+    const reserved = await db.products_reserve.toArray();
 
-    try {
-      products.forEach((p) => {
-        const quantityToDecrease = mapItems.get(p.id) || 0;
-        
-        p.decreaseQuantity(quantityToDecrease);
-      });
-    } catch (error) {
-      
-      // throw new AppError("DOMAIN", `Недостатньо запасів продуктів: ${p.name}`);
-    }
+    return reserved;
   }
+  async addToReserve(
+    data: { id: string; productId: string; quantity: number }[],
+  ): Promise<string[]> {
+    return await db.products_reserve.bulkPut(data, { allKeys: true });
+  }
+
+  async deleteFromReserve(id: string): Promise<string> {
+    await db.products_reserve.delete(id);
+
+    return id;
+  }
+
+  // ========= /RESERVE ==========
+
+  // ========= TO PRODUCE ==========
+  async addToProduce(productsToProduce: ProductToProduce[]): Promise<string[]> {
+    const productEntities = productsToProduce.map((i) => i.toDB());
+    return await db.products_to_produce.bulkPut(productEntities, {
+      allKeys: true,
+    });
+  }
+  async deleteFromProduce(id: string): Promise<string> {
+    console.log("deleted From Produce");
+
+    await db.products_to_produce.delete(id);
+
+    return id;
+  }
+  async getAllToProduce(): Promise<ProductToProduce[]> {
+    const productEntities = await db.products_to_produce.toArray();
+
+    return productEntities.map(
+      (i) => new ProductToProduce(i.id, i.productId, i.quantity, i.status),
+    );
+  }
+
+  async getProductToProduce(id: string): Promise<ProductToProduce> {
+    const productEntity = await db.products_to_produce.get(id);
+    if (!productEntity)
+      throw new AppError("DOMAIN", "Не знайдено продукт для виготовлення");
+
+    return new ProductToProduce(
+      productEntity.id,
+      productEntity.productId,
+      productEntity.quantity,
+      productEntity.status,
+    );
+  }
+
+  async setProductAsProduced(
+    productToProduce: ProductToProduce,
+  ): Promise<string> {
+    await db.products_to_produce.update(productToProduce.id, productToProduce);
+    globalEventBus.publishFromAggregate(productToProduce);
+
+    return productToProduce.id;
+  }
+  // ========= /TO PRODUCE ==========
 
   // ========= MODIFIERS ==========
 

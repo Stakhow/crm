@@ -2,6 +2,8 @@ import Dexie, { type Table } from "dexie";
 
 import type {
   ProductDB,
+  ProductReserveDB,
+  ProductToProduceDB,
   ModifierGroupDB,
   ModifierValueDB,
   ProductModifierRelationDB,
@@ -15,6 +17,8 @@ import type {
 
 export class DexieDb extends Dexie {
   products!: Table<ProductDB, string>;
+  products_reserve!: Table<ProductReserveDB, string>;
+  products_to_produce!: Table<ProductToProduceDB, string>;
   modifiers_groups!: Table<ModifierGroupDB, string>;
   modifiers_values!: Table<ModifierValueDB, string>;
   product_modifiers_relations!: Table<ProductModifierRelationDB, string>;
@@ -28,9 +32,11 @@ export class DexieDb extends Dexie {
   constructor() {
     super("crm");
 
-    this.version(3).stores({
+    this.version(7).stores({
       products:
         "id, category, categoryId, categoryName, name, weight, length, thickness",
+      products_reserve: "id",
+      products_to_produce: "id",
       modifiers_groups: "id, *category",
       modifiers_values: "id, groupId",
       product_modifiers_relations: "id, productId, groupId",
@@ -39,7 +45,7 @@ export class DexieDb extends Dexie {
       logs: "id, type, timestamp",
       clients: "id, name, phone",
       cart: "id, clientId, createdAt",
-      cart_items: "id, cartId, productId, [cartId+productId]",
+      cart_items: "id, cartId, productId",
     });
   }
 }

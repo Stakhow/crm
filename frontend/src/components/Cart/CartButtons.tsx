@@ -40,9 +40,9 @@ export const CartDeleteButton = () => {
 };
 
 type CartItemDeleteButtonType = ButtonProps & {
-    cartItemId: string;
+    productId: string;
 };
-export const CartItemDeleteButton = ({ cartItemId, ...props }: CartItemDeleteButtonType) => {
+export const CartItemDeleteButton = ({ productId, ...props }: CartItemDeleteButtonType) => {
     const { deleteCartItem } = cartStore((s) => s);
 
     return (
@@ -53,7 +53,7 @@ export const CartItemDeleteButton = ({ cartItemId, ...props }: CartItemDeleteBut
             fullWidth
             type={'submit'}
             onClick={() => {
-                deleteCartItem(cartItemId);
+                deleteCartItem(productId);
             }}
             {...props}
         >

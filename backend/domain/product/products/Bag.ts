@@ -1,10 +1,9 @@
-
 import type {
   BagTypes,
   ProductDataBagDTO,
 } from "../../../../dto/ProductDataDTO";
 import type { CreateBagFieldsDTO } from "../../../../dto/ProductToCreateDTO";
-import type { UnitType } from "../../../../dto/ProductViewDTO";
+import type { ProductUnitType } from "../../../../dto/ProductViewDTO";
 
 import { AppError } from "../../../../utils/error";
 import { Film, type FilmProps } from "./Film";
@@ -15,9 +14,11 @@ export interface BagProps extends FilmProps {
 
 export class Bag extends Film<"bag"> {
   readonly categoryName = "bag";
+  readonly subCategoryName = "film";
+
   private readonly LENGTH_MIN: number = 25;
   private readonly LENGTH_MAX: number = 200;
-  public readonly unit: UnitType = "piece";
+  public readonly unit: ProductUnitType = "piece";
 
   private readonly bagType: BagTypes = "bag";
 
@@ -68,11 +69,33 @@ export class Bag extends Film<"bag"> {
     };
   }
 
+  override get weightPerUnit(): number {
+    const res = Number(this._calcBagWeight(1).toFixed(3));
+
+    if (Number.isNaN(res)) {
+      throw new AppError("DOMAIN", "Помилка обчислення ваги за одиницю");
+    }
+
+    return res;
+  }
+
+  get pricePerUnit(): number {
+    const res = Number(
+      (Number(this._calcBagWeight(1).toFixed(3)) * this.price).toFixed(2),
+    );
+
+    if (Number.isNaN(res)) {
+      throw new AppError("DOMAIN", "Помилка обчислення ціни за одиницю");
+    }
+
+    return res;
+  }
+
   toPersistence(): ProductDataBagDTO {
     return {
       id: this.id,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
+      updatedAt: Date.now(),
       categoryName: this.categoryName,
       totalAmount: this.totalAmount,
       quantity: this.quantity,
@@ -81,6 +104,7 @@ export class Bag extends Film<"bag"> {
       length: this.length,
       width: this.width,
       thickness: this.thickness,
+      unit: this.unit,
     };
   }
 }

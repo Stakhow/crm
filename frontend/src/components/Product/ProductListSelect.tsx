@@ -1,21 +1,8 @@
 import { MenuItem, Chip, Card, FormControl, InputLabel, Select, Skeleton } from '@mui/material';
 import { productStore } from '../../../store';
-import { ProductNotFound } from './ProductNotFound';
-import { useEffect } from 'react';
-import type { ProductCategory } from '../../../../backend/domain/product/ProductCategory';
 
-export const ProductListSelect = ({
-    categoryName,
-    cartItemsId = [],
-}: {
-    categoryName: ProductCategory;
-    cartItemsId?: string[];
-}) => {
-    const { products, isLoading, getProducts, productId, selectProduct } = productStore((s) => s);
-
-    useEffect(() => {
-        getProducts(categoryName);
-    }, [categoryName]);
+export const ProductListSelect = ({ cartItemsId = [] }: { cartItemsId?: string[] }) => {
+    const { products, isLoading, productId, selectProduct } = productStore((s) => s);
 
     const options = products.map((product, itemIdx) => {
         const inСart = cartItemsId.includes(product.id);
@@ -25,13 +12,20 @@ export const ProductListSelect = ({
                 {product.name}
 
                 {inСart && <Chip sx={{ ml: 1 }} label="Уже в корзині" />}
-                {!product.isAvailable && <Chip color="error" sx={{ ml: 1 }} label="Закінчився" />}
+                {/* {!product.isAvailable && <Chip color="error" sx={{ ml: 1 }} label="Закінчився" />} */}
             </MenuItem>
         );
     });
 
+    options.unshift(
+        <MenuItem key={'new'} value={'new'}>
+            Створити новий
+        </MenuItem>,
+    );
+
     const List = () =>
-        !!products && !!products.length ? (
+        !!products &&
+        !!products.length && (
             <Card sx={{ p: 2 }} raised>
                 <FormControl fullWidth margin="dense">
                     <InputLabel>{'Список продуктів'}</InputLabel>
@@ -47,8 +41,6 @@ export const ProductListSelect = ({
                     </Select>
                 </FormControl>
             </Card>
-        ) : (
-            <ProductNotFound />
         );
 
     return isLoading ? <Skeleton variant="rounded" height={102} component={Card} /> : <List />;

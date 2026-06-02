@@ -7,27 +7,36 @@ import { notify } from './NotificationStore';
 import { Dayjs } from 'dayjs';
 import type { OrderStatus } from '../../backend/domain/order/Order';
 import type { CartDTO } from '../../dto/CartDTO';
+import { Category } from '../../backend/domain/product/ProductCategory';
+import type { OrderItemProp } from '../../backend/domain/order/OrderItem';
+
+export type OrderItemView = Omit<OrderItemProp, 'category'> & {
+    category: string;
+};
+export type OrderViewUI = Omit<OrderViewDTO, 'items'> & {
+    items: OrderItemView[];
+};
 
 interface OrderState {
     isLoading: boolean;
     error: string;
-    orders: OrderViewDTO[];
+    orders: OrderViewUI[];
 
     dueDate: Dayjs;
     setDueDate: (date: Dayjs) => void;
 
-    order: OrderViewDTO;
-    monthOrders: Map<number, OrderViewDTO[]>;
+    order: OrderViewUI;
+    monthOrders: Map<number, OrderViewUI[]>;
     amountPaid: number;
     getOrdersByClient: (clientId: string) => void;
-    getOrders: (orderId: string) => OrderViewDTO[];
-    getOrder: (orderId: string) => OrderViewDTO;
-    createOrder: (cartId: string, clientId: string) => OrderViewDTO;
+    getOrders: (orderId: string) => OrderViewUI[];
+    getOrder: (orderId: string) => OrderViewUI;
+    createOrder: (cartId: string, clientId: string) => OrderViewUI;
     getOrdersByMonth: (date: Dayjs) => void;
     getOrdersByTargetDate: (date: Dayjs) => void;
     updateStatus: (orderId: string, status: OrderStatus) => void;
     setAmountPaid: (value: number) => number;
-    updateAmountPaid: () => OrderViewDTO;
+    updateAmountPaid: () => OrderViewUI;
     repeatOrder: (orderId: string) => CartDTO;
 }
 
@@ -51,7 +60,7 @@ export const orderStore = create<OrderState>()(
                 try {
                     const orders = await orderService.getByClient(clientId);
 
-                    set({ isLoading: false, orders });
+                    set({ isLoading: false, orders: orders.map((order) => orderMap(order)) });
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getOrdersByClient:errosMessage`);
@@ -74,6 +83,8 @@ export const orderStore = create<OrderState>()(
 
                     notify.success('Замовлення успішно створено');
 
+                    localStorage.removeItem('cartId');
+
                     return order;
                 } catch (error: unknown) {
                     console.log(error);
@@ -90,9 +101,12 @@ export const orderStore = create<OrderState>()(
 
                 try {
                     const monthOrders = await orderService.getOrdersByMonth(date.valueOf());
+                    const orders = monthOrders.get(date.date());
+
+                    if (!orders) return;
 
                     set(
-                        { isLoading: false, monthOrders, orders: monthOrders.get(date.date()) },
+                        { isLoading: false, monthOrders, orders: orders.map((order) => orderMap(order)) },
                         false,
                         `${name}/getOrdersByMonth:success`,
                     );
@@ -108,7 +122,11 @@ export const orderStore = create<OrderState>()(
 
                 try {
                     const orders = await orderService.getAllByTargetDate(date.valueOf());
-                    set({ isLoading: false, orders }, false, `${name}/getOrdersByTargetDate:success`);
+                    set(
+                        { isLoading: false, orders: orders.map((order) => orderMap(order)) },
+                        false,
+                        `${name}/getOrdersByTargetDate:success`,
+                    );
                 } catch (error: unknown) {
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getOrdersByTargetDate:errosMessage`);
@@ -120,12 +138,14 @@ export const orderStore = create<OrderState>()(
                 set({ order: undefined, isLoading: true, error: '' }, false, `${name}/getOrder:start`);
 
                 try {
-                    const order = await orderService.getById(orderId);
+                    const orderRow = await orderService.getById(orderId);
+                    const order = orderMap(orderRow);
 
                     set({ isLoading: false, order, amountPaid: order.amountPaid }, false, `${name}/getOrder:success`);
 
                     return order;
                 } catch (error: unknown) {
+                    console.log(error);
                     if (error instanceof AppError)
                         set({ error: error.message }, false, `${name}/getOrder:errosMessage`);
                     set({ isLoading: false }, false, `${name}/getOrder:error`);
@@ -154,10 +174,9 @@ export const orderStore = create<OrderState>()(
                 set({ error: '', isLoading: true }, false, `${name}/updateAmountPaid:init`);
 
                 try {
-                    console.log('updateAmountPaid', get().order.id, get().amountPaid);
                     const order = await orderService.updateAmountPaid(get().order.id, get().amountPaid);
 
-                    set({ isLoading: false, order }, false, `${name}/updateAmountPaid:success`);
+                    set({ isLoading: false, order: orderMap(order) }, false, `${name}/updateAmountPaid:success`);
 
                     notify.success('Суму оплати оновлено');
 
@@ -193,3 +212,11 @@ export const orderStore = create<OrderState>()(
         { name, enabled: true },
     ),
 );
+
+function orderMap(order: OrderViewDTO) {
+    const items = order.items.map((i) => ({
+        ...i,
+        category: new Category().getTitle(i.category) as string,
+    }));
+    return { ...order, items };
+}

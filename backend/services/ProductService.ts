@@ -2,10 +2,7 @@ import {
   ProductModifier,
   type ProductModifierProps,
 } from "../domain/product/modifiers/ProductModifier";
-import {
-  Category,
-  type ProductCategory,
-} from "./../domain/product/ProductCategory";
+import { type ProductCategory } from "./../domain/product/ProductCategory";
 import { AppError } from "../../utils/error";
 import type { ProductRepository } from "../repositories/product/ProductRepository";
 import type { ProductViewDTO } from "../../dto/ProductViewDTO";
@@ -16,6 +13,8 @@ import type {
 import type { ProductManager } from "../domain/product/ProductManager";
 import { generateId } from "../../utils/utils";
 import { globalEventBus } from "../shared/EventBus";
+import { type ProductReserve } from "../../dto/ProductReserve";
+import { ProductToProduce } from "../domain/productToProduce/ProductToProduce";
 
 export class ProductService {
   constructor(
@@ -83,7 +82,7 @@ export class ProductService {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       categoryName: values.categoryName,
-      name: this.generateName(values),
+      name: values.fields.name?.trim() || "",
       quantity: Number(values.fields.quantity),
       price: Number(values.fields.price),
       width: Number(values.fields.width),
@@ -108,7 +107,7 @@ export class ProductService {
     const events = product.pullDomainEvents();
 
     for (const event of events) {
-      await globalEventBus.publish(event.type, event.payload);
+      await globalEventBus.publish(event.eventName, event.payload);
     }
 
     return await this.getProductToView(id);
@@ -194,28 +193,97 @@ export class ProductService {
     return await this.productRepository.getProductsByCategory(categoryName);
   }
 
-  private generateName(values: CreateProductValues) {
-    const name = !!values.fields.name ? values.fields.name.trim() : "";
+  public async writeOffStock(data: { productId: string; quantity: number }[]) {
+    const ids = data.map((i) => i.productId);
 
-    if (!!name) return name;
+    const products = await this.getProductByIdsMap(ids);
 
-    if (values.categoryName === "bag") {
-      return [
-        new Category().getTitle(values.categoryName),
-        values.fields.length,
-        values.fields.width,
-        values.fields.thickness,
-      ].join("/");
+    try {
+      data.map((i) => {
+        const product = products.get(i.productId);
+
+        if (product) {
+          product.decreaseQuantity(i.quantity);
+        }
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        console.log(error.details);
+      }
+
+      throw new AppError("DOMAIN", "Недостатньо запасів на складі");
     }
-    if (values.categoryName === "film") {
-      return [
-        new Category().getTitle(values.categoryName),
 
-        values.fields.width,
-        values.fields.thickness,
-      ].join("/");
-    }
+    return await this.productRepository.updateBulk([...products.values()]);
+  }
 
-    return new Category().getTitle(values.categoryName);
+  public async addToReserve(data: { productId: string; quantity: number }[]) {
+    return await this.productRepository.addToReserve(
+      data.map((i) => ({ ...i, id: generateId() }) as ProductReserve),
+    );
+  }
+
+  public async deleteFromReserve(id: string) {
+    return await this.productRepository.deleteFromReserve(id);
+  }
+
+  public async createRequestToProduce(
+    data: { productId: string; quantity: number }[],
+  ) {
+    const products = await this.getProductByIdsMap(
+      data.map((i) => i.productId),
+    );
+
+    const productsToProduce = data.reduce((acc, i) => {
+      const product = products.get(i.productId);
+      const diff = i.quantity - (product?.quantity ?? 0);
+
+      if (product && diff > 0) {
+        acc.push(new ProductToProduce(generateId(), product.id, diff));
+      }
+
+      return acc;
+    }, [] as ProductToProduce[]);
+
+    return this.productRepository.addToProduce(productsToProduce);
+  }
+
+  public async deleteFromProduce(id: string) {
+    return await this.productRepository.deleteFromProduce(id);
+  }
+
+  public async getProductsToProduce() {
+    const productsToProduce = await this.productRepository.getAllToProduce();
+
+    const productsToProduceMap = new Map(
+      productsToProduce.map((i) => [i.productId, i]),
+    );
+
+    const products = await this.getProductByIds(
+      productsToProduce.map((i) => i.productId),
+    );
+
+    return products.map((p) => {
+      const productToProduce = productsToProduceMap.get(p.id);
+
+      if (productToProduce) {
+        p.quantity = productToProduce.quantity;
+
+        return { ...p.toView(), id: productToProduce.id };
+      }
+
+      return p.toView();
+    });
+  }
+
+  public async setProcustAsProduced(id: string) {
+    const productToProduce =
+      await this.productRepository.getProductToProduce(id);
+
+    productToProduce.setDone();
+
+    await this.productRepository.setProductAsProduced(productToProduce);
+
+    return productToProduce;
   }
 }

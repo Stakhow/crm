@@ -12,6 +12,7 @@ export default function ProductPage() {
     const { getProduct, product, isLoading, updateProduct, deleteProduct, error, propsToCreate } = productStore(
         (state) => state,
     );
+
     const [openDialog, setOpenDialog] = useState(false);
 
     const { id } = useParams();
@@ -49,12 +50,14 @@ export default function ProductPage() {
                                     </Button>
                                 }
                             />
-                            <FormComponent
-                                props={propsToCreate}
-                                onSubmit={(values) => {
-                                    updateProduct(product.id, values);
-                                }}
-                            />
+                            {!!propsToCreate && (
+                                <FormComponent
+                                    props={propsToCreate}
+                                    onSubmit={(values) => {
+                                        updateProduct(product.id, values);
+                                    }}
+                                />
+                            )}
 
                             <ConfirmationDialog
                                 isOpen={openDialog}

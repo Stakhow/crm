@@ -77,6 +77,8 @@ export class Cart {
 
   removeItem(itemId: string) {
     this.items.delete(itemId);
+
+    return itemId;
   }
 
   getItems() {
@@ -84,6 +86,10 @@ export class Cart {
   }
 
   getProductsId() {
+    console.log(
+      "getProductsId",
+      this.getItems().map((i) => i.productId),
+    );
     return this.getItems().map((i) => i.productId);
   }
 
@@ -122,10 +128,15 @@ export class Cart {
   }
 
   cartItemsToDB(): CartItemDB[] {
-    return this.getItems().map((i) => ({
+    const items = this.getItems().map((i) => ({
       ...i.toPersistence(),
       id: generateId(),
       cartId: this.id,
     }));
+
+    if (!items.length)
+      throw new AppError("DOMAIN", "Неможливо зберегти пусту корзину");
+
+    return items;
   }
 }

@@ -120,8 +120,6 @@ type CalendarBaseProps = {
 const CalendarBase = ({ date, isLoading, monthOrders, ...props }: CalendarBaseProps) => {
     return (
         <DateCalendar
-            // value={date}
-            // defaultValue={dayjs()}
             loading={isLoading}
             dayOfWeekFormatter={(weekday) => `${weekday.format('dd')}.`}
             renderLoading={() => <DayCalendarSkeleton />}

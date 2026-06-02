@@ -10,7 +10,9 @@ import { ProductService } from "./services/ProductService";
 import { OrderService } from "./services/OrderService";
 import { CartService } from "./services/CartService";
 import { CartRepository } from "./repositories/cart/CartRepository";
-import { Subscriber } from "./subscribers";
+import { ProductSubscriber } from "./subscribers/ProductSubscriber";
+import { CheckoutService } from "./services/CheckoutService";
+import { OrderSubscriber } from "./subscribers/OrderSubscriber";
 
 const productFactory = new ProductFactory();
 
@@ -30,12 +32,18 @@ export const productService = new ProductService(
 
 export const cartService = new CartService(cartRepository, productService);
 
+const checkoutService = new CheckoutService(orderRepository, cartService);
+
 export const orderService = new OrderService(
   orderRepository,
   cartService,
   productService,
   clientService,
+  checkoutService,
 );
 
-const subscriber = new Subscriber();
-subscriber.init();
+const productSubscriber = new ProductSubscriber(productService);
+productSubscriber.init();
+
+const orderSubscriber = new OrderSubscriber(productService);
+orderSubscriber.init();

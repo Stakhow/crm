@@ -23,8 +23,9 @@ export class CartService {
     return await this.cartReposirory.load(id);
   }
 
-  async getCartToView(id: string): Promise<CartDTO> {
-    const cart = await this.getCart(id);
+  async getCartToView(cartId: string): Promise<CartDTO> {
+    const cart = await this.getCart(cartId);
+    console.log("cart!!!", cart.getProductsId());
     const products = await this.productService.getProductByIds(
       cart.getProductsId(),
     );
@@ -54,12 +55,16 @@ export class CartService {
       };
     });
 
-    return {
+    const cartDTO = {
       ...cart.toPersistent(),
       items,
       productsIds: cart.getProductsId(),
       totalAmount,
     };
+
+    console.log(cartDTO);
+
+    return cartDTO;
   }
 
   async addCartItem(data: CartItemAdd): Promise<CartDTO> {
@@ -76,27 +81,20 @@ export class CartService {
   }
 
   async deleteCartItem(cartId: string, productId: string): Promise<CartDTO> {
-    console.log("deleteCartItem", cartId, productId);
-
     const cart = await this.getCart(cartId);
+    cart.removeItem(productId);
 
-    const cartItem = cart.getItem(productId);
-    if (!cartItem) throw new AppError("SERVICE", "Позиція відсутня!");
-
-    await this.cartReposirory.deleteCartItem(cart.id, productId);
+    await this.cartReposirory.save(cart);
 
     return this.getCartToView(cartId);
   }
 
-  async deleteCart(id: string) {
-    return this.resetCart(id);
-  }
-
-  async resetCart(id: string) {
-    return await this.cartReposirory.delete(id);
+  async deleteCart(cartId: string) {
+    return await this.cartReposirory.delete(cartId);
   }
 
   async createFromOrder(cartItems: CartItemAdd[]) {
+    console.log("createFromOrder", cartItems);
     const cart = await this.getCart();
 
     cartItems.map((i) => cart.addItem(i));

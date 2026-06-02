@@ -2,11 +2,12 @@ import { AppError } from "../../utils/error";
 import type { OrderRepository } from "../repositories/order/OrderRepository";
 import type { CartService } from "./CartService";
 import { Order, type OrderStatus } from "../domain/order/Order";
+import { OrderItem } from "../domain/order/OrderItem";
 import type { OrderViewDTO } from "../../dto/OrderViewDTO";
 import type { ProductService } from "./ProductService";
 import type { ClientService } from "./ClientService";
 import { generateId } from "../../utils/utils";
-import { Category } from "../domain/product/ProductCategory";
+import { CheckoutService } from "./CheckoutService";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -16,6 +17,7 @@ export class OrderService {
     private cartService: CartService,
     private productService: ProductService,
     private clientService: ClientService,
+    private checkoutService: CheckoutService,
   ) {}
 
   async createOrder(
@@ -35,38 +37,37 @@ export class OrderService {
     const orderItems = cart.items.map((i) => {
       const product = stockProductsMap.get(i.productId);
       if (!product)
-        throw new AppError("DOMAIN", "Товар в коризні відсутній на складі");
+        throw new AppError("DOMAIN", "Товар в корзині відсутній на складі");
 
       product.quantity = i.quantity;
 
-      return {
+      const item = new OrderItem({
         id: generateId(),
         productId: product.id,
         name: product.name,
-        category: new Category().getTitle(product.categoryName),
+        category: product.categoryName,
         quantity: product.quantity,
         price: product.price,
         totalAmount: product.totalAmount,
-        unit: product,
-      };
+        unit: product.unit,
+      });
+
+      return item;
     });
 
-    const orderId = await this.orderRepository.save(
-      new Order(
-        generateId(),
-        client.toView(),
-        orderItems,
-        totalAmount,
-        quantity,
-        this.status,
-        dueDate,
-        Date.now(),
-        amountPaid,
-      ),
-      [...stockProductsMap.values()],
+    const order = new Order(
+      generateId(),
+      client.toView(),
+      orderItems,
+      totalAmount,
+      quantity,
+      this.status,
+      dueDate,
+      Date.now(),
+      amountPaid,
     );
 
-    await this.cartService.resetCart(cart.id);
+    const orderId = await this.checkoutService.commitOrder(order, cart.id);
 
     return await this.getById(orderId);
   }
@@ -91,8 +92,6 @@ export class OrderService {
 
   async repeatOrder(id: string) {
     const order = await this.orderRepository.getById(id);
-
-    
 
     return this.cartService.createFromOrder(
       order.items.map((i) => ({

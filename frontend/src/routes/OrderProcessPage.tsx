@@ -2,47 +2,51 @@ import { Formik, Form } from 'formik';
 import { CircularProgress, Stack, Box, Backdrop } from '@mui/material';
 import { CategoryWithState } from '../components/Categories';
 import type { ProductCategory } from '../../../backend/domain/product/ProductCategory';
-import * as Yup from 'yup';
+
 import { cartStore, categoryStore, productStore } from '../../store';
 import { BottomBar } from '../components/BottomBar';
-import { OrderTotalAmount } from '../components/Order/OrderTotalAmount';
+
 import { GoToCartButton } from '../components/Cart/CartButtons';
 import { CartProductListSelect } from '../components/Cart/CartProductsList';
+import { useEffect } from 'react';
+import { FormComponent } from '../components/Product/FormComponent';
+import { validationSchema } from '../components/Order/validationSchema';
 
 export interface OrderFormValues {
     totalAmount: number;
     categoryName: ProductCategory;
     id: string;
     quantity: number;
-    stock: number;
 }
 
 export default function OrderPageNew() {
     const { cart, isLoading } = cartStore((s) => s);
     const { categoryName } = categoryStore((s) => s);
-    const { product } = productStore((s) => s);
+    const { product, products, productId, propsToCreate, getProducts, createProduct, getProductProps } = productStore(
+        (s) => s,
+    );
+    const isProductLoading = productStore((s) => s).isLoading;
+
+    useEffect(() => {
+        if (!!categoryName) {
+            getProducts(categoryName);
+        }
+    }, [categoryName]);
+
+    useEffect(() => {
+        if (!isProductLoading && (productId === 'new' || !products.length)) {
+            getProductProps(categoryName);
+        }
+    }, [productId, products]);
+
+    // console.log(categoryName);
 
     const initialValues: OrderFormValues = {
         totalAmount: cart?.totalAmount ?? 0,
         categoryName: categoryName,
         id: product?.id ?? '',
-        stock: product?.quantity ?? 0,
         quantity: 0,
     };
-    const validationSchema = Yup.object().shape({
-        totalAmount: Yup.number().moreThan(0, 'Позитивне значення').required("Поле обов'язкове"),
-        categoryName: Yup.string().required("Поле обов'язкове"),
-        id: Yup.number().required("Поле обов'язкове"),
-        stock: Yup.number(),
-        quantity: Yup.number()
-            .max(Yup.ref('stock'), 'Продукту не вистачає на складі')
-            .positive('Тільки позитивне число')
-            .when('categoryName', {
-                is: 'bag',
-                then: (schema) => schema.integer('Тільки ціле число').required("Поле обов'язкове"),
-                otherwise: (schema) => schema.required("Поле обов'язкове"),
-            }),
-    });
 
     return (
         <Box>
@@ -55,18 +59,18 @@ export default function OrderPageNew() {
             >
                 {({ values }) => {
                     return (
-                        <Form>
-                            <Stack mb={14} spacing={2}>
-                                <CategoryWithState />
-                                <CartProductListSelect />
-
-                                <BottomBar>
-                                    <OrderTotalAmount totalAmount={values.totalAmount} />
-
-                                    <GoToCartButton disabled={values.totalAmount === 0} />
-                                </BottomBar>
-                            </Stack>
-                        </Form>
+                        <Box mb={14}>
+                            <Form>
+                                <Stack spacing={2}>
+                                    <CategoryWithState />
+                                    <CartProductListSelect />
+                                </Stack>
+                            </Form>
+                            <BottomBar>
+                                <GoToCartButton disabled={values.totalAmount === 0} />
+                            </BottomBar>
+                            {!!propsToCreate && <FormComponent props={propsToCreate} onSubmit={createProduct} />}
+                        </Box>
                     );
                 }}
             </Formik>

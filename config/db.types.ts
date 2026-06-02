@@ -3,12 +3,17 @@ import { Optional } from "dexie";
 
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
 import type { OrderStatus } from "../backend/domain/order/Order";
-import type { ProductViewUIDTO } from "../dto/ProductViewDTO";
 import type { ProductDataDTO } from "../dto/ProductDataDTO";
-import type { ClientViewDTO } from "../dto/ClientViewDTO";
+import { OrderItem } from "../backend/domain/order/OrderItem";
+import { type IProductProduce } from "../dto/ProductProduce";
+import { type ProductReserve } from "../dto/ProductReserve";
 
 // ---------- PRODUCTS ----------
 export type ProductDB = ProductDataDTO;
+
+export type ProductReserveDB = ProductReserve;
+
+export type ProductToProduceDB = IProductProduce;
 
 // ---------- MODIFIERS ----------
 export type ModifierGroupDB = Optional<
@@ -39,41 +44,34 @@ export type ProductModifierRelationDB = {
 };
 
 // ---------- ORDERS ----------
-export type OrderDB = Optional<
-  {
-    id: string;
-    client: ClientViewDTO;
-    totalAmount: number;
-    quantity: number;
-    status: OrderStatus;
-    deadline: number;
-    createdAt: number;
-    amountPaid: number;
-  },
-  "id"
->;
+export type OrderDB = {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientPhone: string;
+  totalAmount: number;
+  quantity: number;
+  status: OrderStatus;
+  deadline: number;
+  createdAt: number;
+  amountPaid: number;
+};
 
-export type OrderItemDB = Optional<
-  {
-    id: string;
-    orderId: string;
-    productId: string;
-    data: ProductViewUIDTO;
-  },
-  "id"
->;
+export type OrderItemDB = {
+  id: string;
+  orderId: string;
+  productId: string;
+  data: OrderItem;
+};
 
 // ---------- CLIENTS ----------
-export type ClientDB = Optional<
-  {
-    id: string;
-    name: string;
-    phone: string;
-    createdAt: number;
-    updatedAt: number;
-  },
-  "id"
->;
+export type ClientDB = {
+  id: string;
+  name: string;
+  phone: string;
+  createdAt: number;
+  updatedAt: number;
+};
 
 // ---------- CART ----------
 export type CartDB = {

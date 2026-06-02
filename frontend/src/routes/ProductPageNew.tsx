@@ -29,11 +29,10 @@ export default function ProductPageNew() {
 
             {!!categoryName && !!propsToCreate && (
                 <FormComponent
-                    
                     props={propsToCreate}
                     onSubmit={async (values) => {
                         const product = await createProduct(values);
-                        console.log('product created', product);
+
                         if (!!product && !!product.id) navigate(`/products/${product.id}`);
                     }}
                 />

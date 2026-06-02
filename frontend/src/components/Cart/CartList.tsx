@@ -4,8 +4,6 @@ import { priceFormat, quantityFormat } from '../../../../utils/utils';
 import { CartItemDeleteButton } from './CartButtons';
 import { ListItemDots } from '../ListItemDots';
 
-
-
 export const CartList = () => {
     const { items } = cartStore((s) => s);
 
@@ -29,7 +27,7 @@ export const CartList = () => {
                             <ListItemDots title="Кількість" value={quantityFormat(cartItem.quantity, cartItem.unit)} />
                             <ListItemDots title="Вартість" value={priceFormat(cartItem.total)} />
 
-                            <CartItemDeleteButton cartItemId={cartItem.productId} size={'small'} sx={{ mt: 1 }} />
+                            <CartItemDeleteButton productId={cartItem.productId} size={'small'} sx={{ mt: 1 }} />
                         </Card>
                     ))}
                 </Card>

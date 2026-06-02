@@ -1,4 +1,5 @@
 import type { ProductCategory } from "../backend/domain/product/ProductCategory";
+import type { ProductUnitType } from "./ProductViewDTO";
 
 export type ProductDataBaseDTO = {
   id: string;
@@ -9,6 +10,7 @@ export type ProductDataBaseDTO = {
   price: number;
   totalAmount: number;
   quantity: number;
+  unit: ProductUnitType;
 };
 
 export type ProductDataFilmDTO = ProductDataBaseDTO & {

@@ -1,3 +1,23 @@
+export interface DomainEvent {
+  eventName: string;
+  occurredOn: Date;
+  payload: any;
+}
+
+export class EventBusRoot {
+  private domainEvents: any[] = [];
+
+  protected addDomainEvent(event: DomainEvent): void {
+    this.domainEvents.push(event);
+  }
+
+  public pullDomainEvents(): DomainEvent[] {
+    const events = [...this.domainEvents];
+    this.domainEvents = [];
+    return events;
+  }
+}
+
 type EventCallback = (data: any) => void | Promise<void>;
 
 export class NativeEventBus {
@@ -26,6 +46,14 @@ export class NativeEventBus {
     });
 
     await Promise.all(promises);
+  }
+
+  async publishFromAggregate(entity: EventBusRoot): Promise<void> {
+    const events = entity.pullDomainEvents();
+
+    for (const event of events) {
+      await this.publish(event.eventName, event.payload);
+    }
   }
 }
 

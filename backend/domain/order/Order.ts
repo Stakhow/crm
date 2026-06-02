@@ -1,24 +1,21 @@
+import { OrderItem } from "./OrderItem";
 import dayjs from "dayjs";
-import type { ClientViewDTO } from "../../../dto/ClientViewDTO";
 import type { OrderViewDTO } from "../../../dto/OrderViewDTO";
 import { AppError } from "../../../utils/error";
 import type { OrderDB, OrderItemDB } from "../../../config/db.types";
+import { type DomainEvent, EventBusRoot } from "../../shared/EventBus";
 
 export type OrderStatus = "InProgress" | "Done" | "Cancelled";
 
-export type OrderItem = {
-  id: string;
-  productId: string;
-  name: string;
-  category: string;
-  quantity: number;
-  price: number;
-  totalAmount: number;
-};
+export class OrderCreateEvent implements DomainEvent {
+  occurredOn: Date = new Date();
+  eventName: string = "ORDER_CREATED";
+  constructor(public payload: Order) {}
+}
 
-export class Order {
+export class Order extends EventBusRoot {
   public id: string;
-  public client: ClientViewDTO;
+  public client: {id: string, name: string, phone: string};
   public items: OrderItem[];
   public itemsMap: Map<string, OrderItem>;
   public totalAmount: number;
@@ -32,7 +29,7 @@ export class Order {
 
   constructor(
     id: string,
-    client: ClientViewDTO,
+    client: {id: string, name: string, phone: string},
     items: OrderItem[],
     totalAmount: number,
     quantity: number,
@@ -41,6 +38,8 @@ export class Order {
     createdAt: number,
     amountPaid: number,
   ) {
+    super();
+
     this.id = id;
 
     if (!client) throw new AppError("DOMAIN", "Клієнта не вказано");
@@ -75,10 +74,16 @@ export class Order {
     this.localedStatuses.set("Cancelled", "Відмінений");
 
     this.itemsMap = new Map(items.map((i) => [i.id, i]));
+
+    this.addDomainEvent(new OrderCreateEvent(this));
   }
 
   getOrderItem(id: string) {
     return this.itemsMap.get(id);
+  }
+
+  addOrderItem(item: OrderItem) {
+    this.items.push(item);
   }
 
   updateStatus(status: OrderStatus) {
@@ -101,10 +106,8 @@ export class Order {
         id: this.client.id,
         name: this.client.name,
         phone: this.client.phone,
-        createdAt: this.client.createdAt,
-        updatedAt: this.client.updatedAt,
       },
-      items: this.items,
+      items: this.items.map((i) => i.toViewItem()),
       totalAmount: this.totalAmount,
       quantity: this.quantity,
       status: this.status,
@@ -122,7 +125,9 @@ export class Order {
   toSaveDB(): OrderDB {
     return {
       id: this.id,
-      client: this.client,
+      clientId: this.client.id,
+      clientName: this.client.name,
+      clientPhone: this.client.phone,
       totalAmount: this.totalAmount,
       quantity: this.quantity,
       status: this.status,
@@ -135,8 +140,15 @@ export class Order {
     return this.items.map((i) => ({
       id: i.id,
       orderId: this.id,
-      productId: i.id,
+      productId: i.productId,
       data: i,
+    }));
+  }
+
+  getProductsToWrightOff() {
+    return this.items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
     }));
   }
 }

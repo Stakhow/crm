@@ -20,29 +20,19 @@ export class CartRepository {
 
   async save(cart: Cart): Promise<void> {
     await this.delete(cart.id);
-    const persistentCart = cart.toPersistent();
+    const persistentCart = cart.toDB();
 
     db.transaction("rw", db.cart, db.cart_items, async () => {
       await db.cart.put(persistentCart);
+      await db.cart_items.where({ cartId: cart.id }).delete();
       await db.cart_items.bulkPut(cart.cartItemsToDB());
     });
   }
 
   async delete(cartId: string) {
-    console.log(cartId);
     return db.transaction("rw", db.cart, db.cart_items, async () => {
       await db.cart.where({ id: cartId }).delete();
       await db.cart_items.where({ cartId }).delete();
     });
-  }
-
-  async deleteCartItem(cartId: string, productId: string): Promise<void> {
-    console.log(cartId, productId);
-    await db.cart_items
-      .where("[cartId+productId]")
-      .equals([cartId, productId])
-      .delete();
-
-    if ((await db.cart_items.count()) === 0) await this.delete(cartId);
   }
 }

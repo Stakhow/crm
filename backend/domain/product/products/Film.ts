@@ -77,7 +77,7 @@ export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
     return {
       id: this.id,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
+      updatedAt: Date.now(),
       categoryName: this.categoryName,
       totalAmount: this.totalAmount,
       quantity: this.quantity,
@@ -85,6 +85,7 @@ export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
       price: this.price,
       width: this.width,
       thickness: this.thickness,
+      unit: this.unit,
     };
   }
 }
