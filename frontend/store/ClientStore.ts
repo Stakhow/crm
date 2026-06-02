@@ -34,196 +34,151 @@ interface ClientState {
 const name = 'clientStore';
 export const clientStore = create<ClientState>()(
     devtools(
-        (set, get) => ({
-            isLoading: false,
-            error: '',
-            clientFields: {
-                name: '',
-                phone: '',
-            },
-            client: undefined,
-            clients: undefined,
-            contacts: [],
-
-            getClient: async (clientId) => {
-                set(
-                    {
-                        isLoading: true,
-                        client: undefined,
-                        error: '',
-                    },
-                    false,
-                    `${name}/getClient:start`,
-                );
-
+        (set, get) => {
+            const handleRequest = async (
+                actionName: string,
+                errorMessage: string,
+                requestFn: () => Promise<any>,
+                onStartInit: Partial<ClientState> = { isLoading: true, error: '' },
+            ): Promise<any> => {
+                set(onStartInit, false, `${name}/${actionName}:start`);
                 try {
-                    const client = await clientService.getByIdToView(clientId);
-
-                    if (!!client.id) client.phone = formatPhoneForUI(client.phone);
-
-                    set({ client: client, isLoading: false, error: '' }, false, `${name}/getClient:success`);
-
-                    return client;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getClient:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getClient:error`);
-                    notify.error(`Клієнта не існує: ${get().error}`);
-                }
-            },
-
-            setClient: (clientId) => {
-                set({ clientId });
-            },
-
-            getClients: async () => {
-                set({ isLoading: true, clients: undefined, error: '' }, false, `${name}/getClients:start`);
-
-                try {
-                    const clientsDB = await clientService.getAll();
-
-                    const clients: ClientViewDTO[] = clientsDB.map((i) => ({ ...i, phone: formatPhoneForUI(i.phone) }));
-
-                    set({ isLoading: false, clients, error: '' }, false, `${name}/getClients:start`);
-
-                    return clients;
+                    return await requestFn();
                 } catch (error: unknown) {
                     console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getClients:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/getClients:error`);
-                    notify.error(`Помилка отрмання списку клієнтів: ${get().error}`);
+                    const msg = error instanceof AppError ? error.message : 'Невідома помилка';
+                    set({ error: msg, isLoading: false }, false, `${name}/${actionName}:error`);
+                    notify.error(`${errorMessage}: ${get().error}`);
+                    throw error;
                 }
-            },
-            deleteClient: async (clientId) => {
-                set({ client: undefined, isLoading: true, error: '' }, false, `${name}/deleteClient:start`);
+            };
 
-                try {
-                    await clientService.delete(clientId);
+            return {
+                isLoading: false,
+                error: '',
+                clientFields: {
+                    name: '',
+                    phone: '',
+                },
+                client: undefined,
+                clients: undefined,
+                contacts: [],
 
-                    set({ client: undefined, isLoading: false, error: '' }, false, `${name}/deleteClient:success`);
-                    notify.success(`Клієнта видалено`);
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/deleteClient:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/deleteClient:error`);
-                    notify.error(`Помилка видалення клієнта: ${get().error}`);
-                }
-            },
-            saveClient: async (client) => {
-                set(
-                    {
-                        isLoading: true,
-                        error: '',
-                    },
-                    false,
-                    `${name}/saveClient:start`,
-                );
+                getClient: (clientId) =>
+                    handleRequest(
+                        'getClient',
+                        'Клієнта не існує',
+                        async () => {
+                            const client = await clientService.getByIdToView(clientId);
+                            if (!!client.id) client.phone = formatPhoneForUI(client.phone);
+                            set({ client, isLoading: false, error: '' }, false, `${name}/getClient:success`);
+                        },
+                        { isLoading: true, client: undefined, error: '' },
+                    ),
 
-                try {
-                    const saveClient = await clientService.create(client);
-                    set(
-                        { client: saveClient, contacts: [], isLoading: false, error: '' },
-                        false,
-                        `${name}/saveClient:success`,
-                    );
-                    notify.success(`Клієнта збережено`);
+                setClient: (clientId) => {
+                    set({ clientId });
+                },
 
-                    return saveClient;
-                } catch (error) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/saveClient:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/saveClient:error`);
-                    notify.error(`Помилка збереження клієнта: ${get().error}`);
-                }
-            },
-            saveClients: async () => {
-                set(
-                    {
-                        isLoading: true,
-                        error: '',
-                    },
-                    false,
-                    `${name}/saveClients:start`,
-                );
+                getClients: () =>
+                    handleRequest(
+                        'getClients',
+                        'Помилка отрмання списку клієнтів',
+                        async () => {
+                            const clientsDB = await clientService.getAll();
+                            const clients: ClientViewDTO[] = clientsDB.map((i) => ({
+                                ...i,
+                                phone: formatPhoneForUI(i.phone),
+                            }));
+                            set({ isLoading: false, clients, error: '' }, false, `${name}/getClients:start`);
+                        },
+                        { isLoading: true, clients: undefined, error: '' },
+                    ),
 
-                try {
-                    const savedClients = await clientService.saveBulk(get().contacts);
-                    set(
-                        { clients: [], contacts: [], isLoading: false, error: '' },
-                        false,
-                        `${name}/saveClients:success`,
-                    );
-                    notify.success(`Клієнтів успішно збережено`);
+                deleteClient: (clientId) =>
+                    handleRequest(
+                        'deleteClient',
+                        'Помилка видалення клієнта',
+                        async () => {
+                            await clientService.delete(clientId);
+                            set(
+                                { client: undefined, isLoading: false, error: '' },
+                                false,
+                                `${name}/deleteClient:success`,
+                            );
+                            notify.success(`Клієнта видалено`);
+                        },
+                        { client: undefined, isLoading: true, error: '' },
+                    ),
 
-                    return savedClients;
-                } catch (error) {
-                    console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/saveClients:errosMessage`);
-                    set({ isLoading: false }, false, `${name}/saveClients:error`);
-                    notify.error(`Помилка збереження клієнтів: ${get().error}`);
-                }
-            },
-            handlePickContacts: async () => {
-                // 1. Check if the API is supporteds
-                const supported = 'contacts' in navigator && 'ContactsManager' in window;
-                if (supported) {
-                    try {
-                        // 2. Define which properties you want to retrieve
-                        // Options: 'name', 'email', 'tel', 'address', 'icon'
-                        const props = ['name', 'tel'];
-                        const options = { multiple: true }; // Allow selecting multiple contacts
+                saveClient: (client) =>
+                    handleRequest('saveClient', 'Помилка збереження клієнта', async () => {
+                        const saveClient = await clientService.create(client);
+                        set(
+                            { client: saveClient, contacts: [], isLoading: false, error: '' },
+                            false,
+                            `${name}/saveClient:success`,
+                        );
+                        notify.success(`Клієнта збережено`);
+                    }),
 
-                        // 3. Open the native contact picker
-                        //@ts-ignore
-                        const selectedContacts: ContactInfo[] = await navigator.contacts.select(props, options);
+                saveClients: () =>
+                    handleRequest('saveClients', 'Помилка збереження клієнтів', async () => {
+                        const savedClients = await clientService.saveBulk(get().contacts);
+                        set(
+                            { clients: [], contacts: [], isLoading: false, error: '' },
+                            false,
+                            `${name}/saveClients:success`,
+                        );
+                        notify.success(`Клієнтів успішно збережено`);
 
-                        set({
-                            contacts: selectedContacts.map((i) => fromContactToClientMapper(i)),
-                        });
-                    } catch (error) {
-                        console.error('Contact picker failed:', error);
+                        return savedClients;
+                    }),
 
-                        if (error instanceof AppError)
-                            set({ error: error.message }, false, `${name}/saveClients:errosMessage`);
-                        set({ isLoading: false }, false, `${name}/saveClients:error`);
-                        notify.error(`Помилка збереження клієнтів: ${get().error}`);
+                handlePickContacts: async () => {
+                    const supported = 'contacts' in navigator && 'ContactsManager' in window;
+                    if (supported) {
+                        return handleRequest(
+                            'saveClients',
+                            'Помилка збереження клієнтів',
+                            async () => {
+                                const props = ['name', 'tel'];
+                                const options = { multiple: true };
+                                //@ts-ignore
+                                const selectedContacts: ContactInfo[] = await navigator.contacts.select(props, options);
+                                set({
+                                    contacts: selectedContacts.map((i) => fromContactToClientMapper(i)),
+                                });
+                            },
+                            { isLoading: true, error: '' },
+                        );
+                    } else {
+                        console.log('Contact Picker API is not supported on this browser.');
+                        notify.error(`Contact Picker API не підтримується в цьому браузері`);
                     }
-                } else {
-                    console.log('Contact Picker API is not supported on this browser.');
-
-                    notify.error(`Contact Picker API не підтримується в цьому браузері`);
-                }
-            },
-        }),
+                },
+            };
+        },
         { name, enabled: false },
     ),
 );
 
 function formatPhoneForUI(phone: string) {
-    // 1. Remove all non-numeric characters
     let cleaned = ('' + phone).replace(/\D/g, '');
 
-    // 2. Normalize: Remove leading '38' if it exists to normalize (0xx)xxx-xx-xx
     if (cleaned.startsWith('38')) {
         cleaned = cleaned.substring(2);
     }
 
-    // 3. Ensure it starts with '0' and has 10 digits
     const match = cleaned.match(/^0\d{9}$/);
 
     if (match) {
-        // 4. Apply format: +38 (0xx) xxx-xx-xx
         return `+38 (0${cleaned.substring(1, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6, 8)}-${cleaned.substring(8, 10)}`;
     } else throw new AppError('DOMAIN', 'Помилка формату номера телефону');
-
-    // return phone; // Return original or handle error if invalid
 }
 
 function fromContactToClientMapper(client: ContactInfo): ClientViewDTO {
     const name = !!client.name && client.name.length === 1 ? client.name[0] : '';
-
     const phone = !!client.tel && client.tel.length === 1 ? client.tel[0] : '';
 
     return {

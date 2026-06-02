@@ -6,7 +6,7 @@ import { productStore } from '../../store';
 
 export default function TasksPage() {
     const [productId, setProductId] = useState<string>('');
-    const { productsToProduce, isLoading, getProductsToProduce, setProcustAsProduced } = productStore((state) => state);
+    const { productsToProduce, isLoading, getProductsToProduce, setProductAsProduced } = productStore((state) => state);
 
     useEffect(() => {
         getProductsToProduce();
@@ -51,7 +51,7 @@ export default function TasksPage() {
                 title={'Підтвердити виконання?'}
                 handleClose={() => setProductId('')}
                 handleConfirmClick={() => {
-                    setProcustAsProduced(productId);
+                    setProductAsProduced(productId);
                     setProductId('');
                 }}
             />

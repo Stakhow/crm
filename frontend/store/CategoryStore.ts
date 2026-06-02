@@ -20,37 +20,46 @@ interface CategoryState {
 const name = 'category';
 export const categoryStore = create<CategoryState>()(
     devtools(
-        (set, get) => ({
-            categories: [],
-            categoryName: undefined,
-            isLoading: false,
-            error: '',
-            getCategories: async () => {
-                set(
-                    { categories: [], categoryName: undefined, isLoading: true, error: '' },
-                    false,
-                    'category/getCategories:start',
-                );
-
+        (set, get) => {
+            const handleRequest = async (
+                actionName: string,
+                errorMessage: string,
+                requestFn: () => Promise<void>,
+                onStartInit: Partial<CategoryState> = { isLoading: true, error: '' }
+            ): Promise<any> => {
+                set(onStartInit, false, `${name}/${actionName}:start`);
                 try {
-                    set(
-                        {
-                            isLoading: false,
-                            categories: await productService.getCategories(),
-                        },
-                        false,
-                        'category/getCategories:success',
-                    );
+                    return await requestFn();
                 } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, 'category/getCategories:errorMessage');
-                    set({ isLoading: false }, false, 'category/getCategories:error');
-                    notify.error(`Помилка отримання категорій: ${get().error}`);
+                    const msg = error instanceof AppError ? error.message : 'Невідома помилка';
+                    set({ error: msg, isLoading: false }, false, `${name}/${actionName}:error`);
+                    notify.error(`${errorMessage}: ${get().error}`);
+                    throw error;
                 }
-            },
-            setCategory: (categoryName) => set({ categoryName }, false, 'category/setCategory'),
-            setCategories: (categoryNames) => set({ categoryNames }, false, 'category/setCategories'),
-        }),
+            };
+
+            return {
+                categories: [],
+                categoryName: undefined,
+                categoryNames: undefined,
+                isLoading: false,
+                error: '',
+
+                getCategories: () =>
+                    handleRequest(
+                        'getCategories',
+                        'Помилка отримання категорій',
+                        async () => {
+                            const categories = await productService.getCategories();
+                            set({ isLoading: false, categories }, false, `${name}/getCategories:success`);
+                        },
+                        { categories: [], categoryName: undefined, isLoading: true, error: '' }
+                    ),
+
+                setCategory: (categoryName) => set({ categoryName }, false, 'category/setCategory'),
+                setCategories: (categoryNames) => set({ categoryNames }, false, 'category/setCategories'),
+            };
+        },
         { name, enabled: false },
     ),
 );

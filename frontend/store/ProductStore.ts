@@ -1,11 +1,11 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { productService } from '../../backend';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import type { ProductCategory } from '../../backend/domain/product/ProductCategory';
 import type { CreateProductDTO } from '../../dto/ProductToCreateDTO';
 import type { ProductViewDTO, ProductViewUIDTO } from '../../dto/ProductViewDTO';
-import { devtools } from 'zustand/middleware';
 import { priceFormat, quantityFormat } from '../../utils/utils';
 
 export type CreateProductUIDTO = {
@@ -45,159 +45,61 @@ interface ProductState {
     updateProduct: (id: string, values: CreateProductUIDTO) => ProductViewUIDTO;
 
     getProductsToProduce: () => ProductViewUIDTO[];
-    setProcustAsProduced: (id: string) => void;
+    setProductAsProduced: (id: string) => void;
 }
 
 const name = 'productStore';
+
+const BASE_PRODUCT_FIELDS = [
+    { name: 'length', title: 'Довжина', value: (v: any) => `${v} см` },
+    { name: 'width', title: 'Ширина', value: (v: any) => `${v} см` },
+    { name: 'thickness', title: 'Товщина', value: (v: any) => `${v} мкм` },
+];
+
 export const productStore = create<ProductState>()(
     devtools(
-        (set, get) => ({
-            products: [],
-            product: undefined,
-            isLoading: false,
-            error: '',
-            success: true,
-            propsToCreate: undefined,
-            productsToProduce: [],
-            initCreate: () => {
-                set({ product: undefined, products: [], error: '' }, false, `${name}/initCreate`);
-            },
-
-            getProducts: async (categoryName) => {
-                set(
-                    {
-                        isLoading: true,
-                        productId: undefined,
-                        product: undefined,
-                        products: [],
-                        error: '',
-                        success: false,
-                        propsToCreate: undefined,
-                    },
-                    false,
-                    `${name}/getProducts:start`,
-                );
-
+        (set, get) => {
+            // Універсальний хелпер для обробки асинхронних запитів
+            const handleRequest = async <T>(
+                actionName: string,
+                errorMessage: string,
+                requestFn: () => Promise<T>,
+                onStartInit: Partial<ProductState> = { isLoading: true, error: '', success: false },
+            ): Promise<T | undefined> => {
+                set(onStartInit, false, `${name}/${actionName}:start`);
                 try {
-                    const productsRaw = await productService.getProductsToView(categoryName);
-                    const products = await productsRaw.map((i) => productMapper(i));
-                    set(
-                        {
-                            products,
-                            isLoading: false,
-                            product: undefined,
-                            success: true,
-                        },
-                        false,
-                        `${name}/getProducts:success`,
-                    );
-
-                    return products;
+                    const result = await requestFn();
+                    set({ isLoading: false, success: true }, false, `${name}/${actionName}:success`);
+                    return result;
                 } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getProducts:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/getProducts:error`);
-                    notify.error(`Помилка отримання продуктів: ${get().error}`);
+                    const msg = error instanceof AppError ? error.message : 'Невідома помилка';
+                    set({ error: msg, isLoading: false, success: false }, false, `${name}/${actionName}:error`);
+                    notify.error(`${errorMessage}: ${msg}`);
+                    return undefined;
                 }
-            },
-            getProductsToProduce: async () => {
-                set(
-                    {
-                        isLoading: true,
-                        error: '',
-                        success: false,
-                        productsToProduce: [],
-                    },
-                    false,
-                    `${name}/getProductsToProduce:start`,
-                );
+            };
 
-                try {
-                    const productsRaw = await productService.getProductsToProduce();
-                    const productsToProduce = productsRaw.map((i) => productMapperShort(i));
+            const resetProductState = {
+                productId: undefined,
+                product: undefined,
+                products: [],
+                propsToCreate: undefined,
+            };
 
-                    set(
-                        {
-                            productsToProduce,
-                            isLoading: false,
-                            product: undefined,
-                            success: true,
-                        },
-                        false,
-                        `${name}/getProductsToProduce:success`,
-                    );
+            return {
+                products: [],
+                product: undefined,
+                productId: undefined,
+                isLoading: false,
+                error: '',
+                success: true,
+                propsToCreate: undefined,
+                productsToProduce: [],
+                productAmount: 0,
 
-                    return productsToProduce;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getProductsToProduce:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/getProductsToProduce:error`);
-                    notify.error(`Помилка отримання списку на виконання: ${get().error}`);
-                }
-            },
-            getProductsByIds: async (ids) => {
-                set(
-                    {
-                        isLoading: true,
-                        productId: undefined,
-                        product: undefined,
-                        products: [],
-                        error: '',
-                        success: false,
-                    },
-                    false,
-                    `${name}/getProductsByIds:start`,
-                );
+                initCreate: () => set({ product: undefined, products: [], error: '' }, false, `${name}/initCreate`),
 
-                try {
-                    const products = await productService.getProductByIdsToView(ids);
-                    set(
-                        {
-                            products: products.map((i) => productMapper(i)),
-                            isLoading: false,
-                            product: undefined,
-                            success: true,
-                        },
-                        false,
-                        `${name}/getProductsByIds:success`,
-                    );
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getProductsByIds:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/getProductsByIds:error`);
-                    notify.error(`Помилка отримання продуктів: ${get().error}`);
-                }
-            },
-            getProductAmount: async (id, quantity) => {
-                set(
-                    {
-                        productAmount: 0,
-                    },
-                    false,
-                    `${name}/getProductAmount:start`,
-                );
-
-                try {
-                    const productAmount = await productService.getTotalAmount(id, quantity);
-
-                    set(
-                        {
-                            productAmount,
-                        },
-                        false,
-                        `${name}/getProductAmount:success`,
-                    );
-
-                    return productAmount;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message, isLoading: false }, false, `${name}/getProductAmount:errorMessage`);
-
-                    notify.error(`Помилка обчислення вартості: ${get().error}`);
-                }
-            },
-            selectProduct: (id) => {
-                try {
+                selectProduct: (id) => {
                     set(
                         {
                             propsToCreate: undefined,
@@ -207,245 +109,156 @@ export const productStore = create<ProductState>()(
                         false,
                         `${name}/selectProduct:success`,
                     );
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/selectProduct:errorMessage`);
+                },
 
-                    set({ isLoading: false }, false, `${name}/selectProduct:error`);
-
-                    notify.error(`Помилка вибору продукта: ${get().error}`);
-                }
-            },
-            getProduct: async (id) => {
-                set(
-                    {
-                        isLoading: true,
-                        product: undefined,
-                        products: [],
-                        error: '',
-                        success: false,
-                        propsToCreate: undefined,
-                    },
-                    false,
-                    `${name}/getProduct:start`,
-                );
-
-                try {
-                    const product = await productService.getProductToView(id);
-
-                    set(
-                        {
-                            isLoading: false,
-                            product: productMapper(product),
-                            success: true,
-                            propsToCreate: fieldsForEdit({
-                                categoryName: product.categoryName,
-                                fields: product.fields,
-                            }),
+                getProducts: (categoryName) =>
+                    handleRequest(
+                        'getProducts',
+                        'Помилка отримання продуктів',
+                        async () => {
+                            const raw = await productService.getProductsToView(categoryName);
+                            const products = raw.map((i) => productMapper(i));
+                            set({ products });
+                            return products;
                         },
-                        false,
-                        `${name}/getProduct:success`,
-                    );
-                } catch (error: unknown) {
-                    console.log(error);
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/getProduct:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/getProduct:error`);
-                    notify.error(`Помилка отримання продукту: ${get().error}`);
-                }
-            },
+                        { isLoading: true, error: '', success: false, ...resetProductState },
+                    ),
 
-            deleteProduct: async (id) => {
-                set(
-                    { isLoading: true, product: undefined, products: [], error: '', success: false },
-                    false,
-                    `${name}/deleteProduct:start`,
-                );
-
-                try {
-                    await productService.delete(id);
-
-                    const products = get().products;
-                    set(
-                        {
-                            products: products.filter((i) => i.id !== id),
-                            product: undefined,
-                            isLoading: false,
-                            success: true,
+                getProductsToProduce: () =>
+                    handleRequest(
+                        'getProductsToProduce',
+                        'Помилка отримання списку на виконання',
+                        async () => {
+                            const raw = await productService.getProductsToProduce();
+                            const productsToProduce = raw.map(productMapperShort);
+                            set({ productsToProduce, product: undefined });
+                            return productsToProduce;
                         },
-                        false,
-                        `${name}/deleteProduct:success`,
-                    );
+                        { isLoading: true, error: '', success: false, productsToProduce: [] },
+                    ),
 
-                    notify.success('Продукт видалено');
-
-                    return id;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/deleteProduct:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/deleteProduct:error`);
-                    notify.error(`Помилка видалення продукту: ${get().error}`);
-                }
-            },
-            updateProductQuantity: async (...arg) => {
-                set({ isLoading: true, error: '', success: false }, false, `${name}/updateProductQuantity:start`);
-
-                try {
-                    const product = await productService.updateProductQuantity(...arg);
-                    const products = get().products;
-                    set(
-                        {
-                            isLoading: false,
-                            products: products.map((i) => (i.id === product.id ? productMapper(product) : i)),
-                            success: true,
+                getProductsByIds: (ids) =>
+                    handleRequest(
+                        'getProductsByIds',
+                        'Помилка отримання продуктів',
+                        async () => {
+                            const raw = await productService.getProductByIdsToView(ids);
+                            set({ products: raw.map((i) => productMapper(i)), product: undefined });
                         },
-                        false,
-                        `${name}/updateProductQuantity:success`,
-                    );
+                        { isLoading: true, error: '', success: false, ...resetProductState },
+                    ),
 
-                    notify.success(`Кількість оновлено`);
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/updateProductQuantity:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/updateProductQuantity:error`);
-                    notify.error(`Помилка оновлення кількості: ${get().error}`);
-                }
-            },
-            getProductProps: async (categoryName) => {
-                set({ propsToCreate: undefined });
-
-                try {
-                    const propsToCreate = await productService.getProductProps(categoryName);
-                    set({
-                        propsToCreate: fieldsForCreate(propsToCreate),
-                    });
-                } catch (error) {}
-            },
-            createProduct: async (values) => {
-                set(
-                    {
-                        isLoading: true,
-                        product: undefined,
-                        products: [],
-                        error: '',
-                        success: false,
-                        propsToCreate: undefined,
-                    },
-                    false,
-                    `${name}/createProduct:start`,
-                );
-
-                try {
-                    const product = await productService.createProduct({
-                        categoryName: values.categoryName,
-                        fields: fieldsToMap(values.fields),
-                    });
-
-                    set(
-                        {
-                            isLoading: false,
-                            product: productMapper(product),
-                            success: true,
+                getProductAmount: (id, quantity) =>
+                    handleRequest(
+                        'getProductAmount',
+                        'Помилка обчислення вартості',
+                        async () => {
+                            const productAmount = await productService.getTotalAmount(id, quantity);
+                            set({ productAmount });
+                            return productAmount;
                         },
-                        false,
-                        `${name}/createProduct:success`,
-                    );
+                        { productAmount: 0 },
+                    ),
 
-                    notify.success(`Продукт створено`);
-
-                    return product;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/createProduct:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/createProduct:error`);
-                    notify.error(`Помилка створення: ${get().error}`);
-
-                    console.log(error);
-                }
-            },
-            updateProduct: async (id, values) => {
-                set(
-                    {
-                        isLoading: true,
-                        product: undefined,
-                        products: [],
-                        error: '',
-                        success: false,
-                        propsToCreate: undefined,
-                    },
-                    false,
-                    `${name}/updateProduct:start`,
-                );
-
-                try {
-                    const product = await productService.updateProduct(id, {
-                        categoryName: values.categoryName,
-
-                        fields: fieldsToMap(values.fields),
-                    });
-
-                    set(
-                        {
-                            isLoading: false,
-                            product: productMapper(product),
-                            success: true,
-                            propsToCreate: fieldsForEdit({
-                                categoryName: product.categoryName,
-                                fields: product.fields,
-                            }),
+                getProduct: (id) =>
+                    handleRequest(
+                        'getProduct',
+                        'Помилка отримання продукту',
+                        async () => {
+                            const raw = await productService.getProductToView(id);
+                            const product = productMapper(raw);
+                            set({
+                                product,
+                                propsToCreate: fieldsForEdit({ categoryName: raw.categoryName, fields: raw.fields }),
+                            });
                         },
-                        false,
-                        `${name}/updateProduct:success`,
-                    );
+                        { isLoading: true, error: '', success: false, ...resetProductState },
+                    ),
 
-                    notify.success(`Продукт оновлено`);
-
-                    return product;
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/updateProduct:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/updateProduct:error`);
-                    notify.error(`Помилка оновлення: ${get().error}`);
-
-                    console.log(error);
-                }
-            },
-            setProcustAsProduced: async (id) => {
-                set({ isLoading: true, error: '' }, false, `${name}/setProcustAsProduced:start`);
-
-                try {
-                    await productService.setProcustAsProduced(id);
-                    const productsToProduce = get().productsToProduce.filter((i) => i.id !== id);
-
-                    set(
-                        {
-                            productsToProduce,
-                            isLoading: false,
+                deleteProduct: (id) =>
+                    handleRequest(
+                        'deleteProduct',
+                        'Помилка видалення продукту',
+                        async () => {
+                            await productService.delete(id);
+                            set({ products: get().products.filter((i) => i.id !== id), product: undefined });
+                            notify.success('Продукт видалено');
+                            return id;
                         },
-                        false,
-                        `${name}/setProcustAsProduced:success`,
-                    );
+                        { isLoading: true, product: undefined, products: [], error: '', success: false },
+                    ),
 
-                    notify.success(`Продукт виготовлено`);
-                } catch (error: unknown) {
-                    if (error instanceof AppError)
-                        set({ error: error.message }, false, `${name}/setProcustAsProduced:errorMessage`);
-                    set({ isLoading: false }, false, `${name}/setProcustAsProduced:error`);
-                    notify.error(`Помилка встановлення: ${get().error}`);
+                updateProductQuantity: (...args) =>
+                    handleRequest('updateProductQuantity', 'Помилка оновлення кількості', async () => {
+                        const updated = await productService.updateProductQuantity(...args);
+                        set({
+                            products: get().products.map((i) => (i.id === updated.id ? productMapper(updated) : i)),
+                        });
+                        notify.success('Кількість оновлено');
+                    }),
 
-                    console.log(error);
-                }
-            },
-        }),
+                getProductProps: async (categoryName) => {
+                    set({ propsToCreate: undefined });
+                    try {
+                        const props = await productService.getProductProps(categoryName);
+                        set({ propsToCreate: fieldsForCreate(props) });
+                    } catch {}
+                },
+
+                createProduct: (values) =>
+                    handleRequest(
+                        'createProduct',
+                        'Помилка створення',
+                        async () => {
+                            const raw = await productService.createProduct({
+                                categoryName: values.categoryName,
+                                fields: fieldsToMap(values.fields),
+                            });
+                            const product = productMapper(raw);
+                            set({ product });
+                            notify.success('Продукт створено');
+                            return raw;
+                        },
+                        { isLoading: true, error: '', success: false, ...resetProductState },
+                    ),
+
+                updateProduct: (id, values) =>
+                    handleRequest(
+                        'updateProduct',
+                        'Помилка оновлення',
+                        async () => {
+                            const raw = await productService.updateProduct(id, {
+                                categoryName: values.categoryName,
+                                fields: fieldsToMap(values.fields),
+                            });
+                            const product = productMapper(raw);
+                            set({
+                                product,
+                                propsToCreate: fieldsForEdit({ categoryName: raw.categoryName, fields: raw.fields }),
+                            });
+                            notify.success('Продукт оновлено');
+                            return raw;
+                        },
+                        { isLoading: true, error: '', success: false, ...resetProductState },
+                    ),
+
+                setProductAsProduced: (id) =>
+                    handleRequest(
+                        'setProductAsProduced',
+                        'Помилка встановлення',
+                        async () => {
+                            await productService.setProductAsProduced(id);
+                            set({ productsToProduce: get().productsToProduce.filter((i) => i.id !== id) });
+                            notify.success('Продукт виготовлено');
+                        },
+                        { isLoading: true, error: '' },
+                    ),
+            };
+        },
         { name, enabled: false },
     ),
 );
 
-const BASE_PRODUCT_FIELDS = [
-    { name: 'length', title: 'Довжина', value: (v: any) => `${v} см` },
-    { name: 'width', title: 'Ширина', value: (v: any) => `${v} см` },
-    { name: 'thickness', title: 'Товщина', value: (v: any) => `${v} мкм` },
-];
 
 function productMapper(product: ProductViewDTO, includeBagFields = true): ProductViewUIDTO {
     const bagFields =
@@ -473,7 +286,7 @@ const getBaseFormFields = (categoryName: string) =>
         { name: 'thickness', title: 'Товщина (мкм)', fieldType: 'number' },
         { name: 'quantity', title: `Кількість (${categoryName === 'bag' ? 'шт.' : 'кг'})`, fieldType: 'number' },
         { name: 'price', title: 'Ціна', fieldType: 'number' },
-    ].map((f) => ({ ...f, value: '', placeholder: '' })); // заповнюємо дефолтні значення
+    ].map((f) => ({ ...f, value: '', placeholder: '' }));
 
 function fieldsForCreate(data: CreateProductDTO): CreateProductUIDTO {
     return {
@@ -484,7 +297,6 @@ function fieldsForCreate(data: CreateProductDTO): CreateProductUIDTO {
 
 function fieldsForEdit(data: CreateProductDTO): CreateProductUIDTO {
     const allowedEditNames = ['name', 'quantity', 'price'];
-
     const fields = getBaseFormFields(data.categoryName)
         .filter((i) => allowedEditNames.includes(i.name) && Object.hasOwn(data.fields, i.name))
         .map((i) => ({ ...i, value: data.fields[i.name as keyof CreateProductDTO['fields']] }));

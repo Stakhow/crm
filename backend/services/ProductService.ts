@@ -276,7 +276,7 @@ export class ProductService {
     });
   }
 
-  public async setProcustAsProduced(id: string) {
+  public async setProductAsProduced(id: string) {
     const productToProduce =
       await this.productRepository.getProductToProduce(id);
 
