@@ -42,8 +42,10 @@ export const orderService = new OrderService(
   checkoutService,
 );
 
-const productSubscriber = new ProductSubscriber(productService);
+const productSubscriber = new ProductSubscriber();
+// productService
 productSubscriber.init();
 
-const orderSubscriber = new OrderSubscriber(productService);
+const orderSubscriber = new OrderSubscriber();
+// productService
 orderSubscriber.init();

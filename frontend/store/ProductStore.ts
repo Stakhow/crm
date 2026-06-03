@@ -59,7 +59,7 @@ const BASE_PRODUCT_FIELDS = [
 export const productStore = create<ProductState>()(
     devtools(
         (set, get) => {
-            // Універсальний хелпер для обробки асинхронних запитів
+            
             const handleRequest = async <T>(
                 actionName: string,
                 errorMessage: string,

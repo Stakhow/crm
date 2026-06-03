@@ -140,7 +140,6 @@ export class ProductRepository implements IProductRepository {
 
     return id;
   }
-
   // ========= /RESERVE ==========
 
   // ========= TO PRODUCE ==========
@@ -150,22 +149,53 @@ export class ProductRepository implements IProductRepository {
       allKeys: true,
     });
   }
-  async deleteFromProduce(id: string): Promise<string> {
+  async deleteFromProduce(
+    productToProductId: string | string[],
+  ): Promise<string | string[]> {
+    const ids = Array.isArray(productToProductId)
+      ? productToProductId
+      : [productToProductId];
 
-    await db.products_to_produce.delete(id);
+    await db.products_to_produce.where("id").anyOf(ids).delete();
 
-    return id;
+    return productToProductId;
   }
   async getAllToProduce(): Promise<ProductToProduce[]> {
     const productEntities = await db.products_to_produce.toArray();
 
     return productEntities.map(
-      (i) => new ProductToProduce(i.id, i.productId, i.quantity, i.status),
+      (i) =>
+        new ProductToProduce(
+          i.id,
+          i.productId,
+          i.quantity,
+          i.orderId,
+          i.status,
+        ),
     );
   }
 
-  async getProductToProduce(id: string): Promise<ProductToProduce> {
-    const productEntity = await db.products_to_produce.get(id);
+  async getToProduceByOrder(orderId: string): Promise<ProductToProduce[]> {
+    const productEntities = await db.products_to_produce
+      .where({ orderId })
+      .toArray();
+
+    return productEntities.map(
+      (i) =>
+        new ProductToProduce(
+          i.id,
+          i.productId,
+          i.quantity,
+          i.orderId,
+          i.status,
+        ),
+    );
+  }
+
+  async getProductToProduce(
+    produceProductId: string,
+  ): Promise<ProductToProduce> {
+    const productEntity = await db.products_to_produce.get(produceProductId);
     if (!productEntity)
       throw new AppError("DOMAIN", "Не знайдено продукт для виготовлення");
 
@@ -173,6 +203,7 @@ export class ProductRepository implements IProductRepository {
       productEntity.id,
       productEntity.productId,
       productEntity.quantity,
+      productEntity.orderId,
       productEntity.status,
     );
   }

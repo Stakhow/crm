@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { cartStore } from '../../../store';
 import { useEffect } from 'react';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+
 export const CartIconButton = () => {
     const { getCartToView, cart } = cartStore((s) => s);
 
@@ -10,11 +11,9 @@ export const CartIconButton = () => {
         getCartToView();
     }, []);
 
-    const quantity = !!cart ? cart.quantity : 0;
-
     return (
         <IconButton component={NavLink} to="/cart" size="large" color="inherit">
-            <Badge badgeContent={quantity} color="error">
+            <Badge badgeContent={!!cart ? cart.quantity : 0} color="error">
                 <ShoppingCartIcon />
             </Badge>
         </IconButton>

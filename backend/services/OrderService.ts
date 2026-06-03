@@ -69,6 +69,10 @@ export class OrderService {
 
     const orderId = await this.checkoutService.commitOrder(order, cart.id);
 
+    const requestedProducts = order.getWithdrawProducts();
+    await this.productService.addToReserve(requestedProducts);
+    await this.productService.createRequestToProduce(requestedProducts);
+
     return await this.getById(orderId);
   }
 
@@ -84,6 +88,16 @@ export class OrderService {
 
     if (status === "Cancelled" && oldStatus === "Done") {
       await this.productService.restockProducts(order.getWithdrawProducts());
+    }
+    if (status === "Cancelled" && oldStatus === "InProgress") {
+      const productsToProduce =
+        await this.productService.getProductsToProduceByOrder(order.id);
+
+      console.log(productsToProduce);
+
+      await this.productService.deleteFromProduce(
+        productsToProduce.map((i) => i.id),
+      );
     }
 
     return await this.orderRepository.update(order);

@@ -11,11 +11,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { NavLink, useLocation } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack } from '@mui/material';
-
 import { useColorScheme } from '@mui/material/styles';
-import { cartStore, orderStore } from '../store/';
 import { CartIconButton } from './components/Cart/CartButtons';
 
 interface Props {
@@ -47,13 +45,6 @@ export default function App(props: Props) {
 
     const { mode, setMode } = useColorScheme();
     const { pathname } = useLocation();
-
-    const { getCartToView } = cartStore((state) => state);
-    const { order } = orderStore((s) => s);
-
-    useEffect(() => {
-        getCartToView();
-    }, [order]);
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);

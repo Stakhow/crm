@@ -32,11 +32,11 @@ export class DexieDb extends Dexie {
   constructor() {
     super("crm");
 
-    this.version(7).stores({
+    this.version(8).stores({
       products:
         "id, category, categoryId, categoryName, name, weight, length, thickness",
-      products_reserve: "id",
-      products_to_produce: "id",
+      products_reserve: "id, productId, orderId",
+      products_to_produce: "id, productId, orderId",
       modifiers_groups: "id, *category",
       modifiers_values: "id, groupId",
       product_modifiers_relations: "id, productId, groupId",

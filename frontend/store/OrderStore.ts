@@ -26,16 +26,16 @@ interface OrderState {
     monthOrders: Map<number, OrderViewUI[]> | null;
     amountPaid: number;
     setDueDate: (date: Dayjs) => void;
-    getOrders: () => Promise<void>;
-    getOrdersByClient: (clientId: string) => Promise<void>;
-    createOrder: (cartId: string, clientId: string) => Promise<any>;
-    getOrdersByMonth: (date: Dayjs) => Promise<void>;
-    getOrdersByTargetDate: (date: Dayjs) => Promise<void>;
-    getOrder: (orderId: string) => Promise<OrderViewUI | undefined>;
+    getOrders: () => OrderViewUI[];
+    getOrdersByClient: (clientId: string) => OrderViewUI[];
+    createOrder: (cartId: string, clientId: string) => OrderViewUI;
+    getOrdersByMonth: (date: Dayjs) => void;
+    getOrdersByTargetDate: (date: Dayjs) => OrderViewUI[];
+    getOrder: (orderId: string) => OrderViewUI;
     updateStatus: (orderId: string, status: OrderStatus) => OrderStatus;
     setAmountPaid: (value: number) => void;
-    updateAmountPaid: () => Promise<any>;
-    repeatOrder: (orderId: string) => Promise<CartDTO | undefined>;
+    updateAmountPaid: () => OrderViewUI;
+    repeatOrder: (orderId: string) => CartDTO;
 }
 
 const name = 'order';
@@ -103,8 +103,8 @@ export const orderStore = create<OrderState>()(
                         { isLoading: true, orders: [], error: '' },
                     ),
 
-                createOrder: (cartId, clientId) =>
-                    handleRequest(
+                createOrder: async (cartId, clientId) =>
+                    await handleRequest(
                         'createOrder',
                         'Помилка створення замовлення',
                         async () => {
@@ -114,10 +114,11 @@ export const orderStore = create<OrderState>()(
                                 get().amountPaid,
                                 clientId,
                             );
-                            set({ order: orderMap(res) });
+                            const order = orderMap(res);
+                            set({ order });
                             notify.success('Замовлення успішно створено');
                             localStorage.removeItem('cartId');
-                            return res;
+                            return order;
                         },
                         { order: undefined, isLoading: true, error: '' },
                     ),
@@ -142,7 +143,10 @@ export const orderStore = create<OrderState>()(
                         'Помилка отримання списку замовлень дня',
                         async () => {
                             const res = await orderService.getAllByTargetDate(date.valueOf());
-                            set({ orders: res.map(orderMap) });
+                            const orders = res.map(orderMap);
+                            set({ orders });
+
+                            return orders;
                         },
                         { orders: [], isLoading: true, error: '' },
                     ),
@@ -153,9 +157,9 @@ export const orderStore = create<OrderState>()(
                         'Помилка отримання замовлення',
                         async () => {
                             const res = await orderService.getById(orderId);
-                            const OrderUI = orderMap(res);
-                            set({ order: OrderUI, amountPaid: OrderUI.amountPaid });
-                            return OrderUI;
+                            const order = orderMap(res);
+                            set({ order, amountPaid: order.amountPaid });
+                            return order;
                         },
                         { order: undefined, isLoading: true, error: '' },
                     ),
@@ -165,12 +169,14 @@ export const orderStore = create<OrderState>()(
                         'updateStatus',
                         'Помилка оновлення статусу',
                         async () => {
+                            const oldStatus = get().order.status;
+                            console.log(oldStatus);
                             await orderService.updateStatus(orderId, status);
 
                             const message: Record<OrderStatus, string> = {
                                 InProgress: 'Замовлення в роботі',
                                 Done: 'Замовлення виконано. Товари списано зі складу',
-                                Cancelled: 'Замовлення відмінено. Товари повернуто на склад',
+                                Cancelled: `Замовлення відмінено. ${oldStatus === 'Done' ? 'Товари повернуто на склад' : ''}`,
                             };
 
                             notify.success(message[status]);
@@ -186,9 +192,10 @@ export const orderStore = create<OrderState>()(
                         'Помилка оновлення суми оплати',
                         async () => {
                             const res = await orderService.updateAmountPaid(get().order!.id, get().amountPaid);
-                            set({ order: orderMap(res) });
+                            const order = orderMap(res);
+                            set({ order });
                             notify.success('Суму оплати оновлено');
-                            return res;
+                            return order;
                         },
                         { error: '', isLoading: true },
                     ),

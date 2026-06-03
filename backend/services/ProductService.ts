@@ -198,7 +198,7 @@ export class ProductService {
   ) {
     const ids = data.map((i) => i.productId);
     const products = await this.getProductByIdsMap(ids);
-    
+
     data.map((i) => {
       const product = products.get(i.productId);
 
@@ -206,7 +206,7 @@ export class ProductService {
         product.increaseQuantity(i.quantity);
       }
     });
-    
+
     return await this.productRepository.updateBulk([...products.values()]);
   }
 
@@ -247,7 +247,7 @@ export class ProductService {
   }
 
   public async createRequestToProduce(
-    data: { productId: string; quantity: number }[],
+    data: { productId: string; quantity: number; orderId: string }[],
   ) {
     const products = await this.getProductByIdsMap(
       data.map((i) => i.productId),
@@ -258,7 +258,9 @@ export class ProductService {
       const diff = i.quantity - (product?.quantity ?? 0);
 
       if (product && diff > 0) {
-        acc.push(new ProductToProduce(generateId(), product.id, diff));
+        acc.push(
+          new ProductToProduce(generateId(), product.id, diff, i.orderId),
+        );
       }
 
       return acc;
@@ -267,8 +269,8 @@ export class ProductService {
     return this.productRepository.addToProduce(productsToProduce);
   }
 
-  public async deleteFromProduce(id: string) {
-    return await this.productRepository.deleteFromProduce(id);
+  public async deleteFromProduce(productToProductId: string | string[]) {
+    return await this.productRepository.deleteFromProduce(productToProductId);
   }
 
   public async getProductsToProduce() {
@@ -295,14 +297,26 @@ export class ProductService {
     });
   }
 
-  public async setProductAsProduced(id: string) {
+  public async setProductAsProduced(productToProductId: string) {
     const productToProduce =
-      await this.productRepository.getProductToProduce(id);
+      await this.productRepository.getProductToProduce(productToProductId);
 
     productToProduce.setDone();
 
     await this.productRepository.setProductAsProduced(productToProduce);
 
+    await this.deleteFromProduce(productToProductId);
+
+    await this.updateProductQuantity(
+      productToProduce.productId,
+      "add",
+      productToProduce.quantity,
+    );
+
     return productToProduce;
+  }
+
+  public async getProductsToProduceByOrder(orderId: string) {
+    return await this.productRepository.getToProduceByOrder(orderId);
   }
 }

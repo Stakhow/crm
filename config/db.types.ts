@@ -5,7 +5,6 @@ import type { ProductCategory } from "../backend/domain/product/ProductCategory"
 import type { OrderStatus } from "../backend/domain/order/Order";
 import type { ProductDataDTO } from "../dto/ProductDataDTO";
 import { OrderItem } from "../backend/domain/order/OrderItem";
-import { type IProductProduce } from "../dto/ProductProduce";
 import { type ProductReserve } from "../dto/ProductReserve";
 
 // ---------- PRODUCTS ----------
@@ -13,7 +12,13 @@ export type ProductDB = ProductDataDTO;
 
 export type ProductReserveDB = ProductReserve;
 
-export type ProductToProduceDB = IProductProduce;
+export type ProductToProduceDB = {
+  id: string;
+  productId: string;
+  quantity: number;
+  status: "InProgress" | "Done";
+  orderId: string;
+};
 
 // ---------- MODIFIERS ----------
 export type ModifierGroupDB = Optional<

@@ -73,7 +73,7 @@ export class OrderRepository implements IOrderRepository {
   }
 
   async getAll(): Promise<Order[]> {
-    const orders = await db.orders.reverse().toArray();
+    const orders = await db.orders.toArray();
     return this.buildOrders(orders);
   }
 

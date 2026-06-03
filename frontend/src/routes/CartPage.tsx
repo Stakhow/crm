@@ -11,13 +11,9 @@ import { ClientsListSelect } from '../components/Client/ClientsListSelect';
 import { cartStore, calendarStore, orderStore } from '../../store';
 
 export default function CartPage() {
-    const { cart, isLoading, getCartToView } = cartStore((s) => s);
+    const { cart, isLoading } = cartStore((s) => s);
     const { setDueDate } = orderStore((s) => s);
     const { date } = calendarStore((s) => s);
-
-    useEffect(() => {
-        getCartToView();
-    }, []);
 
     useEffect(() => {
         if (!!date) setDueDate(date);

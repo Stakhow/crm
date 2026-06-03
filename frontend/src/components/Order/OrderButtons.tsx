@@ -5,7 +5,7 @@ import { NavLink, useNavigate } from 'react-router';
 export const CreateOrderButton = () => {
     const { isLoading, createOrder, dueDate: date } = orderStore((s) => s);
     const { clientId } = clientStore((s) => s);
-    const { cartId, deleteCart } = cartStore((s) => s);
+    const { cartId, getCartToView } = cartStore((s) => s);
 
     const isValid = !!date && !!clientId;
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ export const CreateOrderButton = () => {
             onClick={async () => {
                 const order = await createOrder(cartId, clientId);
                 if (!!order) {
-                    deleteCart();
+                    getCartToView();
                     navigate(`/orders/${order.id}`);
                 }
             }}

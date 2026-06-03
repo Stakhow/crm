@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { dateToLocalString } from '../../../../utils/utils';
+import { dateToLocalString, quantityFormat } from '../../../../utils/utils';
 import { Button, Card, CardActions, CardContent, Chip, Paper, Typography } from '@mui/material';
 import { grey, red, green } from '@mui/material/colors';
 import { OrderTotalAmount } from './OrderTotalAmount';
@@ -40,7 +40,8 @@ export function OrderSummary({ order }: { order: OrderViewUI }) {
                     Статус: <b>{order.statusTitle}</b>
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Товари: <b>{order.items.map((i) => `${i.name}`).join(' | ')}</b>
+                    Товари:{' '}
+                    <b>{order.items.map((i) => `${i.name} - ${quantityFormat(i.quantity, i.unit)}`).join(' | ')}</b>
                 </Typography>
             </CardContent>
             <CardActions

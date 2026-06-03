@@ -21,7 +21,7 @@ export const OrderStatusSelect = ({
         <FormControl fullWidth margin="dense">
             <InputLabel id={`modifierSelectLabel_${name}`}>{title}</InputLabel>
             <Select
-                disabled={value === 'Cancelled'}
+                // disabled={value === 'Cancelled'}
                 aria-labelledby={`modifierSelectLabel_${name}`}
                 id={`modifier-select-${name}`}
                 label={title}

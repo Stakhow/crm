@@ -80,10 +80,13 @@ export class Order extends EventBusRoot {
       throw new AppError("DOMAIN", "Невідомий статус замовлення");
 
     if (
-      status === "InProgress" &&
-      (this.status === "Done" || this.status === "Cancelled")
+      (status === "InProgress" || status === "Done") &&
+      this.status === "Cancelled"
     ) {
-      throw new AppError("DOMAIN", "Замовлення уже виконане або відмінене");
+      throw new AppError("DOMAIN", "Замовлення уже відмінене");
+    }
+    if (status === "InProgress" && this.status === "Done") {
+      throw new AppError("DOMAIN", "Замовлення уже виконане");
     }
 
     this._status = status;
@@ -99,6 +102,10 @@ export class Order extends EventBusRoot {
 
   addOrderItem(item: OrderItem) {
     this.items.push(item);
+  }
+
+  get productsIds(): string[] {
+    return this.items.map((i) => i.productId);
   }
 
   updateStatus(status: OrderStatus) {
@@ -164,6 +171,7 @@ export class Order extends EventBusRoot {
 
   getWithdrawProducts() {
     return this.items.map((i) => ({
+      orderId: this.id,
       productId: i.productId,
       quantity: i.quantity,
     }));

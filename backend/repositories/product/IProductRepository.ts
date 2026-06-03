@@ -19,8 +19,9 @@ export interface IProductRepository {
   deleteFromReserve(id: string): Promise<string>;
 
   addToProduce(products: ProductToProduce[]): Promise<string[]>;
-  deleteFromProduce(id: string): Promise<string>;
+  deleteFromProduce(id: string | string[]): Promise<string | string[]>;
   getAllToProduce(): Promise<ProductToProduce[]>;
+  getToProduceByOrder(orderId: string): Promise<ProductToProduce[]>;
   getProductToProduce(id: string): Promise<ProductToProduce>;
   setProductAsProduced(data: ProductToProduce): Promise<string>;
 }

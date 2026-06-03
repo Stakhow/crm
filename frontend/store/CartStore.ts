@@ -31,7 +31,7 @@ export const cartStore = create<CartState>()(
                 actionName: string,
                 errorMessage: string,
                 requestFn: () => Promise<void>,
-                onStartInit: Partial<CartState> = { isLoading: true, error: '' }
+                onStartInit: Partial<CartState> = { isLoading: true, error: '' },
             ): Promise<any> => {
                 set(onStartInit, false, `${name}/${actionName}:start`);
                 try {
@@ -54,8 +54,7 @@ export const cartStore = create<CartState>()(
 
                 getCartToView: (id) => {
                     if (!!id) localStorage.setItem(CART_ID_KEY, id);
-                    const cartId = localStorage.getItem(CART_ID_KEY);
-                    if (!cartId) return undefined as any;
+                    const cartId = localStorage.getItem(CART_ID_KEY) || '';
 
                     return handleRequest(
                         'getCartToView',
@@ -63,9 +62,14 @@ export const cartStore = create<CartState>()(
                         async () => {
                             const cart = await cartService.getCartToView(cartId);
                             const items = await cartItemsMap(cart);
-                            set({ cart, cartId: cart.id, isLoading: false, items }, false, `${name}/getCartToView:success`);
+
+                            set(
+                                { cart, cartId: cart.id, isLoading: false, items },
+                                false,
+                                `${name}/getCartToView:success`,
+                            );
                         },
-                        { cart: undefined, cartId: undefined, isLoading: true, items: [], error: '' }
+                        { cart: undefined, cartId: undefined, isLoading: true, items: [], error: '' },
                     ).catch(() => {
                         localStorage.removeItem(CART_ID_KEY);
                     }) as any;
@@ -79,7 +83,7 @@ export const cartStore = create<CartState>()(
                             cartId: localStorage.getItem(CART_ID_KEY) || '',
                         });
                         const items = await cartItemsMap(cart);
-                        set({ cart, isLoading: false, items }, false, `${name}/addCartItem:success`);
+                        set({ cart, cartId: cart.id, isLoading: false, items }, false, `${name}/addCartItem:success`);
                         if (!!cart) localStorage.setItem(CART_ID_KEY, cart.id);
                         notify.success(`Товар додано в корзину`);
                     }) as any,
@@ -91,28 +95,43 @@ export const cartStore = create<CartState>()(
                         return;
                     }
 
-                    handleRequest('deleteCartItem', 'Помилка видалення товару', async () => {
-                        const cart = await cartService.deleteCartItem(cartId, productId);
-                        const items = await cartItemsMap(cart);
-                        set({ cart, isLoading: false, items }, false, `${name}/deleteCartItem:success`);
-                        notify.success(`Товар видалено з корзини`);
-                    });
+                    handleRequest(
+                        'deleteCartItem',
+                        'Помилка видалення товару',
+                        async () => {
+                            const cart = await cartService.deleteCartItem(cartId, productId);
+                            const items = await cartItemsMap(cart);
+                            set(
+                                { cart, cartId: cart.id, isLoading: false, items },
+                                false,
+                                `${name}/deleteCartItem:success`,
+                            );
+                            notify.success(`Товар видалено з корзини`);
+                        },
+                        { isLoading: true, cart: undefined, cartId: undefined } as any,
+                    );
                 },
 
                 deleteCart: () => {
-                    const cartId = localStorage.getItem(CART_ID_KEY);
-                    if (!cartId) return;
+                    const cartId = localStorage.getItem(CART_ID_KEY) || '';
 
                     handleRequest(
                         'deleteCart',
                         'Помилка видалення корзини',
                         async () => {
                             await cartService.deleteCart(cartId);
+
                             localStorage.removeItem(CART_ID_KEY);
-                            set({ cart: undefined, cartId: undefined, isLoading: false, items: undefined }, false, `${name}/deleteCart:success`);
+
+                            set(
+                                { cart: undefined, cartId: undefined, isLoading: false, items: [] },
+                                false,
+                                `${name}/deleteCart:success`,
+                            );
+
                             notify.success(`Корзину видалено`);
                         },
-                        { isLoading: true, cart: undefined } as any
+                        { isLoading: true, cart: undefined } as any,
                     );
                 },
             };

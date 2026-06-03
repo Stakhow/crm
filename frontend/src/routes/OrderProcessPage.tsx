@@ -61,7 +61,7 @@ export default function OrderPageNew() {
                             <Form>
                                 <Stack spacing={2}>
                                     <CategoryWithState />
-                                    <CartProductListSelect />
+                                    {!!categoryName && <CartProductListSelect />}
                                 </Stack>
                             </Form>
                             <BottomBar>
