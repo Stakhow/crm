@@ -17,16 +17,17 @@ interface ContactInfo {
 interface ClientState {
     isLoading: boolean;
     error: string;
-    clientFields: ClientCreateDTO;
     client: ClientViewDTO;
     clientId: string;
     clients: ClientViewDTO[];
     contacts: ClientViewDTO[];
+    init: () => void;
     getClient: (clientId: string) => ClientViewDTO;
     setClient: (clientId: string) => void;
     getClients: () => ClientViewDTO[];
     deleteClient: (clientId: string) => void;
     saveClient: (data: ClientCreateDTO) => ClientViewDTO;
+    updateClient: (data: ClientCreateDTO) => ClientViewDTO;
     saveClients: () => ClientViewDTO[];
     handlePickContacts: () => void;
 }
@@ -56,22 +57,30 @@ export const clientStore = create<ClientState>()(
             return {
                 isLoading: false,
                 error: '',
-                clientFields: {
-                    name: '',
-                    phone: '',
-                },
                 client: undefined,
                 clients: undefined,
                 contacts: [],
+
+                init: () => set({ client: undefined }),
 
                 getClient: (clientId) =>
                     handleRequest(
                         'getClient',
                         'Клієнта не існує',
                         async () => {
-                            const client = await clientService.getByIdToView(clientId);
-                            if (!!client.id) client.phone = formatPhoneForUI(client.phone);
-                            set({ client, isLoading: false, error: '' }, false, `${name}/getClient:success`);
+                            const clientRow = await clientService.getByIdToView(clientId);
+
+                            set(
+                                {
+                                    client: clientMap(clientRow),
+                                    isLoading: false,
+                                    error: '',
+                                },
+                                false,
+                                `${name}/getClient:success`,
+                            );
+
+                            return clientRow;
                         },
                         { isLoading: true, client: undefined, error: '' },
                     ),
@@ -85,12 +94,11 @@ export const clientStore = create<ClientState>()(
                         'getClients',
                         'Помилка отрмання списку клієнтів',
                         async () => {
-                            const clientsDB = await clientService.getAll();
-                            const clients: ClientViewDTO[] = clientsDB.map((i) => ({
-                                ...i,
-                                phone: formatPhoneForUI(i.phone),
-                            }));
+                            const clientsRow = await clientService.getAll();
+                            const clients = clientsRow.map((i) => clientMap(i));
                             set({ isLoading: false, clients, error: '' }, false, `${name}/getClients:start`);
+
+                            return clients;
                         },
                         { isLoading: true, clients: undefined, error: '' },
                     ),
@@ -113,15 +121,25 @@ export const clientStore = create<ClientState>()(
 
                 saveClient: (data) =>
                     handleRequest('saveClient', 'Помилка збереження клієнта', async () => {
-                        const saveClient = await clientService.create(data);
+                        const clientRow = await clientService.create(data);
+                        const client = clientMap(clientRow);
+                        set({ client, contacts: [], isLoading: false, error: '' }, false, `${name}/saveClient:success`);
+                        notify.success(`Клієнта збережено`);
+
+                        return client;
+                    }),
+                updateClient: (data) =>
+                    handleRequest('updateClient', 'Помилка збереження клієнта', async () => {
+                        const clientRow = await clientService.update(get().client.id, data);
+                        const client = clientMap(clientRow);
                         set(
-                            { client: saveClient, contacts: [], isLoading: false, error: '' },
+                            { client, contacts: [], isLoading: false, error: '' },
                             false,
-                            `${name}/saveClient:success`,
+                            `${name}/updateClient:success`,
                         );
                         notify.success(`Клієнта збережено`);
 
-                        return saveClient;
+                        return client;
                     }),
 
                 saveClients: () =>
@@ -189,5 +207,12 @@ function fromContactToClientMapper(client: ContactInfo): ClientViewDTO {
         phone: formatPhoneForUI(phone),
         createdAt: 0,
         updatedAt: 0,
+    };
+}
+
+function clientMap(client: ClientViewDTO) {
+    return {
+        ...client,
+        phone: formatPhoneForUI(client.phone),
     };
 }

@@ -7,12 +7,15 @@ import { validationSchema } from './validationSchema';
 import type { ClientCreateDTO } from '../../../../dto/ClientViewDTO';
 
 export const ClientForm = ({ onSubmit }: { onSubmit: (values: ClientCreateDTO) => void }) => {
-    const { clientFields } = clientStore((s) => s);
+    const { client } = clientStore((s) => s);
 
     return (
         <Card sx={{ p: 2, mb: 2 }} raised>
             <Formik
-                initialValues={clientFields}
+                initialValues={{
+                    name: !!client ? client.name : '',
+                    phone: !!client ? client.phone : '',
+                }}
                 validationSchema={validationSchema}
                 enableReinitialize={true}
                 onSubmit={onSubmit}

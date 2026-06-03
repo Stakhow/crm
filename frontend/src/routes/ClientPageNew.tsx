@@ -3,11 +3,16 @@ import { clientStore } from '../../store';
 import { ClientForm } from '../components/Client/ClientForm';
 import { ClientsForm } from '../components/Client/ClientsForm';
 import { useNavigate } from 'react-router';
+import { useEffect } from 'react';
 
 export default function ClientPageNew() {
-    const { isLoading, contacts, handlePickContacts, saveClient } = clientStore((state) => state);
+    const { isLoading, contacts, handlePickContacts, init, saveClient } = clientStore((state) => state);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        init();
+    }, []);
 
     return (
         <Box sx={{ pb: 10 }}>
