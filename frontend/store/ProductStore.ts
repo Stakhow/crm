@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { productService } from '../../backend';
+import { productService, productionService } from '../../backend';
 import { AppError } from '../../utils/error';
 import { notify } from './NotificationStore';
 import type { ProductCategory } from '../../backend/domain/product/ProductCategory';
@@ -59,7 +59,6 @@ const BASE_PRODUCT_FIELDS = [
 export const productStore = create<ProductState>()(
     devtools(
         (set, get) => {
-            
             const handleRequest = async <T>(
                 actionName: string,
                 errorMessage: string,
@@ -129,7 +128,7 @@ export const productStore = create<ProductState>()(
                         'getProductsToProduce',
                         'Помилка отримання списку на виконання',
                         async () => {
-                            const raw = await productService.getProductsToProduce();
+                            const raw = await productionService.getAll();
                             const productsToProduce = raw.map(productMapperShort);
                             set({ productsToProduce, product: undefined });
                             return productsToProduce;
@@ -247,7 +246,7 @@ export const productStore = create<ProductState>()(
                         'setProductAsProduced',
                         'Помилка встановлення',
                         async () => {
-                            await productService.setProductAsProduced(id);
+                            await productionService.setDone(id);
                             set({ productsToProduce: get().productsToProduce.filter((i) => i.id !== id) });
                             notify.success('Продукт виготовлено');
                         },
@@ -258,7 +257,6 @@ export const productStore = create<ProductState>()(
         { name, enabled: false },
     ),
 );
-
 
 function productMapper(product: ProductViewDTO, includeBagFields = true): ProductViewUIDTO {
     const bagFields =

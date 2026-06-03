@@ -1,6 +1,6 @@
-import { AppError } from "../../../utils/error";
-import { Cart } from "../../domain/cart/Cart";
-import { db } from "./../../../config/db";
+import { AppError } from "../../utils/error";
+import { Cart } from "../domain/cart/Cart";
+import { db } from "./../../config/db";
 
 export class CartRepository {
   async load(id: string): Promise<Cart> {

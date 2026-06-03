@@ -1,5 +1,5 @@
 import { AppError } from "../../utils/error";
-import { CartRepository } from "../repositories/cart/CartRepository";
+import { CartRepository } from "../repositories/CartRepository";
 import type { ProductService } from "./ProductService";
 import type { CartDTO } from "../../dto/CartDTO";
 import { generateId } from "../../utils/utils";

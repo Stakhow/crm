@@ -4,7 +4,7 @@ import {
 } from "../domain/product/modifiers/ProductModifier";
 import { type ProductCategory } from "./../domain/product/ProductCategory";
 import { AppError } from "../../utils/error";
-import type { ProductRepository } from "../repositories/product/ProductRepository";
+import type { ProductRepository } from "../repositories/ProductRepository";
 import type { ProductViewDTO } from "../../dto/ProductViewDTO";
 import type {
   CreateProductDTO,
@@ -14,7 +14,6 @@ import type { ProductManager } from "../domain/product/ProductManager";
 import { generateId } from "../../utils/utils";
 import { globalEventBus } from "../shared/EventBus";
 import { type ProductReserve } from "../../dto/ProductReserve";
-import { ProductToProduce } from "../domain/productToProduce/ProductToProduce";
 
 export class ProductService {
   constructor(
@@ -244,79 +243,5 @@ export class ProductService {
 
   public async deleteFromReserve(id: string) {
     return await this.productRepository.deleteFromReserve(id);
-  }
-
-  public async createRequestToProduce(
-    data: { productId: string; quantity: number; orderId: string }[],
-  ) {
-    const products = await this.getProductByIdsMap(
-      data.map((i) => i.productId),
-    );
-
-    const productsToProduce = data.reduce((acc, i) => {
-      const product = products.get(i.productId);
-      const diff = i.quantity - (product?.quantity ?? 0);
-
-      if (product && diff > 0) {
-        acc.push(
-          new ProductToProduce(generateId(), product.id, diff, i.orderId),
-        );
-      }
-
-      return acc;
-    }, [] as ProductToProduce[]);
-
-    return this.productRepository.addToProduce(productsToProduce);
-  }
-
-  public async deleteFromProduce(productToProductId: string | string[]) {
-    return await this.productRepository.deleteFromProduce(productToProductId);
-  }
-
-  public async getProductsToProduce() {
-    const productsToProduce = await this.productRepository.getAllToProduce();
-
-    const productsToProduceMap = new Map(
-      productsToProduce.map((i) => [i.productId, i]),
-    );
-
-    const products = await this.getProductByIds(
-      productsToProduce.map((i) => i.productId),
-    );
-
-    return products.map((p) => {
-      const productToProduce = productsToProduceMap.get(p.id);
-
-      if (productToProduce) {
-        p.quantity = productToProduce.quantity;
-
-        return { ...p.toView(), id: productToProduce.id };
-      }
-
-      return p.toView();
-    });
-  }
-
-  public async setProductAsProduced(productToProductId: string) {
-    const productToProduce =
-      await this.productRepository.getProductToProduce(productToProductId);
-
-    productToProduce.setDone();
-
-    await this.productRepository.setProductAsProduced(productToProduce);
-
-    await this.deleteFromProduce(productToProductId);
-
-    await this.updateProductQuantity(
-      productToProduce.productId,
-      "add",
-      productToProduce.quantity,
-    );
-
-    return productToProduce;
-  }
-
-  public async getProductsToProduceByOrder(orderId: string) {
-    return await this.productRepository.getToProduceByOrder(orderId);
   }
 }

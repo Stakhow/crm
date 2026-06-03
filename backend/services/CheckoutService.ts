@@ -1,6 +1,6 @@
 import { db } from "../../config/db";
 import { Order } from "../domain/order/Order";
-import { OrderRepository } from "../repositories/order/OrderRepository";
+import { OrderRepository } from "../repositories/OrderRepository";
 import { globalEventBus } from "../shared/EventBus";
 import { CartService } from "./CartService";
 

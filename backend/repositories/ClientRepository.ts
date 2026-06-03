@@ -1,9 +1,9 @@
-import type { ClientCreateDTO } from "../../../dto/ClientViewDTO";
-import { generateId } from "../../../utils/utils";
-import { db } from "./../../../config/db";
-import { AppError } from "./../../../utils/error";
-import { Client, type ClientProps } from "./../../domain/client/Client";
-import type { IClientRepository } from "../../domain/client/IClientRepository";
+import type { ClientCreateDTO } from "../../dto/ClientViewDTO";
+import { generateId } from "../../utils/utils";
+import { db } from "./../../config/db";
+import { AppError } from "./../../utils/error";
+import { Client, type ClientProps } from "./../domain/client/Client";
+import type { IClientRepository } from "../domain/client/IClientRepository";
 
 export class ClientRepository implements IClientRepository {
   private _create(clientDTO: ClientProps) {

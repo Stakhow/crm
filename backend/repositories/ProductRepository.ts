@@ -1,21 +1,19 @@
-import type { IProductRepository } from "../../domain/product/IProductRepository";
-import { db } from "../../../config/db";
+import type { IProductRepository } from "../domain/product/IProductRepository";
+import { db } from "../../config/db";
 import {
   BaseProduct,
   type BaseProductProps,
-} from "../../domain/product/BaseProduct";
-import { AppError } from "../../../utils/error";
-import type { ProductDataDTO } from "../../../dto/ProductDataDTO";
+} from "../domain/product/BaseProduct";
+import { AppError } from "../../utils/error";
+import type { ProductDataDTO } from "../../dto/ProductDataDTO";
 import {
   Category,
   type ProductCategory,
-} from "../../domain/product/ProductCategory";
-import type { ProductManager } from "../../domain/product/ProductManager";
-import { ProductModifier } from "../../domain/product/modifiers/ProductModifier";
-import type { ProductByCategory } from "../../domain/product/ProductByCategory";
-import type { ProductReserve } from "../../../dto/ProductReserve";
-import { ProductToProduce } from "../../domain/productToProduce/ProductToProduce";
-import { globalEventBus } from "../../shared/EventBus";
+} from "../domain/product/ProductCategory";
+import type { ProductManager } from "../domain/product/ProductManager";
+import { ProductModifier } from "../domain/product/modifiers/ProductModifier";
+import type { ProductByCategory } from "../domain/product/ProductByCategory";
+import type { ProductReserve } from "../../dto/ProductReserve";
 
 type ModListDTO = {
   id: string;
@@ -141,82 +139,6 @@ export class ProductRepository implements IProductRepository {
     return id;
   }
   // ========= /RESERVE ==========
-
-  // ========= TO PRODUCE ==========
-  async addToProduce(productsToProduce: ProductToProduce[]): Promise<string[]> {
-    const productEntities = productsToProduce.map((i) => i.toDB());
-    return await db.products_to_produce.bulkPut(productEntities, {
-      allKeys: true,
-    });
-  }
-  async deleteFromProduce(
-    productToProductId: string | string[],
-  ): Promise<string | string[]> {
-    const ids = Array.isArray(productToProductId)
-      ? productToProductId
-      : [productToProductId];
-
-    await db.products_to_produce.where("id").anyOf(ids).delete();
-
-    return productToProductId;
-  }
-  async getAllToProduce(): Promise<ProductToProduce[]> {
-    const productEntities = await db.products_to_produce.toArray();
-
-    return productEntities.map(
-      (i) =>
-        new ProductToProduce(
-          i.id,
-          i.productId,
-          i.quantity,
-          i.orderId,
-          i.status,
-        ),
-    );
-  }
-
-  async getToProduceByOrder(orderId: string): Promise<ProductToProduce[]> {
-    const productEntities = await db.products_to_produce
-      .where({ orderId })
-      .toArray();
-
-    return productEntities.map(
-      (i) =>
-        new ProductToProduce(
-          i.id,
-          i.productId,
-          i.quantity,
-          i.orderId,
-          i.status,
-        ),
-    );
-  }
-
-  async getProductToProduce(
-    produceProductId: string,
-  ): Promise<ProductToProduce> {
-    const productEntity = await db.products_to_produce.get(produceProductId);
-    if (!productEntity)
-      throw new AppError("DOMAIN", "Не знайдено продукт для виготовлення");
-
-    return new ProductToProduce(
-      productEntity.id,
-      productEntity.productId,
-      productEntity.quantity,
-      productEntity.orderId,
-      productEntity.status,
-    );
-  }
-
-  async setProductAsProduced(
-    productToProduce: ProductToProduce,
-  ): Promise<string> {
-    await db.products_to_produce.update(productToProduce.id, productToProduce);
-    globalEventBus.publishFromAggregate(productToProduce);
-
-    return productToProduce.id;
-  }
-  // ========= /TO PRODUCE ==========
 
   // ========= MODIFIERS ==========
 
