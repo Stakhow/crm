@@ -1,6 +1,6 @@
 import { db } from "../../../config/db";
 import { Order } from "../../domain/order/Order";
-import type { IOrderRepository } from "./IOrderRepository";
+import { type IOrderRepository } from "../../domain/order/IOrderRepository";
 
 import type { OrderDB, OrderItemDB } from "../../../config/db.types";
 import { AppError } from "../../../utils/error";

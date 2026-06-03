@@ -1,7 +1,7 @@
 import { type ProductReserve } from "../../../dto/ProductReserve";
-import { BaseProduct } from "../../domain/product/BaseProduct";
-import type { ProductCategory } from "../../domain/product/ProductCategory";
-import type { ProductToProduce } from "../../domain/productToProduce/ProductToProduce";
+import { BaseProduct } from "./BaseProduct";
+import type { ProductCategory } from "./ProductCategory";
+import type { ProductToProduce } from "../productToProduce/ProductToProduce";
 
 export interface IProductRepository {
   save(product: BaseProduct<ProductCategory>): Promise<string>;

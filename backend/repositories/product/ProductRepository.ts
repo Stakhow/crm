@@ -1,4 +1,4 @@
-import type { IProductRepository } from "./IProductRepository";
+import type { IProductRepository } from "../../domain/product/IProductRepository";
 import { db } from "../../../config/db";
 import {
   BaseProduct,
