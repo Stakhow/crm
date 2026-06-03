@@ -1,5 +1,5 @@
 import { AppError } from "../../utils/error";
-import type { OrderRepository } from "../repositories/order/OrderRepository";
+import type { OrderRepository } from "../repositories/OrderRepository";
 import type { CartService } from "./CartService";
 import { Order, type OrderStatus } from "../domain/order/Order";
 import { OrderItem } from "../domain/order/OrderItem";
@@ -8,6 +8,7 @@ import type { ProductService } from "./ProductService";
 import type { ClientService } from "./ClientService";
 import { generateId } from "../../utils/utils";
 import { CheckoutService } from "./CheckoutService";
+import { ProductionService } from "./ProductionService";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -18,6 +19,7 @@ export class OrderService {
     private productService: ProductService,
     private clientService: ClientService,
     private checkoutService: CheckoutService,
+    private productionService: ProductionService,
   ) {}
 
   async createOrder(
@@ -71,7 +73,7 @@ export class OrderService {
 
     const requestedProducts = order.getWithdrawProducts();
     await this.productService.addToReserve(requestedProducts);
-    await this.productService.createRequestToProduce(requestedProducts);
+    await this.productionService.toProduce(requestedProducts);
 
     return await this.getById(orderId);
   }
@@ -90,14 +92,13 @@ export class OrderService {
       await this.productService.restockProducts(order.getWithdrawProducts());
     }
     if (status === "Cancelled" && oldStatus === "InProgress") {
-      const productsToProduce =
-        await this.productService.getProductsToProduceByOrder(order.id);
+      const productsToProduce = await this.productionService.getByOrder(
+        order.id,
+      );
 
       console.log(productsToProduce);
 
-      await this.productService.deleteFromProduce(
-        productsToProduce.map((i) => i.id),
-      );
+      await this.productionService.delete(productsToProduce.map((i) => i.id));
     }
 
     return await this.orderRepository.update(order);

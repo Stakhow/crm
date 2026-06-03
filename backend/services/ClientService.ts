@@ -1,6 +1,6 @@
 import { Client } from "../domain/client/Client";
 import type { ClientCreateDTO, ClientViewDTO } from "../../dto/ClientViewDTO";
-import type { ClientRepository } from "../repositories/client/ClientRepository";
+import type { ClientRepository } from "../repositories/ClientRepository";
 
 export class ClientService {
   constructor(private clientRepository: ClientRepository) {

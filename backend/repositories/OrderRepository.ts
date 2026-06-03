@@ -1,10 +1,10 @@
-import { db } from "../../../config/db";
-import { Order } from "../../domain/order/Order";
-import { type IOrderRepository } from "../../domain/order/IOrderRepository";
+import { db } from "../../config/db";
+import { Order } from "../domain/order/Order";
+import { type IOrderRepository } from "../domain/order/IOrderRepository";
 
-import type { OrderDB, OrderItemDB } from "../../../config/db.types";
-import { AppError } from "../../../utils/error";
-import { OrderItem } from "../../domain/order/OrderItem";
+import type { OrderDB, OrderItemDB } from "../../config/db.types";
+import { AppError } from "../../utils/error";
+import { OrderItem } from "../domain/order/OrderItem";
 
 function groupByOrderId(items: OrderItemDB[]) {
   const map = new Map<string, OrderItemDB[]>();

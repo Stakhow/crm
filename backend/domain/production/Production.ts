@@ -12,7 +12,7 @@ class ProductProducedEvent implements DomainEvent {
   ) {}
 }
 
-export class ProductToProduce extends EventBusRoot {
+export class Production extends EventBusRoot {
   constructor(
     public readonly id: string,
     public readonly productId: string,

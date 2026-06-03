@@ -1,7 +1,6 @@
 import { type ProductReserve } from "../../../dto/ProductReserve";
 import { BaseProduct } from "./BaseProduct";
 import type { ProductCategory } from "./ProductCategory";
-import type { ProductToProduce } from "../productToProduce/ProductToProduce";
 
 export interface IProductRepository {
   save(product: BaseProduct<ProductCategory>): Promise<string>;
@@ -17,11 +16,4 @@ export interface IProductRepository {
 
   addToReserve(products: ProductReserve[]): Promise<string[]>;
   deleteFromReserve(id: string): Promise<string>;
-
-  addToProduce(products: ProductToProduce[]): Promise<string[]>;
-  deleteFromProduce(id: string | string[]): Promise<string | string[]>;
-  getAllToProduce(): Promise<ProductToProduce[]>;
-  getToProduceByOrder(orderId: string): Promise<ProductToProduce[]>;
-  getProductToProduce(id: string): Promise<ProductToProduce>;
-  setProductAsProduced(data: ProductToProduce): Promise<string>;
 }
