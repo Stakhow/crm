@@ -53,12 +53,8 @@ export class ClientRepository implements IClientRepository {
 
   async getByPhone(phone: string) {
     const client = await db.clients.where({ phone }).first();
-    if (!client)
-      throw new AppError("DATABASE", `Немає клієнта з таким номером телефону`, {
-        data: phone,
-      });
 
-    return this._create(client);
+    return !!client ? this._create(client) : undefined;
   }
 
   async delete(id: string): Promise<void> {

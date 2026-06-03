@@ -26,7 +26,7 @@ interface ClientState {
     setClient: (clientId: string) => void;
     getClients: () => ClientViewDTO[];
     deleteClient: (clientId: string) => void;
-    saveClient: (client: ClientCreateDTO) => ClientViewDTO;
+    saveClient: (data: ClientCreateDTO) => ClientViewDTO;
     saveClients: () => ClientViewDTO[];
     handlePickContacts: () => void;
 }
@@ -111,15 +111,17 @@ export const clientStore = create<ClientState>()(
                         { client: undefined, isLoading: true, error: '' },
                     ),
 
-                saveClient: (client) =>
+                saveClient: (data) =>
                     handleRequest('saveClient', 'Помилка збереження клієнта', async () => {
-                        const saveClient = await clientService.create(client);
+                        const saveClient = await clientService.create(data);
                         set(
                             { client: saveClient, contacts: [], isLoading: false, error: '' },
                             false,
                             `${name}/saveClient:success`,
                         );
                         notify.success(`Клієнта збережено`);
+
+                        return saveClient;
                     }),
 
                 saveClients: () =>
