@@ -11,6 +11,7 @@ export type CreateFilmFieldsDTO = CreateBaseProductFieldsDTO & {
   width: number;
   thickness: number;
   filmTypes: FilmTypes[];
+  subCategoryName: ProductCategory;
 };
 
 export type CreateBagFieldsDTO = CreateBaseProductFieldsDTO & {
@@ -19,6 +20,7 @@ export type CreateBagFieldsDTO = CreateBaseProductFieldsDTO & {
   thickness: number;
   filmTypes: FilmTypes[];
   bagTypes: BagTypes[];
+  subCategoryName: ProductCategory;
 };
 
 export type CreateProductFieldsDTO =

@@ -18,6 +18,7 @@ type ProductFieldType = {
     title: string;
     fieldType: string;
     value: string | number;
+    values?: { title: string; value: string }[];
     placeholder: string;
 };
 
@@ -216,7 +217,6 @@ export const productStore = create<ProductState>()(
                     set({ propsToCreate: undefined });
                     try {
                         const props = await productService.getProductProps(categoryName);
-
                         if (isForCart) delete props.fields.quantity;
 
                         set({ propsToCreate: fieldsForCreate(props) });
@@ -282,16 +282,56 @@ export const productStore = create<ProductState>()(
     ),
 );
 
-function productMapper(product: ProductViewDTO, includeBagFields = true): ProductViewUIDTO {
-    const bagFields =
-        includeBagFields && product.categoryName === 'bag'
+function productMapper(product: ProductViewDTO, fullVariant = true): ProductViewUIDTO {
+    const bagAdditionalFields =
+        fullVariant && product.categoryName === 'bag'
             ? [
                   { name: 'weightPerUnit', title: 'Вага', value: (v: any) => `${quantityFormat(v, 'kilogram')}/шт.` },
                   { name: 'pricePerUnit', title: 'Ціна', value: (v: any) => `${priceFormat(v)}/шт.` },
               ]
             : [];
 
-    const fields = [...BASE_PRODUCT_FIELDS, ...bagFields]
+    const bagFields =
+        product.categoryName === 'bag'
+            ? [
+                  { name: 'weightPerUnit', title: 'Вага', value: (v: any) => `${quantityFormat(v, 'kilogram')}/шт.` },
+                  { name: 'pricePerUnit', title: 'Ціна', value: (v: any) => `${priceFormat(v)}/шт.` },
+                  {
+                      name: 'bagType',
+                      title: 'Тип Пакета',
+                      value: (v: any) => {
+                          const names: any = {
+                              bag: 'Пакет',
+                              handle: 'Ручка',
+                              't-shirt': 'Майка',
+                          } as const;
+
+                          return names[v];
+                      },
+                  },
+              ]
+            : [];
+
+    const filmAndBagFields = ['bag', 'film'].includes(product.categoryName)
+        ? [
+              {
+                  name: 'filmType',
+                  title: 'Тип Плівки',
+                  value: (v: any) => {
+                      const names: any = {
+                          sleeve: 'Рукав',
+                          pocket: 'Карман',
+                          half_sleeve: 'Напіврукав',
+                          fabric: 'Полотно',
+                      } as const;
+
+                      return names[v];
+                  },
+              },
+          ]
+        : [];
+
+    const fields = [...BASE_PRODUCT_FIELDS, ...bagFields, ...filmAndBagFields, ...bagAdditionalFields]
         .filter((i) => Object.hasOwn(product.fields, i.name))
         .map((i) => ({ title: i.title, value: i.value(product.fields[i.name]) }));
 
@@ -300,15 +340,43 @@ function productMapper(product: ProductViewDTO, includeBagFields = true): Produc
 
 const productMapperShort = (product: ProductViewDTO) => productMapper(product, false);
 
-const getBaseFormFields = (categoryName: string) =>
-    [
+const getBaseFormFields = (categoryName: string) => {
+    const isBag = categoryName === 'bag';
+
+    const filmOptions = [
+        { value: 'sleeve', title: 'Рукав' },
+        { value: 'pocket', title: 'Карман' },
+        { value: 'half_sleeve', title: 'Напіврукав' },
+        { value: 'fabric', title: 'Полотно' },
+    ];
+
+    return [
         { name: 'name', title: 'Назва продукту', fieldType: 'text' },
+        {
+            name: 'bagTypes',
+            title: 'Тип Пакета',
+            fieldType: 'select',
+            value: 'bag',
+            values: [
+                { value: 'bag', title: 'Пакет' },
+                { value: 'handle', title: 'Ручка' },
+                { value: 't-shirt', title: 'Майка' },
+            ],
+        },
+        {
+            name: 'filmTypes',
+            title: 'Тип Плівки',
+            fieldType: 'select',
+            value: 'sleeve',
+            values: isBag ? filmOptions.slice(0, 2) : filmOptions,
+        },
         { name: 'width', title: 'Ширина (см)', fieldType: 'number' },
         { name: 'length', title: 'Довжина (см)', fieldType: 'number' },
         { name: 'thickness', title: 'Товщина (мкм)', fieldType: 'number' },
-        { name: 'quantity', title: `Кількість (${categoryName === 'bag' ? 'шт.' : 'кг'})`, fieldType: 'number' },
+        { name: 'quantity', title: `Кількість (${isBag ? 'шт.' : 'кг'})`, fieldType: 'number' },
         { name: 'price', title: 'Ціна', fieldType: 'number' },
-    ].map((f) => ({ ...f, value: '', placeholder: '' }));
+    ].map((f) => ({ placeholder: '', ...f, value: f.value ?? '' }));
+};
 
 function fieldsForCreate(data: CreateProductDTO): CreateProductUIDTO {
     return {

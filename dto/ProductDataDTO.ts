@@ -16,9 +16,11 @@ export type ProductDataBaseDTO = {
 export type ProductDataFilmDTO = ProductDataBaseDTO & {
   width: number;
   thickness: number;
+  filmType: FilmTypes;
 };
 export type ProductDataBagDTO = ProductDataFilmDTO & {
   length: number;
+  bagType: BagTypes;
 };
 
 export type ProductDataDTO =
@@ -26,5 +28,5 @@ export type ProductDataDTO =
   | ProductDataFilmDTO
   | ProductDataBagDTO;
 
-export type FilmTypes = "sleeve" | "half sleeve" | "fabric" | "pocket";
+export type FilmTypes = "sleeve" | "half_sleeve" | "fabric" | "pocket";
 export type BagTypes = "bag" | "handle" | "t-shirt";

@@ -87,6 +87,8 @@ export class ProductService {
       width: Number(values.fields.width),
       thickness: Number(values.fields.thickness),
       length: Number(values.fields.length),
+      filmType: values.fields.filmTypes,
+      bagType: values.fields.bagTypes,
     });
 
     const id = await this.productRepository.save(product);

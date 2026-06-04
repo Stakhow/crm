@@ -14,9 +14,13 @@ type ProductInstance<C extends ProductCategory> = InstanceType<
 export class ProductManager {
   constructor(private factory: IProductFactory) {}
 
-  private generateName<C extends ProductCategory>(
-    values: ProductCreateProps<C>[0],
-  ): string {
+  private generateName(values: {
+    categoryName: ProductCategory;
+    name: string;
+    length: number;
+    width: number;
+    thickness: number;
+  }): string {
     const name = values.name ? values.name.trim() : "";
 
     if (name) return name;
@@ -55,7 +59,13 @@ export class ProductManager {
     const Ctor = ProductByCategory[categoryName];
 
     if (!props.name) {
-      props.name = this.generateName(props);
+      props.name = this.generateName({
+        categoryName: props.categoryName,
+        name: props.name, // @ts-ignore
+        length: props.length, // @ts-ignore
+        width: props.width, // @ts-ignore
+        thickness: props.thickness,
+      });
     }
 
     return this.factory.create(Ctor, props);

@@ -97,7 +97,6 @@ export class OrderService {
         order.id,
       );
 
-      console.log(productsToProduce);
 
       await this.productionService.delete(productsToProduce.map((i) => i.id));
     }

@@ -1,4 +1,4 @@
-import { Card, FormControl, Stack, TextField } from '@mui/material';
+import { Card, FormControl, InputLabel, MenuItem, Select, Stack, TextField } from '@mui/material';
 import { FieldArray, getIn, useFormikContext } from 'formik';
 import type { CreateProductUIDTO } from '../../../store/ProductStore';
 
@@ -14,6 +14,33 @@ export const Fields = () => {
                         {values.fields.map((field, index) => {
                             const fieldName = `fields[${index}].value`;
                             const error = getIn(errors, fieldName);
+
+                            if (field.fieldType === 'select') {
+                                return (
+                                    <FormControl key={index} fullWidth margin="dense">
+                                        <InputLabel id={`SelectLabel_${fieldName}`}>{field.title}</InputLabel>
+                                        <Select
+                                            aria-labelledby={`SelectLabel_${fieldName}`}
+                                            id={`select-${fieldName}`}
+                                            label={field.title}
+                                            name={fieldName}
+                                            value={field.value}
+                                            onChange={handleChange}
+                                        >
+                                            {!!field.values &&
+                                                field.values.map((i) => (
+                                                    <MenuItem
+                                                        key={i.value}
+                                                        value={i.value}
+                                                        sx={{ textTransform: 'capitalize' }}
+                                                    >
+                                                        {i.title}
+                                                    </MenuItem>
+                                                ))}
+                                        </Select>
+                                    </FormControl>
+                                );
+                            }
 
                             return (
                                 <FormControl

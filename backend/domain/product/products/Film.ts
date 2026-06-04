@@ -10,49 +10,78 @@ import type { ProductCategory } from "../ProductCategory";
 export interface FilmProps extends BaseProductProps {
   width: number;
   thickness: number;
+  filmType: string;
 }
 
 export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
   readonly categoryName: T = "film" as unknown as T;
+  readonly subCategoryName: "granule" | "film" = "granule";
 
-  protected readonly WIDTH_MIN: number = 30;
-  protected readonly WIDTH_MAX: number = 100;
+  protected readonly WIDTH_MIN = 30;
+  protected readonly WIDTH_MAX = 100;
 
-  protected readonly THICKNESS_MIN: number = 25;
-  protected readonly THICKNESS_MAX: number = 100;
+  protected readonly THICKNESS_MIN = 25;
+  protected readonly THICKNESS_MAX = 100;
 
-  // private readonly filmTypes: FilmTypes[] = [
-  //   "fabric",
-  //   "half sleeve",
-  //   "pocket",
-  //   "sleeve",
-  // ];
-  private readonly filmType: FilmTypes = "sleeve";
+  protected _filmType!: FilmTypes;
 
-  protected readonly width: number;
-  protected readonly thickness: number;
+  protected _width: number = 30;
+  protected _thickness: number = 25;
 
   constructor(props: FilmProps) {
     super(props);
 
-    if (props.width < this.WIDTH_MIN || props.width > this.WIDTH_MAX) {
+    this.width = props.width;
+    this.thickness = props.thickness;
+
+    this.filmType = props.filmType as FilmTypes;
+  }
+
+  set width(width: number) {
+    if (Number.isNaN(width))
+      throw new AppError("DOMAIN", "Ширина має бути числом");
+
+    if (width < this.WIDTH_MIN || width > this.WIDTH_MAX) {
       throw new AppError(
         "DOMAIN",
         `Ширина має бути не менше ${this.WIDTH_MIN}см і не більше ${this.WIDTH_MAX}см`,
       );
     }
-    this.width = props.width;
 
-    if (
-      props.thickness < this.THICKNESS_MIN ||
-      props.thickness > this.THICKNESS_MAX
-    ) {
+    this._width = width;
+  }
+  get width() {
+    return this._width;
+  }
+
+  set thickness(thickness: number) {
+    if (Number.isNaN(thickness))
+      throw new AppError("DOMAIN", "Товщина має бути числом");
+
+    if (thickness < this.THICKNESS_MIN || thickness > this.THICKNESS_MAX) {
       throw new AppError(
         "DOMAIN",
         `Товщина має бути не менше ${this.THICKNESS_MIN}мкм і не більше ${this.THICKNESS_MAX}мкм`,
       );
     }
-    this.thickness = props.thickness;
+
+    this._thickness = thickness;
+  }
+
+  get thickness() {
+    return this._thickness;
+  }
+
+  set filmType(filmType: FilmTypes) {
+    if (!["fabric", "half_sleeve", "pocket", "sleeve"].includes(filmType)) {
+      throw new AppError("DOMAIN", "Невідомий тип плівки");
+    }
+
+    this._filmType = filmType;
+  }
+
+  get filmType() {
+    return this._filmType;
   }
 
   static override get fieldsToCreate(): CreateFilmFieldsDTO {
@@ -60,7 +89,8 @@ export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
       ...super.fieldsToCreate,
       width: 0,
       thickness: 0,
-      filmTypes: ["fabric", "half sleeve", "pocket", "sleeve"],
+      filmTypes: ["fabric", "half_sleeve", "pocket", "sleeve"],
+      subCategoryName: "granule",
     };
   }
 
@@ -70,6 +100,7 @@ export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
       width: this.width,
       thickness: this.thickness,
       filmType: this.filmType,
+      subCategoryName: "granule",
     };
   }
 
@@ -86,11 +117,7 @@ export class Film<T extends ProductCategory = "film"> extends BaseProduct<T> {
       width: this.width,
       thickness: this.thickness,
       unit: this.unit,
+      filmType: this.filmType,
     };
   }
 }
-
-// рукав
-// полурукав
-// полотно
-// карман

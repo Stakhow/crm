@@ -174,7 +174,6 @@ export const orderStore = create<OrderState>()(
                         'Помилка оновлення статусу',
                         async () => {
                             const oldStatus = get().order.status;
-                            console.log(oldStatus);
                             await orderService.updateStatus(orderId, status);
 
                             const message: Record<OrderStatus, string> = {

@@ -1,5 +1,6 @@
 import type {
   BagTypes,
+  FilmTypes,
   ProductDataBagDTO,
 } from "../../../../dto/ProductDataDTO";
 import type { CreateBagFieldsDTO } from "../../../../dto/ProductToCreateDTO";
@@ -10,31 +11,58 @@ import { Film, type FilmProps } from "./Film";
 
 export interface BagProps extends FilmProps {
   length: number;
+  bagType: string;
 }
 
 export class Bag extends Film<"bag"> {
   readonly categoryName = "bag";
   readonly subCategoryName = "film";
 
-  private readonly LENGTH_MIN: number = 25;
-  private readonly LENGTH_MAX: number = 200;
+  private readonly LENGTH_MIN = 25;
+  private readonly LENGTH_MAX = 200;
   public readonly unit: ProductUnitType = "piece";
 
-  private readonly bagType: BagTypes = "bag";
-
-  private readonly length: number;
+  private _bagType!: BagTypes;
+  private _length!: number;
 
   constructor(props: BagProps) {
     super(props);
+    if (!["bag", "handle", "t-shirt"].includes(props.bagType)) {
+      throw new AppError("DOMAIN", "Невідомий тип пакета");
+    }
 
-    if (props.length < this.LENGTH_MIN || props.length > this.LENGTH_MAX) {
+    this._bagType = props.bagType as BagTypes;
+    this.length = props.length;
+  }
+
+  set length(length: number) {
+    if (Number.isNaN(length))
+      throw new AppError("DOMAIN", "Довжина має бути числом");
+
+    if (length < this.LENGTH_MIN || length > this.LENGTH_MAX) {
       throw new AppError(
         "DOMAIN",
         `Довжина має бути не менше ${this.LENGTH_MIN}см і не більше ${this.LENGTH_MAX}см`,
       );
     }
 
-    this.length = props.length;
+    this._length = length;
+  }
+
+  get length() {
+    return this._length;
+  }
+
+  override set filmType(filmType: FilmTypes) {
+    if (!["sleeve", "pocket"].includes(filmType)) {
+      throw new AppError("DOMAIN", "Невідомий тип плівки");
+    }
+
+    this._filmType = filmType;
+  }
+
+  get bagType() {
+    return this._bagType;
   }
 
   override get weight() {
@@ -44,9 +72,9 @@ export class Bag extends Film<"bag"> {
   private _calcBagWeight(qty: number) {
     return Number(
       Number(
-        this.length *
+        this._length *
           0.01 *
-          this.width *
+          this._width *
           0.01 *
           (this.thickness * 0.001 * 2 * qty),
       ).toFixed(3),
@@ -57,7 +85,9 @@ export class Bag extends Film<"bag"> {
     return {
       ...super.fieldsToCreate,
       length: 0,
+      filmTypes: ["sleeve", "pocket"],
       bagTypes: ["bag", "handle", "t-shirt"],
+      subCategoryName: "film",
     };
   }
 
@@ -66,6 +96,7 @@ export class Bag extends Film<"bag"> {
       ...super.getFields(),
       length: this.length,
       bagType: this.bagType,
+      subCategoryName: "film",
     };
   }
 
@@ -105,6 +136,8 @@ export class Bag extends Film<"bag"> {
       width: this.width,
       thickness: this.thickness,
       unit: this.unit,
+      filmType: this.filmType,
+      bagType: this.bagType,
     };
   }
 }
