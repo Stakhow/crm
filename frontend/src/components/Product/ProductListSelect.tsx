@@ -23,25 +23,23 @@ export const ProductListSelect = ({ cartItemsId = [] }: { cartItemsId?: string[]
         </MenuItem>,
     );
 
-    const List = () =>
-        !!products &&
-        !!products.length && (
-            <Card sx={{ p: 2 }} raised>
-                <FormControl fullWidth margin="dense">
-                    <InputLabel>{'Список продуктів'}</InputLabel>
-                    <Select
-                        label={'Список продуктів'}
-                        value={productId ?? ''}
-                        id={'id'}
-                        onChange={(e) => {
-                            selectProduct(e.target.value);
-                        }}
-                    >
-                        {options}
-                    </Select>
-                </FormControl>
-            </Card>
-        );
+    const List = () => (
+        <Card sx={{ p: 2 }} raised>
+            <FormControl fullWidth margin="dense">
+                <InputLabel>{'Список продуктів'}</InputLabel>
+                <Select
+                    label={'Список продуктів'}
+                    value={productId ?? ''}
+                    id={'id'}
+                    onChange={(e) => {
+                        selectProduct(e.target.value);
+                    }}
+                >
+                    {options}
+                </Select>
+            </FormControl>
+        </Card>
+    );
 
     return isLoading ? <Skeleton variant="rounded" height={102} component={Card} /> : <List />;
 };

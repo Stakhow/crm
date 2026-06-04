@@ -22,10 +22,14 @@ export interface OrderFormValues {
 export default function OrderPageNew() {
     const { cart, isLoading } = cartStore((s) => s);
     const { categoryName } = categoryStore((s) => s);
-    const { product, products, productId, propsToCreate, getProducts, createProduct, getProductProps } = productStore(
-        (s) => s,
-    );
-    const isProductLoading = productStore((s) => s).isLoading;
+    const {
+        product,
+        productId,
+        propsToCreate,
+        getProducts,
+        createProduct,
+        getProductProps,
+    } = productStore((s) => s);
 
     useEffect(() => {
         if (!!categoryName) {
@@ -34,10 +38,10 @@ export default function OrderPageNew() {
     }, [categoryName]);
 
     useEffect(() => {
-        if (!isProductLoading && (productId === 'new' || !products.length)) {
-            getProductProps(categoryName);
+        if (productId === 'new') {
+            getProductProps(categoryName, true);
         }
-    }, [productId, products]);
+    }, [productId]);
 
     const initialValues: OrderFormValues = {
         totalAmount: cart?.totalAmount ?? 0,
@@ -59,15 +63,19 @@ export default function OrderPageNew() {
                     return (
                         <Box mb={14}>
                             <Form>
-                                <Stack spacing={2}>
+                                <Stack spacing={1}>
                                     <CategoryWithState />
                                     {!!categoryName && <CartProductListSelect />}
                                 </Stack>
                             </Form>
+
                             <BottomBar>
                                 <GoToCartButton disabled={values.totalAmount === 0} />
                             </BottomBar>
-                            {!!propsToCreate && <FormComponent props={propsToCreate} onSubmit={createProduct} />}
+
+                            {productId === 'new' && !!propsToCreate && (
+                                <FormComponent props={propsToCreate} onSubmit={createProduct} />
+                            )}
                         </Box>
                     );
                 }}

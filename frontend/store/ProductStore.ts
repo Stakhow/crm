@@ -35,8 +35,8 @@ interface ProductState {
     selectProduct: (id: 'new' | string) => void;
     getProducts: (categoryName?: ProductCategory) => ProductViewUIDTO[];
     getProductsByIds: (ids: string[]) => ProductViewUIDTO[];
-    getProduct: (id: string, categoryName?: ProductCategory) => ProductViewUIDTO;
-    getProductProps: (categoryName: ProductCategory) => CreateProductDTO;
+    getProduct: (id: string) => ProductViewUIDTO;
+    getProductProps: (categoryName: ProductCategory, isForCart?: boolean) => CreateProductDTO;
     getProductAmount: (id: string, quantity: number) => number;
     deleteProduct: (id: string) => number;
     updateProductQuantity: (productId: string, unitOperation: 'add' | 'subtract', quantity: number) => void;
@@ -88,7 +88,7 @@ export const productStore = create<ProductState>()(
             return {
                 products: [],
                 product: undefined,
-                productId: undefined,
+                productId: '',
                 isLoading: false,
                 error: '',
                 success: true,
@@ -98,17 +98,29 @@ export const productStore = create<ProductState>()(
 
                 initCreate: () => set({ product: undefined, products: [], error: '' }, false, `${name}/initCreate`),
 
-                selectProduct: (id) => {
-                    set(
-                        {
-                            propsToCreate: undefined,
-                            productId: id,
-                            product: id === 'new' ? undefined : get().products.find((i) => i.id === id),
+                selectProduct: (id) =>
+                    handleRequest(
+                        'selectProduct',
+                        'Помилка вибору продукту',
+                        async () => {
+                            set(
+                                {
+                                    productId: id,
+                                    product: id === 'new' ? undefined : get().products.find((i) => i.id === id),
+                                },
+                                false,
+                                `${name}/selectProduct:success`,
+                            );
                         },
-                        false,
-                        `${name}/selectProduct:success`,
-                    );
-                },
+                        {
+                            isLoading: true,
+                            error: '',
+                            success: false,
+                            product: undefined,
+                            productId: undefined,
+                            propsToCreate: undefined,
+                        },
+                    ),
 
                 getProducts: (categoryName) =>
                     handleRequest(
@@ -117,7 +129,7 @@ export const productStore = create<ProductState>()(
                         async () => {
                             const raw = await productService.getProductsToView(categoryName);
                             const products = raw.map((i) => productMapper(i));
-                            set({ products });
+                            set({ products, isLoading: false });
                             return products;
                         },
                         { isLoading: true, error: '', success: false, ...resetProductState },
@@ -164,14 +176,18 @@ export const productStore = create<ProductState>()(
                         'getProduct',
                         'Помилка отримання продукту',
                         async () => {
-                            const raw = await productService.getProductToView(id);
-                            const product = productMapper(raw);
+                            const productRaw = await productService.getProductToView(id);
+                            const product = productMapper(productRaw);
                             set({
                                 product,
-                                propsToCreate: fieldsForEdit({ categoryName: raw.categoryName, fields: raw.fields }),
+                                productId: product.id,
+                                propsToCreate: fieldsForEdit({
+                                    categoryName: productRaw.categoryName,
+                                    fields: productRaw.fields,
+                                }),
                             });
                         },
-                        { isLoading: true, error: '', success: false, ...resetProductState },
+                        { isLoading: true, error: '', success: false, product: undefined, productId: undefined },
                     ),
 
                 deleteProduct: (id) =>
@@ -196,10 +212,13 @@ export const productStore = create<ProductState>()(
                         notify.success('Кількість оновлено');
                     }),
 
-                getProductProps: async (categoryName) => {
+                getProductProps: async (categoryName, isForCart) => {
                     set({ propsToCreate: undefined });
                     try {
                         const props = await productService.getProductProps(categoryName);
+
+                        if (isForCart) delete props.fields.quantity;
+
                         set({ propsToCreate: fieldsForCreate(props) });
                     } catch {}
                 },
@@ -209,16 +228,17 @@ export const productStore = create<ProductState>()(
                         'createProduct',
                         'Помилка створення',
                         async () => {
-                            const raw = await productService.createProduct({
+                            const productRaw = await productService.createProduct({
                                 categoryName: values.categoryName,
                                 fields: fieldsToMap(values.fields),
                             });
-                            const product = productMapper(raw);
-                            set({ product });
+                            const product = productMapper(productRaw);
+                            const products = [...get().products, product];
+                            set({ product, productId: product.id, products, isLoading: false });
                             notify.success('Продукт створено');
-                            return raw;
+                            return product;
                         },
-                        { isLoading: true, error: '', success: false, ...resetProductState },
+                        { isLoading: true, error: '', success: false, product: undefined, productId: undefined },
                     ),
 
                 updateProduct: (id, values) =>
@@ -226,19 +246,23 @@ export const productStore = create<ProductState>()(
                         'updateProduct',
                         'Помилка оновлення',
                         async () => {
-                            const raw = await productService.updateProduct(id, {
+                            const productRaw = await productService.updateProduct(id, {
                                 categoryName: values.categoryName,
                                 fields: fieldsToMap(values.fields),
                             });
-                            const product = productMapper(raw);
+                            const product = productMapper(productRaw);
                             set({
                                 product,
-                                propsToCreate: fieldsForEdit({ categoryName: raw.categoryName, fields: raw.fields }),
+                                productId: product.id,
+                                propsToCreate: fieldsForEdit({
+                                    categoryName: productRaw.categoryName,
+                                    fields: productRaw.fields,
+                                }),
                             });
                             notify.success('Продукт оновлено');
-                            return raw;
+                            return productRaw;
                         },
-                        { isLoading: true, error: '', success: false, ...resetProductState },
+                        { isLoading: true, error: '', success: false, product: undefined, productId: undefined },
                     ),
 
                 setProductAsProduced: (id) =>

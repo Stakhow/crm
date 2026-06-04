@@ -78,6 +78,10 @@ export abstract class BaseProduct<
   }
 
   set quantity(value: number) {
+    if (Number.isNaN(value))
+      throw new AppError("DOMAIN", "Помилка встановлення кількості", {
+        productId: this.id,
+      });
     if (value < 0)
       throw new AppError("DOMAIN", "Кількість не може бути нижче нуля", {
         productId: this.id,

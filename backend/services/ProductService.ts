@@ -82,7 +82,7 @@ export class ProductService {
       updatedAt: Date.now(),
       categoryName: values.categoryName,
       name: values.fields.name?.trim() || "",
-      quantity: Number(values.fields.quantity),
+      quantity: Number(values.fields.quantity) || 0,
       price: Number(values.fields.price),
       width: Number(values.fields.width),
       thickness: Number(values.fields.thickness),
