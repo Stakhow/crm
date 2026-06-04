@@ -27,7 +27,7 @@ import { InitOrderButton } from '../components/Order/OrderButtons';
 export default function ClientPage() {
     const [open, setOpen] = useState(false);
     const { isLoading, client, getClient, deleteClient, setClient } = clientStore((state) => state);
-    const { orders, getOrdersByClient } = orderStore((state) => state);
+    const { orders, getOrdersByClient, isLoading: isLoadingOrders } = orderStore((state) => state);
 
     const { id } = useParams();
 
@@ -130,24 +130,30 @@ export default function ClientPage() {
                         </CardContent>
                     </Card>
 
-                    {!!orders && (
-                        <Box my={3}>
-                            {!!orders.length ? (
-                                <>
-                                    <Typography variant="h6" textAlign={'center'}>
-                                        Список замовлень:
-                                    </Typography>
-                                    <Stack spacing={1}>
-                                        {orders.map((i) => (
-                                            <OrderSummary key={i.id} order={i} />
-                                        ))}
-                                    </Stack>
-                                </>
-                            ) : (
-                                <ComponentNotFound title={'Замовлення відсутні'} buttonText={''} />
-                            )}
-                        </Box>
-                    )}
+                    <Box my={3}>
+                        {isLoadingOrders ? (
+                            <Box display="flex" justifyContent="center" alignItems="center">
+                                <CircularProgress color="primary" />
+                            </Box>
+                        ) : (
+                            <>
+                                {!!orders && !!orders.length ? (
+                                    <>
+                                        <Typography variant="h6" textAlign={'center'}>
+                                            Список замовлень:
+                                        </Typography>
+                                        <Stack spacing={1}>
+                                            {orders.map((i) => (
+                                                <OrderSummary key={i.id} order={i} />
+                                            ))}
+                                        </Stack>
+                                    </>
+                                ) : (
+                                    <ComponentNotFound title={'Замовлення відсутні'} buttonText={''} />
+                                )}
+                            </>
+                        )}
+                    </Box>
 
                     <BottomBar>
                         <InitOrderButton

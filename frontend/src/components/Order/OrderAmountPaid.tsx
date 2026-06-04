@@ -31,7 +31,7 @@ export const OrderAmountPaid = () => {
         setAmountPaid(amount);
     };
 
-    if (order.isPaid) return <Chip sx={{ fontSize: 20 }} label="Замовлення сплачено" color="success" />;
+    if (order.paid) return <Chip sx={{ fontSize: 20 }} label="Замовлення сплачено" color="success" />;
 
     return (
         <>
@@ -48,7 +48,7 @@ export const OrderAmountPaid = () => {
                     error={!!error}
                 />
             </FormControl>
-            {!order.isPaid && amountPaid !== order.totalAmount && (
+            {!order.paid && amountPaid !== order.totalAmount && (
                 <FormControl margin="dense" fullWidth>
                     <Button
                         size={'large'}
@@ -64,7 +64,7 @@ export const OrderAmountPaid = () => {
                 </FormControl>
             )}
 
-            {!order.isPaid && amountPaid !== order.amountPaid && (
+            {!order.paid && amountPaid !== order.amountPaid && (
                 <FormControl margin="dense" fullWidth>
                     <Button
                         size={'large'}

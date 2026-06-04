@@ -9,6 +9,7 @@ import type { OrderStatus } from '../../backend/domain/order/Order';
 import type { CartDTO } from '../../dto/CartDTO';
 import { Category } from '../../backend/domain/product/ProductCategory';
 import type { OrderItemProp } from '../../backend/domain/order/OrderItem';
+import type { OrderQuery } from '../../dto/OrderQuery';
 
 export type OrderItemView = Omit<OrderItemProp, 'category'> & { category: string };
 export type OrderViewUI = Omit<OrderViewDTO, 'items' | 'statuses'> & {
@@ -23,10 +24,11 @@ interface OrderState {
     orders: OrderViewUI[];
     dueDate: Dayjs | null;
     order: OrderViewUI;
+    statuses: OrderViewUI['statuses'];
     monthOrders: Map<number, OrderViewUI[]> | null;
     amountPaid: number;
     setDueDate: (date: Dayjs) => void;
-    getOrders: () => OrderViewUI[];
+    getOrders: (query?: OrderQuery) => OrderViewUI[];
     getOrdersByClient: (clientId: string) => OrderViewUI[];
     createOrder: (cartId: string, clientId: string) => OrderViewUI;
     getOrdersByMonth: (date: Dayjs) => void;
@@ -42,6 +44,7 @@ const name = 'order';
 const categoryInstance = new Category();
 
 const STATUS_TITLES = {
+    all: 'Усі',
     InProgress: 'В роботі',
     Done: 'Виконано',
     Cancelled: 'Відмінений',
@@ -77,16 +80,17 @@ export const orderStore = create<OrderState>()(
                 order: null,
                 monthOrders: null,
                 amountPaid: 0,
+                statuses: statusMap(['all', 'InProgress', 'Done', 'Cancelled']),
 
                 setDueDate: (date) => set({ dueDate: date }),
                 setAmountPaid: (value) => set({ amountPaid: value }),
 
-                getOrders: () =>
+                getOrders: (query) =>
                     handleRequest(
                         'getOrders',
                         'Помилка отримання списку замовлень',
                         async () => {
-                            const res = await orderService.getAll();
+                            const res = await orderService.getAll(query);
                             set({ orders: res.map(orderMap) });
                         },
                         { isLoading: true, orders: [], error: '' },
@@ -212,13 +216,17 @@ export const orderStore = create<OrderState>()(
     ),
 );
 
+function statusMap(statuses: ('all' | OrderStatus)[]) {
+    return statuses.map((s) => ({ value: s, title: STATUS_TITLES[s] || s }));
+}
+
 function orderMap(order: OrderViewDTO): OrderViewUI {
     const items = order.items.map((i) => ({
         ...i,
         category: categoryInstance.getTitle(i.category) as string,
     }));
 
-    const statuses = order.statuses.map((s) => ({ value: s, title: STATUS_TITLES[s] || s }));
+    const statuses = statusMap(order.statuses);
     const statusTitle = STATUS_TITLES[order.status] || '';
 
     return { ...order, items, statuses, statusTitle };

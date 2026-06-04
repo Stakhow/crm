@@ -60,6 +60,7 @@ export type OrderDB = {
   deadline: number;
   createdAt: number;
   amountPaid: number;
+  paid: boolean;
 };
 
 export type OrderItemDB = {

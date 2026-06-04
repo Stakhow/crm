@@ -9,6 +9,7 @@ import type { ClientService } from "./ClientService";
 import { generateId } from "../../utils/utils";
 import { CheckoutService } from "./CheckoutService";
 import { ProductionService } from "./ProductionService";
+import type { OrderQuery } from "../../dto/OrderQuery";
 
 export class OrderService {
   private status: "InProgress" | "Done" | "Cancelled" = "InProgress";
@@ -132,8 +133,8 @@ export class OrderService {
     return order.toView();
   }
 
-  async getAll(): Promise<OrderViewDTO[]> {
-    const orders = await this.orderRepository.getAll();
+  async getAll(query?: OrderQuery): Promise<OrderViewDTO[]> {
+    const orders = await this.orderRepository.getAll(query);
     return orders.map((i) => i.toView());
   }
 

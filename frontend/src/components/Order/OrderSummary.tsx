@@ -23,7 +23,7 @@ export function OrderSummary({ order }: { order: OrderViewUI }) {
                         label={order.statusTitle}
                         sx={{ mx: 0.2, bgcolor: color[order.status], color: 'white' }}
                     />
-                    {order.isPaid && (
+                    {order.paid && (
                         <Chip size="small" component={'span'} label="Cплачено" color="success" sx={{ mx: 0.2 }} />
                     )}
                 </Typography>
@@ -36,12 +36,10 @@ export function OrderSummary({ order }: { order: OrderViewUI }) {
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Виконати на: <b>{dateToLocalString(order.deadline)}</b>
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Статус: <b>{order.statusTitle}</b>
-                </Typography>
+
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Товари:{' '}
-                    <b>{order.items.map((i) => `${i.name} - ${quantityFormat(i.quantity, i.unit)}`).join(' | ')}</b>
+                    <b>{order.items.map((i) => `${i.name} - ${quantityFormat(i.quantity, i.unit)}`).join('; ')}</b>
                 </Typography>
             </CardContent>
             <CardActions

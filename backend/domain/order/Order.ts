@@ -127,6 +127,10 @@ export class Order extends EventBusRoot {
     this.amountPaid = amount;
   }
 
+  get paid() {
+    return this.totalAmount - this.amountPaid <= 0;
+  }
+
   toView(): OrderViewDTO {
     return {
       id: this.id,
@@ -143,7 +147,7 @@ export class Order extends EventBusRoot {
       deadline: this.deadline,
       createdAt: this.createdAt,
       amountPaid: this.amountPaid,
-      isPaid: this.totalAmount - this.amountPaid <= 0,
+      paid: this.paid,
     };
   }
   toSaveDB(): OrderDB {
@@ -158,6 +162,7 @@ export class Order extends EventBusRoot {
       deadline: this.deadline,
       createdAt: this.createdAt,
       amountPaid: this.amountPaid,
+      paid: this.paid,
     };
   }
   toSaveItemsDB(): OrderItemDB[] {

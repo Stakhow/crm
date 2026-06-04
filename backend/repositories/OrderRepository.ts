@@ -5,6 +5,7 @@ import { type IOrderRepository } from "../domain/order/IOrderRepository";
 import type { OrderDB, OrderItemDB } from "../../config/db.types";
 import { AppError } from "../../utils/error";
 import { OrderItem } from "../domain/order/OrderItem";
+import type { OrderQuery } from "../../dto/OrderQuery";
 
 function groupByOrderId(items: OrderItemDB[]) {
   const map = new Map<string, OrderItemDB[]>();
@@ -72,8 +73,27 @@ export class OrderRepository implements IOrderRepository {
     return this.toDomain(orderDTO, items);
   }
 
-  async getAll(): Promise<Order[]> {
-    const orders = await db.orders.toArray();
+  async getAll(query?: OrderQuery): Promise<Order[]> {
+    let collection = db.orders.toCollection();
+
+    if (query) {
+      collection = collection.filter((order) => {
+        const matchStatus =
+          query.status !== undefined && query.status !== "all"
+            ? order.status === query.status
+            : true;
+
+        let matchPaid = true;
+        if (query.paid !== undefined && query.paid !== "all") {
+          const targetPaidBool = query.paid === "paid";
+          matchPaid = order.paid === targetPaidBool;
+        }
+
+        return matchStatus && matchPaid;
+      });
+    }
+
+    const orders = await collection.toArray();
     return this.buildOrders(orders);
   }
 
